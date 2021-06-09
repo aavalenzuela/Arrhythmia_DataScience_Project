@@ -8,21 +8,33 @@ output:
 
 *In this section we describe the dataset and summarizes the goal of the project and key steps that were performed.*
       
-This project is part of the Capstone of the Professional Certificate Program of Data Science and it has as scope to create a movie recommendation system using the MovieLens dataset. There are several versions of this movielens, for example the one included in the dslabs package is just a small subset of a much larger dataset and the one we are going to use with a dataset with 10 millions of ratings, called Movielens 10M. This big dataset add the difficulty of more data require more time y computing resources, that force to discard some high consume resource algorithm because it can not ran in R with this volume but it gives the opportunity to work with more realistic big data.
+This project is part of the Capstone of the Professional Certificate Program of Data Science and it has as scope applying machine learning techniques that go beyond standard linear regression, giving the opportunity to use a publicly available dataset to solve the problem of your choice. The [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/index.php) and [Kaggle](https://www.kaggle.com/datasets) are good places to seek out a dataset.
+
+For this project, the [Cardiac Arrhythmia](https://archive.ics.uci.edu/ml/datasets/Arrhythmia) dataset from UCI Machine Learning Repository was selected. As we can guess this is a life/health dataset and as the web page mention, this dataset has the following main information:
+
+* This database contains 279 attributes, 206 of which are linear valued and the rest are nominal.
+
+* Concerning the study of H. Altay Guvenir: "The aim is to distinguish between the presence and absence of cardiac arrhythmia and to classify it in one of the 16 groups. Class 01 refers to 'normal' ECG classes 02 to 15 refers to different classes of arrhythmia and class 16 refers to the rest of unclassified ones. For the time being, there exists a computer program that makes such a classification. However there are differences between the cardiolog's and the programs classification. Taking the cardiolog's as a gold standard we aim to minimise this difference by means of machine learning tools." 
+
+
+
+### no
+create a movie recommendation system using the MovieLens dataset. There are several versions of this movielens, for example the one included in the dslabs package is just a small subset of a much larger dataset and the one we are going to use with a dataset with 10 millions of ratings, called Movielens 10M. This big dataset add the difficulty of more data require more time y computing resources, that force to discard some high consume resource algorithm because it can not ran in R with this volume but it gives the opportunity to work with more realistic big data.
 
 This prediction systems will be validated using part of this dataset, part that is not used in the training.
 
 Recommendation systems are referred to as systems and tools that provide suggestions for the items, in this case a movie, the user uses. Recommendation systems are more complicated machine learning challenges because each outcome has a different set of predictors. For example, different users rate a different number of movies and rate the movies in different ways. The inputs to these systems are item’s data, user profile and most importantly, the behavior of each user's access to the items, which in our case it is the rating. System outputs is a collection of products and items that the user will mostly like.
 
-
-
-
-
 The MovieLens dataset is a table witch each row it is rating to a movie provided by one user and has the following structure:
 
-```{r Overview Initial Setup, include = FALSE}
+
+
+
+
+
+```{r Overview Download & Initial Setup, include = FALSE}
 ##########################################################
-# Create edx set, validation set (final hold-out test set)
+# Download & Setup
 ##########################################################
 
 # Note: this process could take a couple of minutes
@@ -30,12 +42,16 @@ The MovieLens dataset is a table witch each row it is rating to a movie provided
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
+#if(!require(kableExtra)) install.packages("kableExtra", dependencies = TRUE)
+
+
 
 library(tidyverse)
 library(caret)
 library(data.table)
+#library(kableExtra)
 
-# Arrhythmia dataset:
+# Cardiac Arrhythmia dataset:
 # https://archive.ics.uci.edu/ml/datasets/Arrhythmia
 # https://archive.ics.uci.edu/ml/machine-learning-databases/arrhythmia/arrhythmia.data
 
@@ -44,100 +60,30 @@ library(data.table)
 arrhythmia.uci <- read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/arrhythmia/arrhythmia.data"),
                      header=FALSE)
 
-# Because we have too many columns prefer make one by one to decrease error setting instead to set all of then in one sentence like 
-# colnames(arrhythmia.uci) <- c("Age", "Sex", "Height", "Weight", .....)
-
-colnames(arrhythmia.uci)[01] <- "Age"
-colnames(arrhythmia.uci)[02] <- "Sex"
-colnames(arrhythmia.uci)[03] <- "Height"
-colnames(arrhythmia.uci)[04] <- "Weight"
-colnames(arrhythmia.uci)[05] <- "QRS duration"
-colnames(arrhythmia.uci)[06] <- "P-R interval"
-colnames(arrhythmia.uci)[07] <- "Q-T interval"
-colnames(arrhythmia.uci)[08] <- "T interval"
-colnames(arrhythmia.uci)[09] <- "P interval"
-colnames(arrhythmia.uci)[10] <- "QRS Vector angles"
-colnames(arrhythmia.uci)[11] <- "T Vector angles"
-colnames(arrhythmia.uci)[12] <- "P Vector angles"
-colnames(arrhythmia.uci)[13] <- "QRST Vector angles"
-colnames(arrhythmia.uci)[14] <- "J Vector angles"
-colnames(arrhythmia.uci)[15] <- "Heart rate"
-colnames(arrhythmia.uci)[16] <- "Q wave Average width of channel DI"
-colnames(arrhythmia.uci)[17] <- "R wave Average width of channel DI"
-colnames(arrhythmia.uci)[18] <- "S wave Average width of channel DI"
-colnames(arrhythmia.uci)[19] <- "R' wave Average width of channel DI"
-colnames(arrhythmia.uci)[20] <- "S' Average width wave of channel DI"
-colnames(arrhythmia.uci)[21] <- "Number of intrinsic deflections of channel DI"
-colnames(arrhythmia.uci)[22] <- "Existence of ragged R wave of channel DI"
-colnames(arrhythmia.uci)[23] <- "Existence of diphasic derivation of R wave of channel DI"
-colnames(arrhythmia.uci)[24] <- "Existence of ragged P wave of channel DI"
-colnames(arrhythmia.uci)[25] <- "Existence of diphasic derivation of P wave of channel DI"
-colnames(arrhythmia.uci)[26] <- "Existence of ragged T wave of channel DI"
-colnames(arrhythmia.uci)[27] <- "Existence of diphasic derivation of T wave of channel DI"
-colnames(arrhythmia.uci)[28] <- "Q wave Average width of channel DII"
-colnames(arrhythmia.uci)[29] <- "R wave Average width of channel DII"
-colnames(arrhythmia.uci)[30] <- "S wave Average width of channel DII"
-colnames(arrhythmia.uci)[31] <- "R' wave Average width of channel DII"
-colnames(arrhythmia.uci)[32] <- "S' wave Average width of channel DII"
-colnames(arrhythmia.uci)[33] <- "Number of intrinsic deflections of channel DII"
-colnames(arrhythmia.uci)[34] <- "Existence of ragged R wave of channel DII"
-colnames(arrhythmia.uci)[35] <- "Existence of diphasic derivation of R wave of channel DII"
-colnames(arrhythmia.uci)[36] <- "Existence of ragged P wave of channel DII"
-colnames(arrhythmia.uci)[37] <- "Existence of diphasic derivation of P wave of channel DII"
-colnames(arrhythmia.uci)[38] <- "Existence of ragged T wave of channel DII"
-colnames(arrhythmia.uci)[39] <- "Existence of diphasic derivation of T wave of channel DII"
-
 
 colnames(arrhythmia.uci)[280] <- "Class code"
 
-dim(arrhythmia.uci)
-names(arrhythmia.uci)
-class(arrhythmia.uci)
-str(arrhythmia.uci)
 
+# Set NA to the ? value (missing value)
 arrhythmia.uci[arrhythmia.uci == "?"] <- NA
-
-
-arrhythmia.uci$`Heart rate`
-# [1] 63   53   75   71   <NA> 84
-
-arrhythmia.uci$Sex
-
-# Redefine some type of the predictor from initial read from files. if using R 3.6 or earlier:
-arrhythmia <- arrhythmia.uci %>% mutate(Sex = as.factor( ifelse(Sex == 0, 'M', 'F')),
-                                        T = as.integer(T),
-                                        P = as.integer(P),
-                                        QRST = as.integer(QRST),
-                                        J = as.integer(J),
-                                        `Heart rate` = as.integer(`Heart rate`),
-                                        `Existence of ragged R wave of channel DI` = as.factor(`Existence of ragged R wave of channel DI`),
-                                        `Existence of diphasic derivation of R wave of channel DI` = as.factor(`Existence of diphasic derivation of R wave of channel DI`),
-                                        `Existence of ragged P wave of channel DI` = as.factor(`Existence of ragged P wave of channel DI`),
-                                        `Existence of diphasic derivation of P wave of channel DI` = as.factor(`Existence of diphasic derivation of P wave of channel DI`),
-                                        `Existence of ragged T wave of channel DI` = as.factor(`Existence of ragged T wave of channel DI`),
-                                        `Existence of diphasic derivation of T wave of channel DI` = as.factor(`Existence of diphasic derivation of T wave of channel DI`)
-                                        )
-
-as.integer(arrhythmia.uci$`Heart rate`)
-str(arrhythmia)
-arrhythmia$`Heart rate`
-arrhythmia$`Existence of ragged R wave of channel DI`
-
-
-
-
-# Validation set will be 10% of data
-set.seed(1, sample.kind="Rounding") # if using R 3.5 or earlier, use `set.seed(1)`
-test_index <- createDataPartition(y = arrhythmia$class, times = 1, p = 0.1, list = FALSE)
-train <- arrhythmia[-test_index,]
-validation <- arrhythmia[test_index,]
-
-
-
-rm(dl, ratings, movies, test_index, temp, movielens, removed)
 ```
 
+## Characteristics of dataset
+The Arrhythmia dataset is a table witch each row it is collection of health measurement for each patience and the last one says if this persons it is a normal health or has same of the 15 arrhythmia.
+
+
 ```{r}
+# dimension
+dim(arrhythmia.uci)
+# Display predictors (columns)
+str(arrhythmia.uci) 
+```
+
+You can see there are few patients but a lot of elements to consider. This elements are displayed as the first view we can see that required some work in setting its proper name (provided in the description of the dataset) but we are not to cover each one because we are talking of 279 predictors.
+
+
+
+```{r, include = FALSE}
 
 Class <- data.frame(`Class code`= 01, Class = "Normal", check.names = FALSE)
 Class <- bind_rows( Class,
@@ -170,36 +116,52 @@ Class <- bind_rows( Class,
                     data.frame(`Class code`= 15, Class = "Atrial Fibrillation or Flutter", check.names = FALSE))
 Class <- bind_rows( Class,
                     data.frame(`Class code`= 16, Class = "Others", check.names = FALSE))
+Class$`Class code` <- as.factor(Class$`Class code`)
 ```
 
 
+About the output, the last column give us the Class code. 1 is for "Normal" and all the rest are arrhythmia. First we are going to display de distribution in a table, where you can see that "Normal" take a preponderance percentage and later a graph where we can see how the different arrhythmia are distributed in our dataset
 
 
+```{r, include = FALSE}
+# Initial Redefine some type of the predictor from initial read from files. if using R 3.6 or earlier:
+arrhythmia <- arrhythmia.uci %>% mutate(`Class code` = as.factor(`Class code`)
+                                        )
+```
 
-```{r}
+
+```{r, echo=FALSE, message=FALSE}
+left_join(arrhythmia, Class, by = "Class code") %>% group_by(`Class code`, Class) %>% summarise( n = n(), Percentage = 100*n()/nrow(arrhythmia))
+```
+
+You can see than some arrytmia type are not present in our dataset (11,12 and 13).
+
+```{r, echo=FALSE, warning=FALSE}
 left_join(arrhythmia, Class, by = "Class code") %>% ggplot(aes(Class)) + geom_histogram(stat="count") +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))   # Rotate axis labels
-left_join(arrhythmia, Class, by = "Class code") %>% group_by(Class) %>% summarise(n = n())
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))  + # Rotate axis labels
+  xlab("Cardiac Arrhythmia Classification") +
+  ylab("Number of Patiences") +
+  ggtitle("Distribution of Cardiac Arrhythmia")
 ```
 
 
-```{r Exploring edx, echo=TRUE}
-str(train)
-```
-
-Looking some rows:
-
-```{r Some rows of edx, echo=FALSE}
-head(train, 3)
-
-```
 
 
 
 ## Approach
 The develop of this predicting Cardiac Arrhythmia classification can be explained in the follows steps:
 
-1.- Start analyzing the dataset, cleaning, setting properly and analyze the better option to get a good predictor.
+1.- Start analyzing the dataset, cleaning, working on missing values that we found, review predictors that does not add value and define the outcomes that we are going to predict.
+
+2.- Create the training and validation, or test, dataset
+
+3.- Works with several classification supervised machines to get a better accuracy in our predictions. Evaluate sensitivity and specificity.
+
+4.- Review the results
+
+###### no
+
+setting properly and analyze the better option to get a good predictor.
 
 
 Start creating the model and explained why this approach was taken. The main, but not the only, approach is in base of Data Science: Machine Learning from	Harvard University (course HarvardX+PH125.8x). The objective of the final model it is to get and get a **RMSE < 0.86490** in the validation set.
@@ -210,17 +172,8 @@ The algorithm is developed using the training (train) set. For a final test of t
 
 3.- Continue with the final validation with this trained algorithm 
 
-###### no
 
-## Evaluation
-The rating is an numeric running from 0.5 through 5 by 0.5 step. This means 10 possible options to the user who make the rating.
-For evaluate the algorithm we are going to use the Root Mean Square Error (RMSE) [https://en.wikipedia.org/wiki/Root-mean-square_deviation]. This take advantage of the numeric characteristic of rating and in R can be represented as:
 
-```{r Loss Function definition, echo=TRUE}
-RMSE <- function(true_ratings, predicted_ratings){
-  sqrt(mean((true_ratings - predicted_ratings)^2))
-}
-```
 
 
 \newpage

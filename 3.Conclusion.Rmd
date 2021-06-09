@@ -1,0 +1,12 @@
+# Conclusion
+*This section that gives a brief summary of the report, its limitations and future work.*
+
+We get our better RMSE =  which is under the target of 0.86490. The most important predictor are  movie and  user. After that a few improvement where obtained. The use of the year of the movie and the timestamp give too little improvement that the result was not presented.
+
+The division of the edx between train and test was not absolutely necessary but show us that the result in the test was a little different that in the validation set.
+
+Because R works with in memory approach, the separation of genre as a challenging and I need to increase the memory. There are some other ways, like split, separate and rejoin, but it was not as elegant, but feasible.
+
+Here we use the rating of the movie as a input for our analysis in our Recommendation systems. The movie genres was a second input and the third one was related as how the user are classified. The user classification was used in the user effect but this can be further develop, asking more question when the user registered in the system, then this type of system can spend more development.
+
+The Recommendation systems worked here was analyzed and applied models, with the mass of information. These systems are now an important part of the store, news, Social media, movies and music, books and search engines sites. The initial model presented lead us to the target RMSE but there is an open field  where more models (as classification) are in place.

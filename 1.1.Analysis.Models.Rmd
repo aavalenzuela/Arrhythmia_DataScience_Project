@@ -1,0 +1,655 @@
+## Fisrt Model...just the most common
+
+We are now to create our models. For that we are not to use the validation, we are going to take edx and split in train and test set. We are going to test in the last group and when we are satisfy with the RMSE, we are going to move to the final validation.
+
+
+```{r}
+y_hat <- rep(1, times = nrow(validation_set)) %>% factor() # Using Bormal as the only answer
+confusionMatrix(y_hat, validation_set$`Class code`)$overall["Accuracy"]
+```
+
+
+experiment......
+```{r}
+lm_fit <-  lm(`Class code` ~ Sex, data = arrhythmia.uci)
+  p_hat <- predict(lm_fit, test_set)
+  y_hat <- ifelse(p_hat > 0.5, "Female", "Male") %>% factor()
+  confusionMatrix(y_hat, test_set$sex)$overall["Accuracy"]
+```
+
+```{r}
+#The lm Function
+# fit regression line to predict son's height from father's height
+fit <- lm(`Class code` ~ Sex, data = train)
+fit
+
+# summary statistics
+summary(fit)
+```
+
+
+
+
+```{r Creating training and test in base of edx}
+# To construct our model, create our training and test in base of edx
+set.seed(755)
+test_index <- createDataPartition(y = edx$rating, times = 1,
+                                  p = 0.2, list = FALSE)
+train_set <- edx[-test_index,]
+test_set <- edx[test_index,]
+test_set <- test_set %>% 
+     semi_join(train_set, by = "movieId") %>%
+     semi_join(train_set, by = "userId")
+```
+
+
+We start now making the first model. But remember, not with the whole movielen 10M dataset, only with the training.
+
+The most basic and quick approach it is consider that a rating for a movie is just the average of all rating, e. gr., assumes the same rating for all movies and all users.
+
+
+$$
+ y_{u,i} = \mu + \varepsilon_{i,u}
+$$
+$\mu$ the "true" rating for all movies and  $\varepsilon_{i,u}$ an independent errors sampled from the same distribution centered at 0.
+
+Let's calculate the average and see what RMSE we get:
+
+```{r First Model}
+# Average in training dataset
+mu <- mean(train_set$rating)
+mu
+# Predict the RMSE on the test set
+rmse_naive_mean_model_result <- RMSE(test_set$rating, mu)
+rmse_naive_mean_model_result
+```
+Let's see how this distribution of rating is and we add the means just calculated and one RMSE up and down from this means:
+
+```{r, echo=FALSE}
+# Distribution of rating of the first model
+edx %>% group_by(rating) %>% ggplot(aes(rating)) + geom_histogram(bins = 10) + geom_vline(xintercept=mu) +
+  geom_vline(xintercept= c(mu - rmse_naive_mean_model_result, mu + rmse_naive_mean_model_result), linetype='dashed', color='blue', size=0.5) +
+  ggtitle("Distribution of Rating")
+```
+
+We can appreciate than the RMSE of `r rmse_naive_mean_model_result` it is high in the range of the rating. It is not close to the target  and the full number rating (1,2,3,4 and 5) are more common than fractional rating (0.5, 1.5, 2.5, 3.5 and 4.5). The work now it is improve this initial RSME.
+
+
+For our record, we keep this first model:
+
+
+```{r,echo=FALSE}
+# Creating a results dataframe that contains all RMSE results
+rmse_results <- data.frame(model="Naive Mean-Baseline Model", RMSE = rmse_naive_mean_model_result)
+```
+
+
+```{r Result Naive Mean-Baseline Model, echo=FALSE}
+rmse_results %>% knitr::kable()
+```
+
+
+## Model knn
+
+
+```{r}
+# Predict region using KNN
+
+#trr <- train_set %>% select(Age,Sex,`Class code`)
+#%>% drop_na("P")
+trr <- train_set[,c(1:280)] %>% drop_na("T Vector angles") %>%  select(-P)  %>% drop_na("QRST")  %>% select(-J) %>% drop_na("Heart rate")
+library(caret)
+fit <- train(`Class code` ~ .,  method = "knn", 
+             tuneGrid = data.frame(k = seq(1, 17, 2)), 
+             data = trr)
+ggplot(fit)
+fit$bestTune$k
+fit$finalModel
+#  1   2   3   4   5   6   7   8   9  10  14  15  16 
+#121  21   7   6   6  12   1   1   4  25   2   2  11 
+varImp(fit)
+```
+```{r}
+#fit knn model
+
+validation_set_c <- validation_set %>% drop_na("T Vector angles") %>%  select(-P)  %>% drop_na("QRST")  %>% select(-J) %>% drop_na("Heart rate")
+
+#knn_fit <- knn3(`Class code` ~ Sex+Age, data = train_set, k=11)
+
+y_hat_knn <- predict(fit, validation_set, type = "raw")
+confusionMatrix(data = y_hat_knn, reference = validation_set_c$`Class code`)$overall["Accuracy"]
+
+```
+
+```{r}
+#fit knn model
+
+
+knn_fit <- knn3(`Class code` ~ V261+V228+V113+V148+V202, data = train_set, k=9)
+
+y_hat_knn <- predict(knn_fit, validation_set, type = "class")
+confusionMatrix(data = y_hat_knn, reference = validation_set$`Class code`)$overall["Accuracy"]
+
+```
+```{r}
+#fit knn model
+
+
+knn_fit <- knn3(`Class code` ~ Age+Sex, data = train_set, k=9)
+
+y_hat_knn <- predict(knn_fit, validation_set, type = "class")
+confusionMatrix(data = y_hat_knn, reference = validation_set$`Class code`)$overall["Accuracy"]
+
+```
+```{r}
+    control <- trainControl(method = "cv", number = 10, p = .9)
+    train_knn_cv <- train(y ~ ., method = "knn", 
+                          data = mnist_27$train,
+                          tuneGrid = data.frame(k = seq(9, 71, 2)),
+                          trControl = control)
+    ggplot(train_knn_cv, highlight = TRUE)
+    
+    train_knn$results %>% 
+      ggplot(aes(x = k, y = Accuracy)) +
+      geom_line() +
+      geom_point() +
+      geom_errorbar(aes(x = k, 
+                        ymin = Accuracy - AccuracySD,
+                        ymax = Accuracy + AccuracySD))
+```
+
+### Model rpart
+
+
+```{r}
+# use cross validation to choose cp
+library(caret)
+
+train_rpart <- train(`Class code` ~ Age+Sex+V261+V228+V113+V148+V202, method = "rpart",
+                     tuneGrid = data.frame(cp = seq(0, 0.05, len = 25)),
+                     data = trr)
+ggplot(train_rpart)
+
+# access the final model and plot it
+plot(train_rpart$finalModel, margin = 0.1)
+text(train_rpart$finalModel, cex = 0.75)
+trr %>% 
+  mutate(y_hat = predict(train_rpart)) %>% 
+  ggplot() +
+  geom_point(aes(day, margin)) +
+  geom_step(aes(day, y_hat), col="red")
+
+# prune the tree 
+pruned_fit <- prune(fit, cp = 0.01)
+
+# compute accuracy
+y_hat_rpart <- predict(train_rpart, validation_set, type = "raw")
+confusionMatrix(y_hat_rpart, reference = validation_set$`Class code`)$overall["Accuracy"]
+```
+
+
+## Model Random Forests
+
+```{r}
+#Random Forests
+
+library(randomForest)
+
+train_rf <- train(`Class code` ~ ., method = "rf",
+                     tuneGrid = data.frame(mtry = seq(0, 800, len = 10)),
+                     data = trr)
+
+#fit <- randomForest(`Class code` ~ ., data = trr) 
+plot(train_rf)
+
+polls_2008 %>%
+  mutate(y_hat = predict(fit, newdata = polls_2008)) %>% 
+  ggplot() +
+  geom_point(aes(day, margin)) +
+  geom_line(aes(day, y_hat), col="red")
+
+library(randomForest)
+train_rf <- randomForest(y ~ ., data=mnist_27$train)
+confusionMatrix(predict(train_rf, mnist_27$test), mnist_27$test$y)$overall["Accuracy"]
+
+
+
+#  fit <- randomForest(y ~ x, data = dat, nodesize = 50, maxnodes = 25)
+
+
+
+
+# use cross validation to choose parameter
+train_rf_2 <- train(y ~ .,
+                    method = "Rborist",
+                    tuneGrid = data.frame(predFixed = 2, minNode = c(3, 50)),
+                    data = mnist_27$train)
+confusionMatrix(predict(train_rf_2, mnist_27$test), mnist_27$test$y)$overall["Accuracy"]
+```
+
+## Model
+
+```{r}
+#Support Vector Classifier:
+library(e1071)
+set.seed(1)
+train_svm <- svm(`Class code` ~ .,kernel = "linear",cost = 1,
+                     #tuneGrid = data.frame(ranges = seq(0, 2, len = 10)),
+                     data = trr)
+
+#svc <- svm(Y~.,data = df_train.boruta,kernel = "linear",cost = 1)
+tune.out <- tune(svm,`Class code` ~ .,data = trr,ranges = list(cost= c(0.001,0.05,0.01,0.1,1,5,10,100)), kernel = "linear")
+bestsvc <- tune.out$best.model
+summary(bestsvc)
+svcpred <- predict(bestsvc,validation_set)
+svcpred <- predict(train_svm,validation_set)
+
+
+#y_hat_rpart <- predict(train_rpart, validation_set, type = "raw")
+
+#print(mean(svcpred==validation_set$Y))
+#confusionMatrix(svcpred,validation_set$Y)
+confusionMatrix(data = svcpred, reference = validation_set$`Class code`)$overall["Accuracy"]
+
+```
+
+
+
+
+
+
+## Movie-Based Model
+
+Some movies are over the average and other under it. Can be see that in the data? Is there some preference for some movies over others? This is the code assuming that there is one effect for the movie itself (one item has better preference than other)
+
+$$
+ y_{u,i} = \mu + b_{i} + \varepsilon_{i,u}
+$$
+
+ $\mu$ the "true" rating for all movies and $b_{i}$ the average rating for movie i or the "movie effect" and $\varepsilon_{i,u}$ independent errors sampled from the same distribution centered at 0.
+ 
+ 
+ 
+
+First we create this $b_{i}$:
+```{r}
+# Calculate the average by movie
+movie_avgs <- train_set %>%
+   group_by(movieId) %>%
+   summarize(b_i = mean(rating - mu))
+```
+
+
+And see how this perform in the test dataset.
+```{r, echo=FALSE}
+# Compute the predicted ratings on test dataset
+predicted_ratings <- test_set %>% 
+   left_join(movie_avgs, by='movieId') %>%
+   mutate(pred = mu + b_i) %>%
+   .$pred
+```
+and calculate the RMSE
+```{r RMSE on Movie-Based Model, echo=FALSE}
+rmse_movie_model_result <- RMSE(test_set$rating, predicted_ratings)
+rmse_results <- bind_rows(rmse_results,
+                          data.frame(model="Movie-Based Model",
+                                     RMSE = rmse_movie_model_result ))
+```
+
+```{r Result Movie-Based Model, echo=FALSE}
+rmse_results %>% knitr::kable()
+```
+
+We see that adding the movie we get a great improvement in our prediction. But we need to continue because we did not get to the target 
+
+
+
+
+
+
+## User effect
+
+We just considered the movie. What is about the user? All the user rate equal the same movie...certainly not.
+
+The we can have a new model:
+
+$$
+ y_{u,i} = \mu + b_{i} + b_{u} + \varepsilon_{i,u}
+$$
+
+ 
+  $\mu$ the "true" rating for all movies and $b_{i}$ the average rating for movie i or the "movie effect" and $b_{u}$ the average rating for user u or "user effect" and $\varepsilon_{i,u}$ independent errors sampled from the same distribution centered at 0.
+
+Let's calculate this $b_{u}$:
+
+```{r User Effects Model}
+# Calculate the average by user
+user_avgs <- train_set %>% 
+     left_join(movie_avgs, by='movieId') %>%
+     group_by(userId) %>%
+     summarize(b_u = mean(rating - mu - b_i))
+```
+
+
+```{r, echo=FALSE}
+# Compute the predicted ratings on test dataset
+predicted_ratings <- test_set %>% 
+     left_join(movie_avgs, by='movieId') %>%
+     left_join(user_avgs, by='userId') %>%
+     mutate(pred = mu + b_i + b_u) %>%
+     .$pred
+
+```
+
+
+```{r RMSE of User Effects Model, echo=FALSE}
+rmse_movie_user_model_result <- RMSE(predicted_ratings, test_set$rating)
+rmse_results <- bind_rows(rmse_results,
+                          data.frame(model="Movie-Based + User Effects Model",  
+                                     RMSE = rmse_movie_user_model_result ))
+```
+
+```{r Result of User Effects Model, echo=FALSE}
+rmse_results %>% knitr::kable()
+```
+
+
+Considering the user we obtain a new improvement. We are now close to our target.
+
+
+
+
+
+
+## Regularization
+
+
+
+### Movie-Based Model Regularization
+
+One aspect in the machine learning is to check the data and see id it is leading us to a wrong conclusion. We start with the best and worst movie according to the rating:
+
+```{r Movie-Based Model Regularization, echo=FALSE}
+movie_rate <- edx %>%
+  group_by(movieId) %>%
+  mutate(avg_rating = mean(rating), n = n()) %>%
+  select(-rating, -userId, -timestamp, -genres ) %>%
+  distinct()
+
+# Better rate of movies
+movie_rate %>% arrange(desc(avg_rating))
+
+```
+
+The best movies we do not see the ones we expected. Is this an error in our knowledge of movies? Take a look to the column n, which n stand for the number of rated received: it is a value as low as 1 or 2 rated. Let see what is happening with the worse movies:
+
+
+```{r, echo=FALSE}
+# Worse rate of movies
+movie_rate %>% arrange(avg_rating)
+```
+We see the same behavior.
+
+This lead us to anew model
+
+$$
+ y_{u,i} = \mu + b_{i,r} + \varepsilon_{i,u}
+$$
+ $\mu$ the "true" rating for all movies and $b_{i,r}$ the average rating for movie i or the "movie effect" considering the numbers of votes that the move has and $\varepsilon_{i,u}$ independent errors sampled from the same distribution centered at 0.
+
+We see before in the Movie Distribution that there are a lot of movies with 1 or 2 rating. How many? Can be dropped?
+
+```{r Movies with few votes, echo=FALSE}
+# Movies with low numbers of rating in the dataset
+
+paste(round(100*nrow(filter(movie_rate, n <= 2))/nrow(movie_rate),3), "%")
+
+```
+It is not a big group of data. It can be dropped but it has same information anyway. Can we used? Yes! Here we found the concept of *regularization*.
+
+Regularization constrains the total variability of the effect sizes by penalizing large estimates that come from small sample sizes.
+
+Let's start with a $\lambda_{i}$ equal to 3 and see the effect, only considering movies (no users).
+
+```{r Regularization effect on movies, echo=FALSE}
+lambda <- 3
+mu <- mean(train_set$rating)
+
+# New Movies average but now with regularization 
+movie_reg_avgs <- train_set %>% 
+     group_by(movieId) %>% 
+     summarize(b_i = sum(rating - mu)/(n()+lambda), n = n()) 
+
+data.frame(original = movie_avgs$b_i, 
+           regularlized = movie_reg_avgs$b_i, 
+           n = movie_reg_avgs$n) %>%
+     ggplot(aes(original, regularlized, size=sqrt(n))) + 
+     geom_point(shape=1, alpha=0.5)
+```
+
+The rating of a movie with low "votes" is moved to the mean. Let see whats is happening with this most and worst movies with this change. 
+
+The most popular movies are:
+
+```{r Regularization New less Popular, message=FALSE, echo=FALSE}
+movie_titles <- edx %>% 
+     select(movieId, title) %>%
+     distinct()
+
+# New Movies average but now with regularization see without are most and worse popular
+movie_reg_avgs %>% 
+   left_join(movie_titles, by="movieId") %>%
+   arrange(desc(b_i))
+```
+
+And less popular movies are:
+
+```{r Regularization New Most Popular, message=FALSE, echo=FALSE}
+movie_reg_avgs %>% 
+   left_join(movie_titles, by="movieId") %>%
+   arrange(b_i) 
+```
+
+
+
+
+
+
+Now we can see in the better rating ones that are more well know and the numbers of rating it is not close to 1.
+
+
+Initially we select $\lambda_{i}$ = 3, but can we have a better value?
+
+
+```{r Regularization looking for lambda, echo=FALSE}
+lambdas <- seq(0, 10, 0.25)
+mu <- mean(train_set$rating)
+just_the_sum <- train_set %>% 
+     group_by(movieId) %>% 
+     summarize(s = sum(rating - mu), n_i = n())
+rmses <- sapply(lambdas, function(l){
+     predicted_ratings <- test_set %>% 
+          left_join(just_the_sum, by='movieId') %>% 
+          mutate(b_i = s/(n_i+l)) %>%
+          mutate(pred = mu + b_i) %>%
+          .$pred
+     return(RMSE(predicted_ratings, test_set$rating))
+})
+
+# A plot to show the behaivor of different lambda over RMSE
+qplot(lambdas, rmses)  
+lambda_i <-lambdas[which.min(rmses)]
+
+```
+
+Yes, $\lambda_{i}$ = `r lambda_i` give us the better RMSE. Let's calculate now the RMSE.
+
+```{r Regularization lambda_i, echo=FALSE}
+predicted_ratings <- test_set %>% 
+          left_join(just_the_sum, by='movieId') %>% 
+          mutate(b_i = s/(n_i+lambda_i)) %>%
+          mutate(pred = mu + b_i) %>%
+          .$pred
+
+```
+
+```{r Result with Regularization lambda_i, echo=FALSE}
+rmse_movie_model_reg <- RMSE(test_set$rating, predicted_ratings)
+rmse_results <- bind_rows(rmse_results,
+                          data.frame(model="Movie-Based Model Regularization + User effect",
+                                     RMSE = rmse_movie_model_reg ))
+```
+
+```{r Result Movie-Based Model Regularization and User effect, echo=FALSE}
+rmse_results %>% knitr::kable()
+rm(just_the_sum)
+```
+
+We see that with movie regularization we are worse. But if we try to regularize both movie and user at the same time? This is the approach in the next section.
+
+
+
+### Movie and user regularization
+
+Now er are going to see the effect of regularization using $\lambda$ that consider both predictor: movie and user.
+
+Obtaining  the parameter  $\lambda$:
+
+```{r  Regularization Movie and User effect}
+#Looking  for lambda for movie and user effect
+lambdas <- seq(0, 10, 0.25)
+rmses <- sapply(lambdas, function(l){
+     mu <- mean(train_set$rating)
+     b_i <- train_set %>%
+          group_by(movieId) %>%
+          summarize(b_i = sum(rating - mu)/(n()+l))
+     b_u <- train_set %>% 
+          left_join(b_i, by="movieId") %>%
+          group_by(userId) %>%
+          summarize(b_u = sum(rating - b_i - mu)/(n()+l))
+     predicted_ratings <- 
+          test_set %>% 
+          left_join(b_i, by = "movieId") %>%
+          left_join(b_u, by = "userId") %>%
+          mutate(pred = mu + b_i + b_u) %>%
+          .$pred
+     return(RMSE(predicted_ratings, test_set$rating))
+})
+
+qplot(lambdas, rmses)
+```
+
+
+```{r Regularization new lambda, echo=FALSE}
+lambda <- lambdas[which.min(rmses)]
+```
+The new $lambda$ = `r lambda`. Let's see now what RMSE we get using this value.
+
+
+```{r Regularization redifine predictor for mivie and user}
+# Using lambda to redefine b_i and b_u
+movie_reg_avgs <- train_set %>% 
+     group_by(movieId) %>% 
+     summarize(b_i = sum(rating - mu)/(n()+lambda), n_i = n()) 
+
+ user_reg_avgs <- train_set %>% 
+          left_join(movie_reg_avgs, by="movieId") %>%
+          group_by(userId) %>%
+          summarize(b_u = sum(rating - b_i - mu)/(n()+lambda))
+```
+
+
+```{r , echo=FALSE}
+# Calculate the new RMSE whit Regularization of movie and user
+     predicted_ratings <- 
+          test_set %>% 
+          left_join(movie_reg_avgs, by = "movieId") %>%
+          left_join(user_reg_avgs, by = "userId") %>%
+          mutate(pred = mu + b_i + b_u ) %>%
+          .$pred
+     
+```
+
+
+
+
+```{r RMSE Regularization Movie-Based and User Effects Model, echo=FALSE}
+rmse_movie_user_model_regularization_result <- RMSE(predicted_ratings, test_set$rating)
+rmse_results <- bind_rows(rmse_results,
+                          data.frame(model="Regularization(Movie-Based + User Effects Model)",  
+                                     RMSE = rmse_movie_user_model_regularization_result ))
+```
+
+```{r Result Regularization Movie-Based and User Effects Model, echo=FALSE}
+rmse_results %>% knitr::kable()
+```
+
+Now, applying regularization to both movie and user at the same time we get a better RMSE. We are now closed to our target
+
+
+
+## Genres
+
+The genre of a movie can affect the rate that a user can give to a movie. First we separate the genres by movie as we showed previously and then see if this predictor can help us in obtaining a better RMSE
+
+
+```{r genres, echo=FALSE}
+#First we create a new dataset with one genre by row
+new_train_set <- train_set %>% 
+    mutate(genre = fct_explicit_na(genres, na_level = "(no genres listed)")
+          ) %>%
+   separate_rows(genre, sep = "\\|")
+
+```
+
+
+```{r Average by genres}
+# Calculate the average by genres
+genre_avgs <- new_train_set %>% 
+   left_join(movie_reg_avgs, by='movieId') %>%
+   left_join(user_reg_avgs, by='userId') %>%
+   group_by(genres) %>%
+   summarize(b_u_g = mean(rating - mu - b_i - b_u ))
+```
+
+
+Now if we test our new model in the test set to see if this give us a better RMSE.
+
+```{r, echo=FALSE}
+rm(new_train_set)
+new_test_set <- test_set %>% 
+    mutate(genre = fct_explicit_na(genres, na_level = "(no genres listed)")
+          ) %>%
+   separate_rows(genre, sep = "\\|")
+
+
+# Compute the predicted ratings on test dataset
+     predicted_ratings <- 
+          new_test_set %>% 
+          left_join(movie_reg_avgs, by = "movieId") %>%
+          left_join(user_reg_avgs, by = "userId") %>%
+          left_join(genre_avgs, by = "genres") %>%
+          mutate(pred = mu + b_i + b_u + ifelse(is.na(b_u_g),0,b_u_g)) %>%
+          .$pred
+  
+```
+
+```{r RMSE Regularization Movie_User and Genre Based Model, echo=FALSE}
+rmse_movie_user_genre_model_result <- RMSE(predicted_ratings, new_test_set$rating)
+# Adding the results to the results dataset
+rmse_results <- rmse_results %>% add_row(model="Regularization(Movie+User) + Genre Based Model", RMSE=rmse_movie_user_genre_model_result)
+```
+
+
+```{r Result Regularization Movie_User and Genre Based Model, echo=FALSE}
+rmse_results %>% knitr::kable()
+rm(new_test_set) 
+```
+
+
+The new RMSE get a little better but enough to reach the target. Then this is our model that we are going to use with validation dataset.
+
+
+
+
+\newpage

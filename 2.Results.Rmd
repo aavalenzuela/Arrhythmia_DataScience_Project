@@ -1,0 +1,191 @@
+# Results
+*This section presents the modeling results and discusses the model performance.*
+
+
+In the previous section we use edx to build a model can give us a RMSE under the target. Now we are going to use the same steps, but with the edx to construct the model in the same way and the validation the dataset to test if we reach our target.
+
+
+
+
+```{r Results housekeeping, echo=FALSE, results='hide'}
+#Delete data that we do not need
+rm( test_index, test_set, train_set, lambda_i)
+gc()
+```
+    
+
+
+## Fisrt Model...just the average movie rating
+
+We start with the average of the movie as the initial predictor.
+```{r Results Fisrt Model}
+# Average in edx dataset
+mu <- mean(edx$rating)
+# Predict the RMSE on the validation set
+rmse_naive_mean_model_result <- RMSE(validation$rating, mu)
+# Creating a results dataframe that contains all RMSE results
+rmse_results_v <- data.frame(model="Naive Mean-Baseline Model", RMSE=rmse_naive_mean_model_result)
+```
+
+```{r, echo=FALSE}
+rmse_results_v %>% knitr::kable()
+```
+
+## Movie-Based Model
+
+We continue taking in consideration the movie effect:
+```{r Results Movie-Based Model}
+# Calculate the average by movie
+movie_avgs <- edx %>%
+   group_by(movieId) %>%
+   summarize(b_i = mean(rating - mu))
+
+# Compute the predicted ratings on validation dataset
+predicted_ratings <- validation %>%
+   left_join(movie_avgs, by='movieId') %>%
+   mutate(pred = mu + b_i) %>%
+   .$pred
+```
+
+
+```{r, echo=FALSE}
+rmse_movie_model_result <- RMSE(validation$rating, predicted_ratings)
+# Adding the results to the results dataset
+rmse_results_v <- rmse_results_v %>% add_row(model="Movie-Based Model", RMSE=rmse_movie_model_result)
+```
+
+```{r, echo=FALSE}
+rmse_results_v %>% knitr::kable()
+```
+
+As before, we get a good improvement.
+
+
+## User effect
+
+Now continue with the user effect.
+```{r Results User effect}
+# Calculate the average by user
+user_avgs <- edx %>%
+   left_join(movie_avgs, by='movieId') %>%
+   group_by(userId) %>%
+   summarize(b_u = mean(rating - mu - b_i))
+
+# Compute the predicted ratings on validation dataset
+predicted_ratings <- validation %>%
+   left_join(movie_avgs, by='movieId') %>%
+   left_join(user_avgs, by='userId') %>%
+   mutate(pred = mu + b_i + b_u) %>%
+   .$pred
+```
+
+
+```{r, echo=FALSE}
+rmse_movie_user_model_result <- RMSE(validation$rating, predicted_ratings)
+
+# Adding the results to the results dataset
+rmse_results_v <- rmse_results_v %>% add_row(model="Movie-Based + User Effects Model", RMSE=rmse_movie_user_model_result)
+```
+
+
+```{r, echo=FALSE}
+rmse_results_v %>% knitr::kable()
+```
+The improvement is as expected.
+
+
+## Regularization
+
+Fer regularization, we already know the we get better result considering both movie and user regularization at the same time. We are going to use $\lambda$ calculated before (`r lambda`)
+
+```{r Results Regularization}
+# We use lambda calculated previously
+
+# Using lambda to redefine b_i and b_u
+movie_reg_avgs <- edx %>% 
+     group_by(movieId) %>% 
+     summarize(b_i = sum(rating - mu)/(n()+lambda), n_i = n()) 
+
+user_reg_avgs <- edx %>% 
+          left_join(movie_reg_avgs, by="movieId") %>%
+          group_by(userId) %>%
+          summarize(b_u = sum(rating - b_i - mu)/(n()+lambda))
+
+ # Calculate the
+     predicted_ratings <- 
+          validation %>% 
+          left_join(movie_reg_avgs, by = "movieId") %>%
+          left_join(user_reg_avgs, by = "userId") %>%
+          mutate(pred = mu + b_i + b_u ) %>%
+          .$pred
+     
+```
+
+
+
+```{r, echo=FALSE}
+rmse_movie_user_model_regularization_result <- RMSE(predicted_ratings, validation$rating)
+rmse_results_v <- bind_rows(rmse_results_v,
+                          data.frame(model="Regularization(Movie-Based + User Effects Model)",  
+                                     RMSE = rmse_movie_user_model_regularization_result ))
+```
+
+```{r, echo=FALSE}
+rmse_results_v %>% knitr::kable()
+```
+
+
+
+
+
+
+
+## Genre
+
+As the last step it is use the genre of the movie as a predictor. For that we are going to separate each movie in each genre as we did before with the variable edx_genres.
+
+```{r Results adding genre}
+#First we create a new dataset with one genre by row
+edx_genres <- edx %>% 
+   mutate(genre = fct_explicit_na(genres, na_level = "(no genres listed)")
+          ) %>%
+   separate_rows(genre, sep = "\\|")
+
+# Calculate the average by genre
+genre_avgs <- edx_genres %>% 
+   left_join(movie_reg_avgs, by='movieId') %>%
+   left_join(user_reg_avgs, by='userId') %>%
+   group_by(genres) %>%
+   summarize(b_u_g = mean(rating - mu - b_i - b_u ))
+
+
+validation_genres <- validation %>% 
+   mutate(genres = fct_explicit_na(genres, na_level = "(no genres listed)")
+          ) %>%
+   separate_rows(genres, sep = "\\|")
+
+# Compute the predicted ratings on validation dataset
+     predicted_ratings <- 
+          validation_genres %>% 
+          left_join(movie_reg_avgs, by = "movieId") %>%
+          left_join(user_reg_avgs, by = "userId") %>%
+          left_join(genre_avgs, by = "genres") %>%
+          mutate(pred = mu + b_i + b_u + ifelse(is.na(b_u_g),0,b_u_g)) %>%
+          .$pred
+     
+
+```
+
+
+```{r, echo=FALSE}
+rmse_movie_user_genre_model_result <- RMSE(predicted_ratings, validation_genres$rating)
+# Adding the results to the results dataset
+rmse_results_v <- rmse_results_v %>% add_row(model="Regularization(Movie+User) + Genre Based Model", RMSE=rmse_movie_user_genre_model_result)
+```
+
+
+
+```{r Final result with Regularization of Movie_User and Genre Based Model, echo=FALSE}
+rmse_results_v %>% knitr::kable()
+```
+\newpage
