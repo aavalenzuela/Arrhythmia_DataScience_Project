@@ -2,7 +2,9 @@
 
 *In this section we explain the process and techniques used, including data cleaning, data exploration and visualization, insights gained, and your modeling approach.*
 
+## Preparing the data
 
+As we mention,in the description of the dataset is the description of the 279 measurement present in the dataset. The first task it is to set this definition in the name of the column and later set its values according to the one in the description: lineal or nominal, in our case numeric or factor. For that we review the output of the structure created when we read the dataset from UCI.
 
 ```{r, include = FALSE}
 
@@ -10,46 +12,288 @@
 # Because we have too many columns prefer make one by one to decrease error setting instead to set all of then in one sentence like 
 # colnames(arrhythmia.uci) <- c("Age", "Sex", "Height", "Weight", .....)
 
-colnames(arrhythmia.uci)[01] <- "Age"
-colnames(arrhythmia.uci)[02] <- "Sex"
-colnames(arrhythmia.uci)[03] <- "Height"
-colnames(arrhythmia.uci)[04] <- "Weight"
-colnames(arrhythmia.uci)[05] <- "QRS duration"
-colnames(arrhythmia.uci)[06] <- "P-R interval"
-colnames(arrhythmia.uci)[07] <- "Q-T interval"
-colnames(arrhythmia.uci)[08] <- "T interval"
-colnames(arrhythmia.uci)[09] <- "P interval"
-colnames(arrhythmia.uci)[10] <- "QRS Vector angles"
-colnames(arrhythmia.uci)[11] <- "T Vector angles"
-colnames(arrhythmia.uci)[12] <- "P Vector angles"
-colnames(arrhythmia.uci)[13] <- "QRST Vector angles"
-colnames(arrhythmia.uci)[14] <- "J Vector angles"
-colnames(arrhythmia.uci)[15] <- "Heart rate"
-colnames(arrhythmia.uci)[16] <- "Q wave Average width of channel DI"
-colnames(arrhythmia.uci)[17] <- "R wave Average width of channel DI"
-colnames(arrhythmia.uci)[18] <- "S wave Average width of channel DI"
-colnames(arrhythmia.uci)[19] <- "R' wave Average width of channel DI"
-colnames(arrhythmia.uci)[20] <- "S' Average width wave of channel DI"
-colnames(arrhythmia.uci)[21] <- "Number of intrinsic deflections of channel DI"
-colnames(arrhythmia.uci)[22] <- "Existence of ragged R wave of channel DI"
-colnames(arrhythmia.uci)[23] <- "Existence of diphasic derivation of R wave of channel DI"
-colnames(arrhythmia.uci)[24] <- "Existence of ragged P wave of channel DI"
-colnames(arrhythmia.uci)[25] <- "Existence of diphasic derivation of P wave of channel DI"
-colnames(arrhythmia.uci)[26] <- "Existence of ragged T wave of channel DI"
-colnames(arrhythmia.uci)[27] <- "Existence of diphasic derivation of T wave of channel DI"
-colnames(arrhythmia.uci)[28] <- "Q wave Average width of channel DII"
-colnames(arrhythmia.uci)[29] <- "R wave Average width of channel DII"
-colnames(arrhythmia.uci)[30] <- "S wave Average width of channel DII"
-colnames(arrhythmia.uci)[31] <- "R' wave Average width of channel DII"
-colnames(arrhythmia.uci)[32] <- "S' wave Average width of channel DII"
-colnames(arrhythmia.uci)[33] <- "Number of intrinsic deflections of channel DII"
-colnames(arrhythmia.uci)[34] <- "Existence of ragged R wave of channel DII"
-colnames(arrhythmia.uci)[35] <- "Existence of diphasic derivation of R wave of channel DII"
-colnames(arrhythmia.uci)[36] <- "Existence of ragged P wave of channel DII"
-colnames(arrhythmia.uci)[37] <- "Existence of diphasic derivation of P wave of channel DII"
-colnames(arrhythmia.uci)[38] <- "Existence of ragged T wave of channel DII"
-colnames(arrhythmia.uci)[39] <- "Existence of diphasic derivation of T wave of channel DII"
+colnames(arrhythmia.uci)[001] <- "Age"
+colnames(arrhythmia.uci)[002] <- "Sex"
+colnames(arrhythmia.uci)[003] <- "Height"
+colnames(arrhythmia.uci)[004] <- "Weight"
+colnames(arrhythmia.uci)[005] <- "QRS duration"
+colnames(arrhythmia.uci)[006] <- "P-R interval"
+colnames(arrhythmia.uci)[007] <- "Q-T interval"
+colnames(arrhythmia.uci)[008] <- "T interval"
+colnames(arrhythmia.uci)[009] <- "P interval"
+colnames(arrhythmia.uci)[010] <- "QRS Vector angles"
+colnames(arrhythmia.uci)[011] <- "T Vector angles"
+colnames(arrhythmia.uci)[012] <- "P Vector angles"
+colnames(arrhythmia.uci)[013] <- "QRST Vector angles"
+colnames(arrhythmia.uci)[014] <- "J Vector angles"
+colnames(arrhythmia.uci)[015] <- "Heart rate"
+colnames(arrhythmia.uci)[016] <- "Channel DI Q wave Average"
+colnames(arrhythmia.uci)[017] <- "Channel DI R wave Average"
+colnames(arrhythmia.uci)[018] <- "Channel DI S wave Average"
+colnames(arrhythmia.uci)[019] <- "Channel DI R' wave Average"
+colnames(arrhythmia.uci)[020] <- "Channel DI S' Average"
+colnames(arrhythmia.uci)[021] <- "Channel DI Number of intrinsic deflections"
+colnames(arrhythmia.uci)[022] <- "Channel DI Existence of ragged R wave"
+colnames(arrhythmia.uci)[023] <- "Channel DI Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[024] <- "Channel DI Existence of ragged P wave"
+colnames(arrhythmia.uci)[025] <- "Channel DI Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[026] <- "Channel DI Existence of ragged T wave"
+colnames(arrhythmia.uci)[027] <- "Channel DI Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[028] <- "Channel DII Q wave Average"
+colnames(arrhythmia.uci)[029] <- "Channel DII R wave Average"
+colnames(arrhythmia.uci)[030] <- "Channel DII S wave Average"
+colnames(arrhythmia.uci)[031] <- "Channel DII R' wave Average"
+colnames(arrhythmia.uci)[032] <- "Channel DII S' wave Average"
+colnames(arrhythmia.uci)[033] <- "Channel DII Number of intrinsic deflections"
+colnames(arrhythmia.uci)[034] <- "Channel DII Existence of ragged R wave"
+colnames(arrhythmia.uci)[035] <- "Channel DII Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[036] <- "Channel DII Existence of ragged P wave"
+colnames(arrhythmia.uci)[037] <- "Channel DII Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[038] <- "Channel DII Existence of ragged T wave"
+colnames(arrhythmia.uci)[039] <- "Channel DII Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[040] <- "Channel DIII Q wave Average"
+colnames(arrhythmia.uci)[041] <- "Channel DIII R wave Average"
+colnames(arrhythmia.uci)[042] <- "Channel DIII S wave Average"
+colnames(arrhythmia.uci)[043] <- "Channel DIII R' wave Average"
+colnames(arrhythmia.uci)[044] <- "Channel DIII S' wave Average"
+colnames(arrhythmia.uci)[045] <- "Channel DIII Number of intrinsic deflections"
+colnames(arrhythmia.uci)[046] <- "Channel DIII Existence of ragged R wave"
+colnames(arrhythmia.uci)[047] <- "Channel DIII Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[048] <- "Channel DIII Existence of ragged P wave"
+colnames(arrhythmia.uci)[049] <- "Channel DIII Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[050] <- "Channel DIII Existence of ragged T wave"
+colnames(arrhythmia.uci)[051] <- "Channel DIII Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[052] <- "Channel AVR Q wave Average"
+colnames(arrhythmia.uci)[053] <- "Channel AVR R wave Average"
+colnames(arrhythmia.uci)[054] <- "Channel AVR S wave Average"
+colnames(arrhythmia.uci)[055] <- "Channel AVR R' wave Average"
+colnames(arrhythmia.uci)[056] <- "Channel AVR S' wave Average"
+colnames(arrhythmia.uci)[057] <- "Channel AVR Number of intrinsic deflections"
+colnames(arrhythmia.uci)[058] <- "Channel AVR Existence of ragged R wave"
+colnames(arrhythmia.uci)[059] <- "Channel AVR Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[060] <- "Channel AVR Existence of ragged P wave"
+colnames(arrhythmia.uci)[061] <- "Channel AVR Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[062] <- "Channel AVR Existence of ragged T wave"
+colnames(arrhythmia.uci)[063] <- "Channel AVR Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[064] <- "Channel AVL Q wave Average"
+colnames(arrhythmia.uci)[065] <- "Channel AVL R wave Average"
+colnames(arrhythmia.uci)[066] <- "Channel AVL S wave Average"
+colnames(arrhythmia.uci)[067] <- "Channel AVL R' wave Average"
+colnames(arrhythmia.uci)[068] <- "Channel AVL S' wave Average"
+colnames(arrhythmia.uci)[069] <- "Channel AVL Number of intrinsic deflections"
+colnames(arrhythmia.uci)[070] <- "Channel AVL Existence of ragged R wave"
+colnames(arrhythmia.uci)[071] <- "Channel AVL Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[072] <- "Channel AVL Existence of ragged P wave"
+colnames(arrhythmia.uci)[073] <- "Channel AVL Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[074] <- "Channel AVL Existence of ragged T wave"
+colnames(arrhythmia.uci)[075] <- "Channel AVL Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[076] <- "Channel AVF Q wave Average"
+colnames(arrhythmia.uci)[077] <- "Channel AVF R wave Average"
+colnames(arrhythmia.uci)[078] <- "Channel AVF S wave Average"
+colnames(arrhythmia.uci)[079] <- "Channel AVF R' wave Average"
+colnames(arrhythmia.uci)[080] <- "Channel AVF S' wave Average"
+colnames(arrhythmia.uci)[081] <- "Channel AVF Number of intrinsic deflections"
+colnames(arrhythmia.uci)[082] <- "Channel AVF Existence of ragged R wave"
+colnames(arrhythmia.uci)[083] <- "Channel AVF Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[084] <- "Channel AVF Existence of ragged P wave"
+colnames(arrhythmia.uci)[085] <- "Channel AVF Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[086] <- "Channel AVF Existence of ragged T wave"
+colnames(arrhythmia.uci)[087] <- "Channel AVF Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[088] <- "Channel V1 Q wave Average"
+colnames(arrhythmia.uci)[089] <- "Channel V1 R wave Average"
+colnames(arrhythmia.uci)[090] <- "Channel V1 S wave Average"
+colnames(arrhythmia.uci)[091] <- "Channel V1 R' wave Average"
+colnames(arrhythmia.uci)[092] <- "Channel V1 S' wave Average"
+colnames(arrhythmia.uci)[093] <- "Channel V1 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[094] <- "Channel V1 Existence of ragged R wave"
+colnames(arrhythmia.uci)[095] <- "Channel V1 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[096] <- "Channel V1 Existence of ragged P wave"
+colnames(arrhythmia.uci)[097] <- "Channel V1 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[098] <- "Channel V1 Existence of ragged T wave"
+colnames(arrhythmia.uci)[099] <- "Channel V1 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[100] <- "Channel V2 Q wave Average"
+colnames(arrhythmia.uci)[101] <- "Channel V2 R wave Average"
+colnames(arrhythmia.uci)[102] <- "Channel V2 S wave Average"
+colnames(arrhythmia.uci)[103] <- "Channel V2 R' wave Average"
+colnames(arrhythmia.uci)[104] <- "Channel V2 S' wave Average"
+colnames(arrhythmia.uci)[105] <- "Channel V2 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[106] <- "Channel V2 Existence of ragged R wave"
+colnames(arrhythmia.uci)[107] <- "Channel V2 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[108] <- "Channel V2 Existence of ragged P wave"
+colnames(arrhythmia.uci)[109] <- "Channel V2 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[110] <- "Channel V2 Existence of ragged T wave"
+colnames(arrhythmia.uci)[111] <- "Channel V2 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[112] <- "Channel V3 Q wave Average"
+colnames(arrhythmia.uci)[113] <- "Channel V3 R wave Average"
+colnames(arrhythmia.uci)[114] <- "Channel V3 S wave Average"
+colnames(arrhythmia.uci)[115] <- "Channel V3 R' wave Average"
+colnames(arrhythmia.uci)[116] <- "Channel V3 S' wave Average"
+colnames(arrhythmia.uci)[117] <- "Channel V3 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[118] <- "Channel V3 Existence of ragged R wave"
+colnames(arrhythmia.uci)[119] <- "Channel V3 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[120] <- "Channel V3 Existence of ragged P wave"
+colnames(arrhythmia.uci)[121] <- "Channel V3 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[122] <- "Channel V3 Existence of ragged T wave"
+colnames(arrhythmia.uci)[123] <- "Channel V3 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[124] <- "Channel V4 Q wave Average"
+colnames(arrhythmia.uci)[125] <- "Channel V4 R wave Average"
+colnames(arrhythmia.uci)[126] <- "Channel V4 S wave Average"
+colnames(arrhythmia.uci)[127] <- "Channel V4 R' wave Average"
+colnames(arrhythmia.uci)[128] <- "Channel V4 S' wave Average"
+colnames(arrhythmia.uci)[129] <- "Channel V4 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[130] <- "Channel V4 Existence of ragged R wave"
+colnames(arrhythmia.uci)[131] <- "Channel V4 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[132] <- "Channel V4 Existence of ragged P wave"
+colnames(arrhythmia.uci)[133] <- "Channel V4 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[134] <- "Channel V4 Existence of ragged T wave"
+colnames(arrhythmia.uci)[135] <- "Channel V4 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[136] <- "Channel V5 Q wave Average"
+colnames(arrhythmia.uci)[137] <- "Channel V5 R wave Average"
+colnames(arrhythmia.uci)[138] <- "Channel V5 S wave Average"
+colnames(arrhythmia.uci)[139] <- "Channel V5 R' wave Average"
+colnames(arrhythmia.uci)[140] <- "Channel V5 S' wave Average"
+colnames(arrhythmia.uci)[141] <- "Channel V5 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[142] <- "Channel V5 Existence of ragged R wave"
+colnames(arrhythmia.uci)[143] <- "Channel V5 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[144] <- "Channel V5 Existence of ragged P wave"
+colnames(arrhythmia.uci)[145] <- "Channel V5 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[146] <- "Channel V5 Existence of ragged T wave"
+colnames(arrhythmia.uci)[147] <- "Channel V5 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[148] <- "Channel V6 Q wave Average"
+colnames(arrhythmia.uci)[149] <- "Channel V6 R wave Average"
+colnames(arrhythmia.uci)[150] <- "Channel V6 S wave Average"
+colnames(arrhythmia.uci)[151] <- "Channel V6 R' wave Average"
+colnames(arrhythmia.uci)[152] <- "Channel V6 S' wave Average"
+colnames(arrhythmia.uci)[153] <- "Channel V6 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[154] <- "Channel V6 Existence of ragged R wave"
+colnames(arrhythmia.uci)[155] <- "Channel V6 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[156] <- "Channel V6 Existence of ragged P wave"
+colnames(arrhythmia.uci)[157] <- "Channel V6 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[158] <- "Channel V6 Existence of ragged T wave"
+colnames(arrhythmia.uci)[159] <- "Channel V6 Existence of diphasic derivation of T wave"
 
+colnames(arrhythmia.uci)[160] <- "Channel DI JJ wave Amplitude"
+colnames(arrhythmia.uci)[161] <- "Channel DI Q wave Amplitude"
+colnames(arrhythmia.uci)[162] <- "Channel DI R wave Amplitude"
+colnames(arrhythmia.uci)[163] <- "Channel DI S wave Amplitude"
+colnames(arrhythmia.uci)[164] <- "Channel DI R' wave Amplitude"
+colnames(arrhythmia.uci)[165] <- "Channel DI S' wave Amplitude"
+colnames(arrhythmia.uci)[166] <- "Channel DI P wave Amplitude"
+colnames(arrhythmia.uci)[167] <- "Channel DI T wave Amplitude"
+colnames(arrhythmia.uci)[168] <- "Channel DI QRSA"
+colnames(arrhythmia.uci)[169] <- "Channel DI QRSTA"
+colnames(arrhythmia.uci)[170] <- "Channel DII JJ wave Amplitude"
+colnames(arrhythmia.uci)[171] <- "Channel DII Q wave Amplitude"
+colnames(arrhythmia.uci)[172] <- "Channel DII R wave Amplitude"
+colnames(arrhythmia.uci)[173] <- "Channel DII S wave Amplitude"
+colnames(arrhythmia.uci)[174] <- "Channel DII R' wave Amplitude"
+colnames(arrhythmia.uci)[175] <- "Channel DII S' wave Amplitude"
+colnames(arrhythmia.uci)[176] <- "Channel DII P wave Amplitude"
+colnames(arrhythmia.uci)[177] <- "Channel DII T wave Amplitude"
+colnames(arrhythmia.uci)[178] <- "Channel DII QRSA"
+colnames(arrhythmia.uci)[179] <- "Channel DII QRSTA"
+colnames(arrhythmia.uci)[180] <- "Channel DIII JJ wave Amplitude"
+colnames(arrhythmia.uci)[181] <- "Channel DIII Q wave Amplitude"
+colnames(arrhythmia.uci)[182] <- "Channel DIII R wave Amplitude"
+colnames(arrhythmia.uci)[183] <- "Channel DIII S wave Amplitude"
+colnames(arrhythmia.uci)[184] <- "Channel DIII R' wave Amplitude"
+colnames(arrhythmia.uci)[185] <- "Channel DIII S' wave Amplitude"
+colnames(arrhythmia.uci)[186] <- "Channel DIII P wave Amplitude"
+colnames(arrhythmia.uci)[187] <- "Channel DIII T wave Amplitude"
+colnames(arrhythmia.uci)[188] <- "Channel DIII QRSA"
+colnames(arrhythmia.uci)[189] <- "Channel DIII QRSTA"
+colnames(arrhythmia.uci)[190] <- "Channel AVR JJ wave Amplitude"
+colnames(arrhythmia.uci)[191] <- "Channel AVR Q wave Amplitude"
+colnames(arrhythmia.uci)[192] <- "Channel AVR R wave Amplitude"
+colnames(arrhythmia.uci)[193] <- "Channel AVR S wave Amplitude"
+colnames(arrhythmia.uci)[194] <- "Channel AVR R' wave Amplitude"
+colnames(arrhythmia.uci)[195] <- "Channel AVR S' wave Amplitude"
+colnames(arrhythmia.uci)[196] <- "Channel AVR P wave Amplitude"
+colnames(arrhythmia.uci)[197] <- "Channel AVR T wave Amplitude"
+colnames(arrhythmia.uci)[198] <- "Channel AVR QRSA"
+colnames(arrhythmia.uci)[199] <- "Channel AVR QRSTA"
+colnames(arrhythmia.uci)[200] <- "Channel AVL JJ wave Amplitude"
+colnames(arrhythmia.uci)[201] <- "Channel AVL Q wave Amplitude"
+colnames(arrhythmia.uci)[202] <- "Channel AVL R wave Amplitude"
+colnames(arrhythmia.uci)[203] <- "Channel AVL S wave Amplitude"
+colnames(arrhythmia.uci)[204] <- "Channel AVL R' wave Amplitude"
+colnames(arrhythmia.uci)[205] <- "Channel AVL S' wave Amplitude"
+colnames(arrhythmia.uci)[206] <- "Channel AVL P wave Amplitude"
+colnames(arrhythmia.uci)[207] <- "Channel AVL T wave Amplitude"
+colnames(arrhythmia.uci)[208] <- "Channel AVL QRSA"
+colnames(arrhythmia.uci)[209] <- "Channel AVL QRSTA"
+colnames(arrhythmia.uci)[210] <- "Channel AVF JJ wave Amplitude"
+colnames(arrhythmia.uci)[211] <- "Channel AVF Q wave Amplitude"
+colnames(arrhythmia.uci)[212] <- "Channel AVF R wave Amplitude"
+colnames(arrhythmia.uci)[213] <- "Channel AVF S wave Amplitude"
+colnames(arrhythmia.uci)[214] <- "Channel AVF R' wave Amplitude"
+colnames(arrhythmia.uci)[215] <- "Channel AVF S' wave Amplitude"
+colnames(arrhythmia.uci)[216] <- "Channel AVF P wave Amplitude"
+colnames(arrhythmia.uci)[217] <- "Channel AVF T wave Amplitude"
+colnames(arrhythmia.uci)[218] <- "Channel AVF QRSA"
+colnames(arrhythmia.uci)[219] <- "Channel AVF QRSTA"
+colnames(arrhythmia.uci)[220] <- "Channel V1 JJ wave Amplitude"
+colnames(arrhythmia.uci)[221] <- "Channel V1 Q wave Amplitude"
+colnames(arrhythmia.uci)[222] <- "Channel V1 R wave Amplitude"
+colnames(arrhythmia.uci)[223] <- "Channel V1 S wave Amplitude"
+colnames(arrhythmia.uci)[224] <- "Channel V1 R' wave Amplitude"
+colnames(arrhythmia.uci)[225] <- "Channel V1 S' wave Amplitude"
+colnames(arrhythmia.uci)[226] <- "Channel V1 P wave Amplitude"
+colnames(arrhythmia.uci)[227] <- "Channel V1 T wave Amplitude"
+colnames(arrhythmia.uci)[228] <- "Channel V1 QRSA"
+colnames(arrhythmia.uci)[229] <- "Channel V1 QRSTA"
+colnames(arrhythmia.uci)[230] <- "Channel V2 JJ wave Amplitude"
+colnames(arrhythmia.uci)[231] <- "Channel V2 Q wave Amplitude"
+colnames(arrhythmia.uci)[232] <- "Channel V2 R wave Amplitude"
+colnames(arrhythmia.uci)[233] <- "Channel V2 S wave Amplitude"
+colnames(arrhythmia.uci)[234] <- "Channel V2 R' wave Amplitude"
+colnames(arrhythmia.uci)[235] <- "Channel V2 S' wave Amplitude"
+colnames(arrhythmia.uci)[236] <- "Channel V2 P wave Amplitude"
+colnames(arrhythmia.uci)[237] <- "Channel V2 T wave Amplitude"
+colnames(arrhythmia.uci)[238] <- "Channel V2 QRSA"
+colnames(arrhythmia.uci)[239] <- "Channel V2 QRSTA"
+colnames(arrhythmia.uci)[240] <- "Channel V3 JJ wave Amplitude"
+colnames(arrhythmia.uci)[241] <- "Channel V3 Q wave Amplitude"
+colnames(arrhythmia.uci)[242] <- "Channel V3 R wave Amplitude"
+colnames(arrhythmia.uci)[243] <- "Channel V3 S wave Amplitude"
+colnames(arrhythmia.uci)[244] <- "Channel V3 R' wave Amplitude"
+colnames(arrhythmia.uci)[245] <- "Channel V3 S' wave Amplitude"
+colnames(arrhythmia.uci)[246] <- "Channel V3 P wave Amplitude"
+colnames(arrhythmia.uci)[247] <- "Channel V3 T wave Amplitude"
+colnames(arrhythmia.uci)[248] <- "Channel V3 QRSA"
+colnames(arrhythmia.uci)[249] <- "Channel V3 QRSTA"
+colnames(arrhythmia.uci)[250] <- "Channel V4 JJ wave Amplitude"
+colnames(arrhythmia.uci)[251] <- "Channel V4 Q wave Amplitude"
+colnames(arrhythmia.uci)[252] <- "Channel V4 R wave Amplitude"
+colnames(arrhythmia.uci)[253] <- "Channel V4 S wave Amplitude"
+colnames(arrhythmia.uci)[254] <- "Channel V4 R' wave Amplitude"
+colnames(arrhythmia.uci)[255] <- "Channel V4 S' wave Amplitude"
+colnames(arrhythmia.uci)[256] <- "Channel V4 P wave Amplitude"
+colnames(arrhythmia.uci)[257] <- "Channel V4 T wave Amplitude"
+colnames(arrhythmia.uci)[258] <- "Channel V4 QRSA"
+colnames(arrhythmia.uci)[259] <- "Channel V4 QRSTA"
+colnames(arrhythmia.uci)[260] <- "Channel V5 JJ wave Amplitude"
+colnames(arrhythmia.uci)[261] <- "Channel V5 Q wave Amplitude"
+colnames(arrhythmia.uci)[262] <- "Channel V5 R wave Amplitude"
+colnames(arrhythmia.uci)[263] <- "Channel V5 S wave Amplitude"
+colnames(arrhythmia.uci)[264] <- "Channel V5 R' wave Amplitude"
+colnames(arrhythmia.uci)[265] <- "Channel V5 S' wave Amplitude"
+colnames(arrhythmia.uci)[266] <- "Channel V5 P wave Amplitude"
+colnames(arrhythmia.uci)[267] <- "Channel V5 T wave Amplitude"
+colnames(arrhythmia.uci)[268] <- "Channel V5 QRSA"
+colnames(arrhythmia.uci)[269] <- "Channel V5 QRSTA"
+colnames(arrhythmia.uci)[270] <- "Channel V6 JJ wave Amplitude"
+colnames(arrhythmia.uci)[271] <- "Channel V6 Q wave Amplitude"
+colnames(arrhythmia.uci)[272] <- "Channel V6 R wave Amplitude"
+colnames(arrhythmia.uci)[273] <- "Channel V6 S wave Amplitude"
+colnames(arrhythmia.uci)[274] <- "Channel V6 R' wave Amplitude"
+colnames(arrhythmia.uci)[275] <- "Channel V6 S' wave Amplitude"
+colnames(arrhythmia.uci)[276] <- "Channel V6 P wave Amplitude"
+colnames(arrhythmia.uci)[277] <- "Channel V6 T wave Amplitude"
+colnames(arrhythmia.uci)[278] <- "Channel V6 QRSA"
+colnames(arrhythmia.uci)[279] <- "Channel V6 QRSTA"
+
+colnames(arrhythmia.uci)[280] <- "Class code"
 
 ```
 
@@ -66,35 +310,305 @@ arrhythmia.uci$`Heart rate`
 # [1] 63   53   75   71   <NA> 84
 
 arrhythmia.uci$Sex
+```
 
+
+```{r , include = FALSE}
 # Redefine some type of the predictor from initial read from files. if using R 3.6 or earlier:
 arrhythmia <- arrhythmia.uci %>% mutate(Sex = as.factor( ifelse(Sex == 0, 'M', 'F')),
                                         `T interval`= as.integer(`T interval`),
                                         `P interval` = as.integer(`P interval`),
                                         `QRST Vector angles` = as.integer(`QRST Vector angles`),
+                                        `T Vector angles` = as.integer(`T Vector angles`),
+                                        `P Vector angles` = as.integer(`P Vector angles`),
                                         `J Vector angles` = as.integer(`J Vector angles`),
                                         `Heart rate` = as.integer(`Heart rate`),
-                                        `Existence of ragged R wave of channel DI` = as.factor(`Existence of ragged R wave of channel DI`),
-                                        `Existence of diphasic derivation of R wave of channel DI` = as.factor(`Existence of diphasic derivation of R wave of channel DI`),
-                                        `Existence of ragged P wave of channel DI` = as.factor(`Existence of ragged P wave of channel DI`),
-                                        `Existence of diphasic derivation of P wave of channel DI` = as.factor(`Existence of diphasic derivation of P wave of channel DI`),
-                                        `Existence of ragged T wave of channel DI` = as.factor(`Existence of ragged T wave of channel DI`),
-                                        `Existence of diphasic derivation of T wave of channel DI` = as.factor(`Existence of diphasic derivation of T wave of channel DI`),
+                                        `Channel DI Existence of ragged R wave` = as.factor(`Channel DI Existence of ragged R wave`),
+                                        `Channel DI Existence of diphasic derivation of R wave` = as.factor(`Channel DI Existence of diphasic derivation of R wave`),
+                                        `Channel DI Existence of ragged P wave` = as.factor(`Channel DI Existence of ragged P wave`),
+                                        `Channel DI Existence of diphasic derivation of P wave` = as.factor(`Channel DI Existence of diphasic derivation of P wave`),
+                                        `Channel DI Existence of ragged T wave` = as.factor(`Channel DI Existence of ragged T wave`),
+                                        `Channel DI Existence of diphasic derivation of T wave` = as.factor(`Channel DI Existence of diphasic derivation of T wave`),
+                                        `Channel DII Existence of ragged R wave` = as.factor(`Channel DII Existence of ragged R wave`),
+                                        `Channel DII Existence of diphasic derivation of R wave` = as.factor(`Channel DII Existence of diphasic derivation of R wave`),
+                                        `Channel DII Existence of ragged P wave` = as.factor(`Channel DII Existence of ragged P wave`),
+                                        `Channel DII Existence of diphasic derivation of P wave` = as.factor(`Channel DII Existence of diphasic derivation of P wave`),
+                                        `Channel DII Existence of ragged T wave` = as.factor(`Channel DII Existence of ragged T wave`),
+                                        `Channel DII Existence of diphasic derivation of T wave` = as.factor(`Channel DII Existence of diphasic derivation of T wave`),
+                                        `Channel DIII Existence of ragged R wave` = as.factor(`Channel DIII Existence of ragged R wave`),
+                                        `Channel DIII Existence of diphasic derivation of R wave` = as.factor(`Channel DIII Existence of diphasic derivation of R wave`),
+                                        `Channel DIII Existence of ragged P wave` = as.factor(`Channel DIII Existence of ragged P wave`),
+                                        `Channel DIII Existence of diphasic derivation of P wave` = as.factor(`Channel DIII Existence of diphasic derivation of P wave`),
+                                        `Channel DIII Existence of ragged T wave` = as.factor(`Channel DIII Existence of ragged T wave`),
+                                        `Channel DIII Existence of diphasic derivation of T wave` = as.factor(`Channel DIII Existence of diphasic derivation of T wave`),
+                                        `Channel AVR Existence of ragged R wave` = as.factor(`Channel AVR Existence of ragged R wave`),
+                                        `Channel AVR Existence of diphasic derivation of R wave` = as.factor(`Channel AVR Existence of diphasic derivation of R wave`),
+                                        `Channel AVR Existence of ragged P wave` = as.factor(`Channel AVR Existence of ragged P wave`),
+                                        `Channel AVR Existence of diphasic derivation of P wave` = as.factor(`Channel AVR Existence of diphasic derivation of P wave`),
+                                        `Channel AVR Existence of ragged T wave` = as.factor(`Channel AVR Existence of ragged T wave`),
+                                        `Channel AVR Existence of diphasic derivation of T wave` = as.factor(`Channel AVR Existence of diphasic derivation of T wave`),
+                                        `Channel AVL Existence of ragged R wave` = as.factor(`Channel AVL Existence of ragged R wave`),
+                                        `Channel AVL Existence of diphasic derivation of R wave` = as.factor(`Channel AVL Existence of diphasic derivation of R wave`),
+                                        `Channel AVL Existence of ragged P wave` = as.factor(`Channel AVL Existence of ragged P wave`),
+                                        `Channel AVL Existence of diphasic derivation of P wave` = as.factor(`Channel AVL Existence of diphasic derivation of P wave`),
+                                        `Channel AVL Existence of ragged T wave` = as.factor(`Channel AVL Existence of ragged T wave`),
+                                        `Channel AVL Existence of diphasic derivation of T wave` = as.factor(`Channel AVL Existence of diphasic derivation of T wave`),
+                                        `Channel AVF Existence of ragged R wave` = as.factor(`Channel AVF Existence of ragged R wave`),
+                                        `Channel AVF Existence of diphasic derivation of R wave` = as.factor(`Channel AVF Existence of diphasic derivation of R wave`),
+                                        `Channel AVF Existence of ragged P wave` = as.factor(`Channel AVF Existence of ragged P wave`),
+                                        `Channel AVF Existence of diphasic derivation of P wave` = as.factor(`Channel AVF Existence of diphasic derivation of P wave`),
+                                        `Channel AVF Existence of ragged T wave` = as.factor(`Channel AVF Existence of ragged T wave`),
+                                        `Channel AVF Existence of diphasic derivation of T wave` = as.factor(`Channel AVF Existence of diphasic derivation of T wave`),
+                                        `Channel V1 Existence of ragged R wave` = as.factor(`Channel V1 Existence of ragged R wave`),
+                                        `Channel V1 Existence of diphasic derivation of R wave` = as.factor(`Channel V1 Existence of diphasic derivation of R wave`),
+                                        `Channel V1 Existence of ragged P wave` = as.factor(`Channel V1 Existence of ragged P wave`),
+                                        `Channel V1 Existence of diphasic derivation of P wave` = as.factor(`Channel V1 Existence of diphasic derivation of P wave`),
+                                        `Channel V1 Existence of ragged T wave` = as.factor(`Channel V1 Existence of ragged T wave`),
+                                        `Channel V1 Existence of diphasic derivation of T wave` = as.factor(`Channel V1 Existence of diphasic derivation of T wave`),
+                                        `Channel V2 Existence of ragged R wave` = as.factor(`Channel V2 Existence of ragged R wave`),
+                                        `Channel V2 Existence of diphasic derivation of R wave` = as.factor(`Channel V2 Existence of diphasic derivation of R wave`),
+                                        `Channel V2 Existence of ragged P wave` = as.factor(`Channel V2 Existence of ragged P wave`),
+                                        `Channel V2 Existence of diphasic derivation of P wave` = as.factor(`Channel V2 Existence of diphasic derivation of P wave`),
+                                        `Channel V2 Existence of ragged T wave` = as.factor(`Channel V2 Existence of ragged T wave`),
+                                        `Channel V2 Existence of diphasic derivation of T wave` = as.factor(`Channel V2 Existence of diphasic derivation of T wave`),
+                                        `Channel V3 Existence of ragged R wave` = as.factor(`Channel V3 Existence of ragged R wave`),
+                                        `Channel V3 Existence of diphasic derivation of R wave` = as.factor(`Channel V3 Existence of diphasic derivation of R wave`),
+                                        `Channel V3 Existence of ragged P wave` = as.factor(`Channel V3 Existence of ragged P wave`),
+                                        `Channel V3 Existence of diphasic derivation of P wave` = as.factor(`Channel V3 Existence of diphasic derivation of P wave`),
+                                        `Channel V3 Existence of ragged T wave` = as.factor(`Channel V3 Existence of ragged T wave`),
+                                        `Channel V3 Existence of diphasic derivation of T wave` = as.factor(`Channel V3 Existence of diphasic derivation of T wave`),
+                                        `Channel V4 Existence of ragged R wave` = as.factor(`Channel V4 Existence of ragged R wave`),
+                                        `Channel V4 Existence of diphasic derivation of R wave` = as.factor(`Channel V4 Existence of diphasic derivation of R wave`),
+                                        `Channel V4 Existence of ragged P wave` = as.factor(`Channel V4 Existence of ragged P wave`),
+                                        `Channel V4 Existence of diphasic derivation of P wave` = as.factor(`Channel V4 Existence of diphasic derivation of P wave`),
+                                        `Channel V4 Existence of ragged T wave` = as.factor(`Channel V4 Existence of ragged T wave`),
+                                        `Channel V4 Existence of diphasic derivation of T wave` = as.factor(`Channel V4 Existence of diphasic derivation of T wave`),
+                                        `Channel V5 Existence of ragged R wave` = as.factor(`Channel V5 Existence of ragged R wave`),
+                                        `Channel V5 Existence of diphasic derivation of R wave` = as.factor(`Channel V5 Existence of diphasic derivation of R wave`),
+                                        `Channel V5 Existence of ragged P wave` = as.factor(`Channel V5 Existence of ragged P wave`),
+                                        `Channel V5 Existence of diphasic derivation of P wave` = as.factor(`Channel V5 Existence of diphasic derivation of P wave`),
+                                        `Channel V5 Existence of ragged T wave` = as.factor(`Channel V5 Existence of ragged T wave`),
+                                        `Channel V5 Existence of diphasic derivation of T wave` = as.factor(`Channel V5 Existence of diphasic derivation of T wave`),
+                                        `Channel V6 Existence of ragged R wave` = as.factor(`Channel V6 Existence of ragged R wave`),
+                                        `Channel V6 Existence of diphasic derivation of R wave` = as.factor(`Channel V6 Existence of diphasic derivation of R wave`),
+                                        `Channel V6 Existence of ragged P wave` = as.factor(`Channel V6 Existence of ragged P wave`),
+                                        `Channel V6 Existence of diphasic derivation of P wave` = as.factor(`Channel V6 Existence of diphasic derivation of P wave`),
+                                        `Channel V6 Existence of ragged T wave` = as.factor(`Channel V6 Existence of ragged T wave`),
+                                        `Channel V6 Existence of diphasic derivation of T wave` = as.factor(`Channel V6 Existence of diphasic derivation of T wave`),
                                         `Class code` = as.factor(`Class code`)
                                         )
 
+```
+
+
+```{r , include = FALSE}
+#delete
 as.integer(arrhythmia.uci$`Heart rate`)
 str(arrhythmia)
 arrhythmia$`Heart rate`
 arrhythmia$`Existence of ragged R wave of channel DI`
+```
+
+As a result of this transformation, we have a "well defined" new dataset:
+
+```{r}
+# Display predictors (columns) of the new dataset
+str(arrhythmia, list.len = 25)
+```
+
+```{r}
 
 
+#summary(arrhythmia)
+```
+
+## Cleaning
+
+The first analysis is to review if all the predictor give information. For that we are going to check if all the values of the dataset are equal, e. gr., it has standard deviation equal to zero. We are going to delect them.
+
+```{r}
+sd.arrhythmia <- apply(arrhythmia,2,sd, na.rm=TRUE)
+sd0.list.arrhythmia <- names(sd.arrhythmia[sd.arrhythmia == 0 & !is.na(sd.arrhythmia)])
+
+# Indentify the column number to be deleted
+ix <- which(colnames(arrhythmia) %in% sd0.list.arrhythmia)
+arrhythmia1 <- arrhythmia[,-ix]
+
+```
+
+## Cleaning, working with NA
+
+As we mention before, some values are not defined. Initially they are "?" and we change for NA. This table show us which predictor are involve and how many they are:
+
+```{r , echo = FALSE}
 # counts the number of NAs per column, resulting in:
-colSums(is.na(arrhythmia))
-coln <- colSums(is.na(arrhythmia))
-coln <- coln[coln > 0]
-coln
+#colSums(is.na(arrhythmia))
+colna <- colSums(is.na(arrhythmia1))
+colna <- colna[colna > 0]
+colna %>% knitr::kable(caption = 'Table of Ocurrence of NA', col.names = c( 'Ocurrences'))
+```
 
+For the next algorithm we required that all the columns has values. How are we going to proceed with this missing values?
+
+### Missing J Vector angles
+
+Because we have a big number of this missing values `r round(100*colna[4]/nrow(arrhythmia),digits = 1)`% the better solution it is not consider this predictor.
+
+```{r Delete J Vector angles Predictor, include=FALSE}
+
+arrhythmia2 <- arrhythmia1 %>% select(-`J Vector angles`)
+
+```
+
+
+### Missing P Vector angles
+
+This is not as big as the previous one, only `r round(100*colna[2]/nrow(arrhythmia),digits = 1)`%, let's see how it is distributed
+
+```{r , echo = FALSE}
+summary(arrhythmia2$`P Vector angles`)
+```
+
+```{r , echo = FALSE, message=FALSE, warning=FALSE}
+arrhythmia2 %>% ggplot(aes(`P Vector angles`)) + geom_histogram() + 
+  geom_vline( xintercept = mean(arrhythmia$`P Vector angles`,na.rm = TRUE), colour = "blue") +
+  geom_vline( xintercept = median(arrhythmia$`P Vector angles`,na.rm = TRUE), colour = "green")
+```
+This show in blue the mean and in grenn the median for this predictors. We are going to use the median which look more independent of the low values that look lake a outsiders.
+
+
+```{r}
+arrhythmia2$`P Vector angles`[is.na(arrhythmia2$`P Vector angles`)] <- median(arrhythmia2$`P Vector angles`,na.rm = TRUE)
+```
+
+
+### Missing T Vector angles
+
+
+This is smaller number of the previous one, only `r round(100*colna[1]/nrow(arrhythmia),digits = 1)`%, let's see how it is distributed
+
+```{r , echo = FALSE}
+summary(arrhythmia2$`T Vector angles`)
+```
+
+```{r , echo = FALSE, message=FALSE, warning=FALSE}
+arrhythmia2 %>% ggplot(aes(`T Vector angles`)) + geom_histogram() + 
+  geom_vline( xintercept = mean(arrhythmia$`T Vector angles`,na.rm = TRUE), colour = "blue") +
+  geom_vline( xintercept = median(arrhythmia$`T Vector angles`,na.rm = TRUE), colour = "green")
+```
+
+This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low values as before.
+
+
+```{r}
+arrhythmia2$`T Vector angles`[is.na(arrhythmia2$`T Vector angles`)] <- median(arrhythmia2$`T Vector angles`,na.rm = TRUE)
+```
+
+
+
+### Missing QRST Vector angles
+
+This is only one missing value and represent the `r round(100*colna[3]/nrow(arrhythmia),digits = 1)`%, let's see some data fo this missing:
+
+
+```{r}
+arrhythmia2 %>% filter(is.na(`QRST Vector angles`))
+```
+Let-s do the same analysis about the distribution:
+
+```{r , echo = FALSE}
+summary(arrhythmia2$`QRST Vector angles`)
+```
+
+```{r , echo = FALSE, message=FALSE, warning=FALSE}
+arrhythmia2 %>% ggplot(aes(`QRST Vector angles`)) + geom_histogram() + 
+  geom_vline( xintercept = mean(arrhythmia$`QRST Vector angles`,na.rm = TRUE), colour = "blue") +
+  geom_vline( xintercept = median(arrhythmia$`QRST Vector angles`,na.rm = TRUE), colour = "green")
+```
+
+This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low values as before.
+
+```{r}
+arrhythmia2$`QRST Vector angles`[is.na(arrhythmia2$`QRST Vector angles`)] <- median(arrhythmia2$`QRST Vector angles`,na.rm = TRUE)
+```
+
+
+
+### Missing Heart rate
+
+This is only one missing value and represent the `r round(100*colna[5]/nrow(arrhythmia),digits = 1)`%, let's see some data fo this missing:
+
+
+```{r}
+arrhythmia2 %>% filter(is.na(`Heart rate`))
+```
+Let-s do the same analysis about the distribution:
+
+```{r , echo = FALSE}
+summary(arrhythmia2$`Heart rate`)
+```
+
+```{r , echo = FALSE, message=FALSE, warning=FALSE}
+arrhythmia2 %>% ggplot(aes(`Heart rate`)) + geom_histogram() + 
+  geom_vline( xintercept = mean(arrhythmia$`Heart rate`,na.rm = TRUE), colour = "blue") +
+  geom_vline( xintercept = median(arrhythmia$`Heart rate`,na.rm = TRUE), colour = "green")
+```
+
+This show in blue the mean and in green the median for this predictors. In this case both values are pretty close. We are going to use the median anyway.
+
+```{r}
+arrhythmia2$`Heart rate`[is.na(arrhythmia2$`Heart rate`)] <- median(arrhythmia2$`Heart rate`,na.rm = TRUE)
+```
+
+
+## Correlation
+
+When we use the median in the section abode, we assume that the data is not related with other predictor. Is this true? Now that we have data we can check if this is correct for each predictor we keep.
+
+```{r}
+data_numeric <- select_if(arrhythmia2, is.numeric)             # Subset numeric columns with dplyr
+#data_numuric
+
+cor(data_numeric)
+```
+
+
+```{r}
+#delete we have them all
+# T interval
+pos.T.interval <- seq(1:ncol(data_numeric))[colnames(data_numeric) == "T interval"]
+#pos.T.interval <- as.numeric(pos.T.interval)
+cor(data_numeric[-pos.T.interval], data_numeric$`T interval`)  %>% data.frame() #%>% filter( . > 0.5 | .  < -0.5)
+```
+
+
+```{r}
+# P Vector angles
+cor(data_numuric[-8], data_numuric$`T interval`)
+
+# QRST Vector angles	
+cor(data_numuric[-8], data_numuric$`T interval`)
+
+#Heart rate
+cor(data_numuric[-8], data_numuric$`T interval`)
+
+```
+
+
+
+
+```{r , include = FALSE}
+#deete
+colna <- data.frame(colna)
+colna <- cbind(colna,rownames(colna))
+colnames(colna)[2] <- "Class"
+colnames(colna)[1] <- "n"
+arrhythmia %>% ggplot(aes(is.na(V11))) + geom_bar()
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))  # Rotate axis labels
+```
+
+
+```{r , include = FALSE}
 ##########################################################
 # Create train set, validation set (final hold-out test set)
 ##########################################################

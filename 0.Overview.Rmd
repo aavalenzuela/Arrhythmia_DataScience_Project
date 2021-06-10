@@ -76,7 +76,7 @@ The Arrhythmia dataset is a table witch each row it is collection of health meas
 # dimension
 dim(arrhythmia.uci)
 # Display predictors (columns)
-str(arrhythmia.uci) 
+str(arrhythmia.uci, list.len = 25)
 ```
 
 You can see there are few patients but a lot of elements to consider. This elements are displayed as the first view we can see that required some work in setting its proper name (provided in the description of the dataset) but we are not to cover each one because we are talking of 279 predictors.
@@ -85,37 +85,37 @@ You can see there are few patients but a lot of elements to consider. This eleme
 
 ```{r, include = FALSE}
 
-Class <- data.frame(`Class code`= 01, Class = "Normal", check.names = FALSE)
+Class <- data.frame(`Class code`= 01, `Class name` = "Normal", check.names = FALSE)
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 02, Class = "Ischemic changes (Coronary Artery Disease)", check.names = FALSE))
+                    data.frame(`Class code`= 02, `Class name` = "Ischemic changes (Coronary Artery Disease)", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 03, Class = "Old Anterior Myocardial Infarction", check.names = FALSE))
+                    data.frame(`Class code`= 03, `Class name` = "Old Anterior Myocardial Infarction", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 04, Class = "Old Inferior Myocardial Infarction", check.names = FALSE))
+                    data.frame(`Class code`= 04, `Class name` = "Old Inferior Myocardial Infarction", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 05, Class = "Sinus tachycardy", check.names = FALSE))
+                    data.frame(`Class code`= 05, `Class name` = "Sinus tachycardy", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 06, Class = "Sinus bradycardy", check.names = FALSE))
+                    data.frame(`Class code`= 06, `Class name` = "Sinus bradycardy", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 07, Class = "Ventricular Premature Contraction (PVC)", check.names = FALSE))
+                    data.frame(`Class code`= 07, `Class name` = "Ventricular Premature Contraction (PVC)", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 08, Class = "Supraventricular Premature Contraction", check.names = FALSE))
+                    data.frame(`Class code`= 08, `Class name` = "Supraventricular Premature Contraction", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 09, Class = "Left bundle branch block", check.names = FALSE))
+                    data.frame(`Class code`= 09, `Class name` = "Left bundle branch block", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 10, Class = "Right bundle branch block", check.names = FALSE))
+                    data.frame(`Class code`= 10, `Class name` = "Right bundle branch block", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 11, Class = "1. degree AtrioVentricular block", check.names = FALSE))
+                    data.frame(`Class code`= 11, `Class name` = "1. degree AtrioVentricular block", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 12, Class = "2. degree AV block", check.names = FALSE))
+                    data.frame(`Class code`= 12, `Class name` = "2. degree AV block", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 13, Class = "3. degree AV block", check.names = FALSE))
+                    data.frame(`Class code`= 13, `Class name` = "3. degree AV block", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 14, Class = "Left ventricule hypertrophy", check.names = FALSE))
+                    data.frame(`Class code`= 14, `Class name` = "Left ventricule hypertrophy", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 15, Class = "Atrial Fibrillation or Flutter", check.names = FALSE))
+                    data.frame(`Class code`= 15, `Class name` = "Atrial Fibrillation or Flutter", check.names = FALSE))
 Class <- bind_rows( Class,
-                    data.frame(`Class code`= 16, Class = "Others", check.names = FALSE))
+                    data.frame(`Class code`= 16, `Class name` = "Others", check.names = FALSE))
 Class$`Class code` <- as.factor(Class$`Class code`)
 ```
 
@@ -131,13 +131,16 @@ arrhythmia <- arrhythmia.uci %>% mutate(`Class code` = as.factor(`Class code`)
 
 
 ```{r, echo=FALSE, message=FALSE}
-left_join(arrhythmia, Class, by = "Class code") %>% group_by(`Class code`, Class) %>% summarise( n = n(), Percentage = 100*n()/nrow(arrhythmia))
+left_join(arrhythmia, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
+  knitr::kable()
+  
 ```
 
 You can see than some arrytmia type are not present in our dataset (11,12 and 13).
 
 ```{r, echo=FALSE, warning=FALSE}
-left_join(arrhythmia, Class, by = "Class code") %>% ggplot(aes(Class)) + geom_histogram(stat="count") +
+left_join(arrhythmia, Class, by = "Class code") %>% ggplot(aes(`Class name`)) + geom_histogram(stat="count") +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))  + # Rotate axis labels
   xlab("Cardiac Arrhythmia Classification") +
   ylab("Number of Patiences") +
