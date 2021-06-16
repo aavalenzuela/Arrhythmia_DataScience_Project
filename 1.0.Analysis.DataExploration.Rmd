@@ -821,7 +821,7 @@ unique(validation_set$`Class code`) %>% sort()
 ```
 
 The first prediction is if we can predict is the patience is normal or has one of the 15 arrhythmia.
-The second prediction, as you probably guess, is if we can categorize the righ class.
+The second prediction, as you probably guess, is if we can categorize the right class.
 
 
 

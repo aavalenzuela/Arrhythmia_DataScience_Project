@@ -1,11 +1,145 @@
-## Fisrt Model...just the most common
+## Evaluation metrics
 
-We are now to create our models. For that we are not to use the validation, we are going to take edx and split in train and test set. We are going to test in the last group and when we are satisfy with the RMSE, we are going to move to the final validation.
+
+As we mention previously, we are going to implement models for two purposes:
+
+a. Detection of cardiac arrhythmia 
+b. Classification of cardiac arrhythmia.
+
+In our first prediction for detectiono f cardiac arrhythmia, the data points are classified into two classes: “Normal” & “Arrhythmia”. This model only identifies if the patient is normal (class 1) or suffers from any form of arrhythmia (class 2 to 16). Then the output is a binary variable (is a variable that has two possible outcomes). The arrhythmia class will be treated as the ‘Positive’ class.
+
+We are going to see the following evaluation metrics:
+* accuracy is defined as the overall proportion that is predicted correctly.
+* sensitivity is defined as the ability of an algorithm to predict a positive outcome when the actual outcome is positive.
+* specificity is defined as the ability of an algorithm to not predict a positive when the actual outcome is not a positive.
+
+
+We can summarize in the following way:
+
+High accuracy: $Y=1⟹\hat{Y}=1$ and $Y=0⟹\hat{Y}=0$
+High sensitivity: $Y=1⟹\hat{Y}=1$
+High specificity: $Y=0⟹\hat{Y}=0$
+
+
+We are looking for accuracy and sensitivity. Why? it is much more important to maximize sensitivity over specificity: failing to predict a arrhythmia (‘Positive’ class) can put the health/life of the patience in risk. It is better than this patience make all the exams/procedure and when validate that he or she is ok.
+
+
+In our prediction model for classification of cardiac arrhythmia classified the patient into one of 16 classes, with class 1 representing “Normal” and classes 2 to 16 representing a condition of cardiac arrhythmia. Here we continue with the accuracy concept but now sensitivity is for class.
+
+
+Let's show the standard definition in an binary variable:
+True Positive (TN) – This is correctly classified as the class if interest / target.
+True Negative (TN) – This is correctly classified as not a class of interest / target.
+False Positive (FP) – This is wrongly classified as the class of interest / target.
+False Negative (FN) – This is wrongly classified as not a class of interest / target.
+
+
 
 
 ```{r}
-y_hat <- rep(1, times = nrow(validation_set)) %>% factor() # Using Bormal as the only answer
+M <- matrix(c("True Positives (TP)","False Positives (FP)","False Negatives (FN)","True Negatives (TN)"),2,byrow = TRUE) #%>%
+rownames(M) <- c("Predicted Positive","Predicted Negative")
+colnames(M) <- c("Actually Positive", "Actually Negative")
+M %>% knitr::kable()
+```
+
+$$
+Accuracy = (TP+TN)/(TP+TN+FP+FN)\\
+Sensitivity = TP/(TP+FN)\\
+Specificity = TN/(TN+FP)
+$$
+
+
+Whats happened when we have more class? Then we have the same aritmetics for the Accuracy, but we have a value for Sensitivity and Specificity for each class.
+
+
+```{r}
+M3 <- matrix(c("True A (TA)","False A (FA.B)","False A (FA.C)","False B (FB.A)","True B (TB)","False B (FB.C)","False C (FC.A)","False C (FC.B)","True C (TC)"),3,byrow = TRUE) #%>%
+rownames(M3) <- c("Predicted A", "Predicted B", "Predicted C")
+colnames(M3) <- c("Actually A", "Actually B", "Actually C")
+M3 %>% knitr::kable()
+```
+
+$$
+Accuracy = (TA+TB+TC)/(TA+TB+TC+FA.B+FA.C+FB.A+FB.C+FC.A+FC.B)\\
+Sensitivity_{A} = TA/(TA+FB.A+FC.A)\\
+Specificity_{A} = TA/(TA+FA.B+FA.C)\\
+Sensitivity_{B} = TB/(TB+FA.B+FC.B)\\
+Specificity_{B} = TB/(TB+FB.A+FB.C)\\
+Sensitivity_{C} = TC/(TC+FB.C+FA.C)\\
+Specificity_{C} = TC/(TC+FA.C+FB.C)
+$$
+
+
+
+
+
+## Fisrt Model...just the most common
+
+We are now to create our models. For that we are not to use the validation, we are going to use train dataset.
+
+
+The most basic and quick approach it is consider that the most common class (mode), in this case it is the "Normal" class, is the best guess. Then the model is:
+
+
+$$
+ \hat{y} = y_{mode} + \varepsilon_{i,u}
+$$
+$y_{mode}$ the "true" class for all patience and  $\varepsilon_{i,u}$ an independent errors sampled from the same distribution centered at 0.
+
+
+
+
+
+
+
+
+
+Let's works with the first Prediction
+```{r ,error=TRUE}
+expected_value_1 <- ifelse(validation_set$`Class code` == 1,1,2) %>% factor()
+predicted_value <- rep(1, times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
+confusionMatrix(predicted_value, expected_value_1)$overall["Accuracy"]
+confusionMatrix(predicted_value, expected_value_1)$byClass["Sensitivity"]
+confusionMatrix(predicted_value, expected_value_1)$byClass["Specificity"]
+```
+
+
+```{r}
+table(expected_value_1,predicted_value)
+```
+With the class 2 (arrhythmia) ^Y=1 when Y=1. Because an algorithm that calls everything positive (^Y=1 no matter what) has perfect sensitivity, this metric on its own is not enough to judge an algorithm. For this reason, we also examine
+
+
+
+```{r}
+#install required packages
+#install.packages('gmodels')
+#import required library 
+library(gmodels)
+ 
+#Computes the crosstable calculations
+CrossTable(predicted_value, expected_value_1)
+```
+
+
+Second Predictions:
+```{r}
+y_hat <- rep(1, times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
 confusionMatrix(y_hat, validation_set$`Class code`)$overall["Accuracy"]
+confusionMatrix(y_hat, validation_set$`Class code`)$byClass[,1:2]
+```
+
+
+
+```{r}
+#install required packages
+install.packages('gmodels')
+#import required library 
+library(gmodels)
+ 
+#Computes the crosstable calculations
+CrossTable(y_hat, validation_set$`Class code`)
 ```
 
 
@@ -28,19 +162,6 @@ summary(fit)
 ```
 
 
-
-
-```{r Creating training and test in base of edx}
-# To construct our model, create our training and test in base of edx
-set.seed(755)
-test_index <- createDataPartition(y = edx$rating, times = 1,
-                                  p = 0.2, list = FALSE)
-train_set <- edx[-test_index,]
-test_set <- edx[test_index,]
-test_set <- test_set %>% 
-     semi_join(train_set, by = "movieId") %>%
-     semi_join(train_set, by = "userId")
-```
 
 
 We start now making the first model. But remember, not with the whole movielen 10M dataset, only with the training.
