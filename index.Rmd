@@ -4,13 +4,11 @@ subtitle: "Data Analysis and Prediction Algorithms with R"
 author: "Alejandro A Valenzuela"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
-
 output:
-
-  pdf_document: default
   html_document:
     
     df_print: paged
+  pdf_document: default
 always_allow_html: yes  
 urlcolor: blue
 description: This book introduces concepts and skills that can help you tackle real-world
