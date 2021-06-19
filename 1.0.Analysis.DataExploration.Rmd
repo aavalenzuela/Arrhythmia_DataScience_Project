@@ -1,12 +1,12 @@
 # Methods and Analysis
 
-*In this section we explain the process and techniques used, including data cleaning, data exploration and visualization, insights gained, and your modeling approach.*
+*In this section we explain the process and techniques used, including data cleaning, data exploration and visualization, insights gained, and the modeling approach.*
 
 ## Preparing the data
 
 As we mention,in the description of the dataset is the description of the 279 measurement present in the dataset. The first task it is to set this definition in the name of the column and later set its values according to the one in the description: lineal or nominal, in our case numeric or factor. For that we review the output of the structure created when we read the dataset from UCI.
 
-```{r, include = FALSE}
+```{r Analysis setting colnames, include = FALSE}
 
 
 # Because we have too many columns prefer make one by one to decrease error setting instead to set all of then in one sentence like 
@@ -298,22 +298,9 @@ colnames(arrhythmia.uci)[280] <- "Class code"
 ```
 
 
-```{r , include = FALSE}
-#delete
-arrhythmia.uci[arrhythmia.uci == "?"] <- NA
-arrhythmia.uci$`T Vector angles`
-#arrhythmia$`T Vector angles`
 
 
-
-arrhythmia.uci$`Heart rate`
-# [1] 63   53   75   71   <NA> 84
-
-arrhythmia.uci$Sex
-```
-
-
-```{r , include = FALSE}
+```{r Analysis Redefine types, include = FALSE}
 # Redefine some type of the predictor from initial read from files. if using R 3.6 or earlier:
 arrhythmia <- arrhythmia.uci %>% mutate(Sex = as.factor( ifelse(Sex == 0, 'M', 'F')),
                                         `T interval`= as.integer(`T interval`),
@@ -401,17 +388,10 @@ arrhythmia <- arrhythmia.uci %>% mutate(Sex = as.factor( ifelse(Sex == 0, 'M', '
 ```
 
 
-```{r , include = FALSE}
-#delete
-as.integer(arrhythmia.uci$`Heart rate`)
-str(arrhythmia)
-arrhythmia$`Heart rate`
-arrhythmia$`Existence of ragged R wave of channel DI`
-```
 
 As a result of this transformation, we have a "well defined" new dataset:
 
-```{r}
+```{r Analysis new structure}
 # Display predictors (columns) of the new dataset
 str(arrhythmia, list.len = 25)
 ```
@@ -424,23 +404,32 @@ str(arrhythmia, list.len = 25)
 
 ## Cleaning
 
-The first analysis is to review if all the predictor give information. For that we are going to check if all the values of the dataset are equal, e. gr., it has standard deviation equal to zero. We are going to delect them.
+The first analysis is to review if all the predictor give information. For that we are going to check if all the values of the dataset are equal, e. gr., it has standard deviation equal to zero. We are going to detect them.
 
-```{r}
+```{r Analysis Cleaning,warning=FALSE}
 sd.arrhythmia <- apply(arrhythmia,2,sd, na.rm=TRUE)
-sd0.list.arrhythmia <- names(sd.arrhythmia[sd.arrhythmia == 0 & !is.na(sd.arrhythmia)]) # chack is.na......
+sd0.list.arrhythmia <- names(sd.arrhythmia[sd.arrhythmia == 0 & !is.na(sd.arrhythmia)]) # check is.na......
 
 # Identify the column number to be deleted
 ix <- which(colnames(arrhythmia) %in% sd0.list.arrhythmia)
-arrhythmia1 <- arrhythmia[,-ix]
+variable.names(arrhythmia[ix])
+
 
 ```
+ and delete them:
+```{r Analysis Cleaning delete columns}
+
+arrhythmia1 <- arrhythmia[,-ix]
+```
+
+
+
 
 ## Cleaning, working with NA
 
 As we mention before, some values are not defined. Initially they are "?" and we change for NA. This table show us which predictor are involve and how many they are:
 
-```{r , echo = FALSE}
+```{r Analysis Cleaning working with NA, echo = FALSE}
 # counts the number of NAs per column, resulting in:
 #colSums(is.na(arrhythmia))
 colna <- colSums(is.na(arrhythmia1))
@@ -448,13 +437,13 @@ colna <- colna[colna > 0]
 colna %>% knitr::kable(caption = 'Table of Ocurrence of NA', col.names = c( 'Ocurrences'))
 ```
 
-For the next algorithm we required that all the columns has values. How are we going to proceed with this missing values?
+The algorithms required that all the columns has values. How are we going to proceed with this missing values?
 
 ### Missing J Vector angles
 
-Because we have a big number of this missing values `r round(100*colna[4]/nrow(arrhythmia),digits = 1)`% the better solution it is not consider this predictor.
+Because we have a big number of this missing values (`r round(100*colna[4]/nrow(arrhythmia),digits = 1)`%) the better solution it is not consider this predictor.
 
-```{r Delete J Vector angles Predictor, include=FALSE}
+```{r Delete J Vector angles Predictor}
 
 arrhythmia2 <- arrhythmia1 %>% select(-`J Vector angles`)
 
@@ -474,7 +463,8 @@ arrhythmia2 %>% ggplot(aes(`P Vector angles`)) + geom_histogram() +
   geom_vline( xintercept = mean(arrhythmia$`P Vector angles`,na.rm = TRUE), colour = "blue") +
   geom_vline( xintercept = median(arrhythmia$`P Vector angles`,na.rm = TRUE), colour = "green")
 ```
-This show in blue the mean and in grenn the median for this predictors. We are going to use the median which look more independent of the low values that look lake a outsiders.
+
+This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low values that look lake a outsiders.
 
 
 ```{r}
@@ -508,13 +498,13 @@ arrhythmia2$`T Vector angles`[is.na(arrhythmia2$`T Vector angles`)] <- median(ar
 
 ### Missing QRST Vector angles
 
-This is only one missing value and represent the `r round(100*colna[3]/nrow(arrhythmia),digits = 1)`%, let's see some data fo this missing:
+This is only one missing value and represent the `r round(100*colna[3]/nrow(arrhythmia),digits = 1)`%, let's see some data for this missing:
 
 
 ```{r}
-arrhythmia2 %>% filter(is.na(`QRST Vector angles`))
+arrhythmia2 %>% filter(is.na(`QRST Vector angles`)) %>% select(Age, Sex, Height, Weight, `QRS duration`,`P-R interval`, `Q-T interval`, `T interval`, `P interval` ,`QRS Vector angles`)
 ```
-Let-s do the same analysis about the distribution:
+Let's do the same analysis about the distribution:
 
 ```{r , echo = FALSE}
 summary(arrhythmia2$`QRST Vector angles`)
@@ -540,7 +530,7 @@ This is only one missing value and represent the `r round(100*colna[5]/nrow(arrh
 
 
 ```{r}
-arrhythmia2 %>% filter(is.na(`Heart rate`)) 
+arrhythmia2 %>% filter(is.na(`Heart rate`)) %>% select(Age, Sex, Height, Weight, `QRS duration`,`P-R interval`, `Q-T interval`, `T interval`, `P interval` ,`QRS Vector angles`)
 ```
 Let's do the same analysis about the distribution:
 
@@ -577,27 +567,9 @@ cor_data_numeric[lower.tri(cor_data_numeric, diag = TRUE)] <- NA # Should the di
 ```
 
 
-```{r}
-#delete
-diag(cor_data_numeric) <- 0  # set zero to the diagonal from value 1
-limit <- 0.9
-cor_data_numeric[cor_data_numeric > -limit & cor_data_numeric < limit] <- 0
 
-#cor_data_numeric <- cor_data_numeric[complete.cases(cor_data_numeric)]
-cor_data_numeric
-
-sd.cor_data_numeric <- apply(cor_data_numeric,2,sd, na.rm=TRUE)
-sd0.list.cor_data_numeric <- names(sd.cor_data_numeric[sd.cor_data_numeric == 0])
-
-# Identify the column number to be deleted
-ix <- which(colnames(cor_data_numeric) %in% sd0.list.cor_data_numeric)
-cor_data_numeric1 <- cor_data_numeric[,-ix]
-cor_data_numeric2 <- cor_data_numeric1[-ix,]
-cor_data_numeric2
-```
-
-For this table the more posite correlated are:
-```{r Correlation creating the tidy table}
+For this table the more positive correlated are:
+```{r Correlation creating the tidy table, include=FALSE}
 data2 <- data.frame(cor_data_numeric, check.names = FALSE)   
 data2 <- tibble::rownames_to_column(data2, "cor_1") # Apply rownames_to_column
 cor_arrythmia_numeric <- data2 %>%  gather(cor_2,value,2:ncol(data2))
@@ -607,7 +579,7 @@ cor_arrythmia_numeric %>% slice_max(order_by = value, n = 10) %>% knitr::kable()
 
 
 How many are correlated more than .9?
-```{r Correlation }
+```{r Correlation with limit}
 limit <- 0.9
 cor_arrythmia_numeric %>% filter(value < -limit | value > limit) %>% count() %>% knitr::kable()
 ```
@@ -665,11 +637,11 @@ cor_arrythmia_numeric %>%  filter( cor_1 %in% "Heart rate" | cor_2 %in% "Heart r
 cor_arrythmia_numeric %>%  filter( cor_1 %in% "Heart rate" | cor_2 %in% "Heart rate") %>% slice_min(order_by = value, n = 5) %>% knitr::kable()
 ```
 
-and this predictor has very low corraltion with all the rest of the predictor
+and this predictor has very low correlation with all the rest of the predictor
 
 
 Less correlated predictors......candidates?????
-```{r Correlation }
+```{r Correlation xxx}
 limit <- 0.0001
 cor_arrythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::kable()
 ```
@@ -683,27 +655,29 @@ cor_arrythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::kab
 
 Let's take a look to some predictors to see if we can find some outliers. Let's start with Age.
 
-```{r Outliers Age}
+```{r Outliers Age Boxplot, echo=FALSE}
 arrhythmia2 %>% ggplot(aes(Age)) + geom_boxplot() #+ geom_point()
 ```
+
 It does not show any value we can detect as outlier.
 
 Let's continue with Height Height are in centimeters.
 
-```{r Outliers Height}
+```{r Outliers Height Boxplot, echo=FALSE}
 arrhythmia2 %>% ggplot(aes(Height)) + geom_boxplot() #+ geom_point()
 ```
+
 We see two vales out of natural range:
-```{r}
+```{r Outliers Height Max, echo=FALSE}
 slice_max(arrhythmia2, order_by = Height, n = 2) %>% select(Height)
 ```
 Let's take a look. Can we change for the means o median? Yes, but let's see if we can get more information that can lead us to the right data.
-Could be a transcription error from US norm and really means 6 feet 8 inches (203 cm) and 6 feet 8 inches (233 cm)?
+Could be a transcription error from US norm and really means 6 feet 8 inches (203 cm) and 7 feet 8 inches (233 cm)?
 More information we can get from the data:
 ```{r}
 slice_max(arrhythmia2, order_by = Height, n = 2) %>% select(Age,Weight, Height)
 ```
-They are infants! Then, we can assume, the error is they put the height in mm instead of cm! No other patience less than a year is in the dataset and with one year old there is other one with more weight. For a more precise data maybe a weight-height chat for age can be used. Then we change these values assumen an error in the unit:
+They are infants! Then, we can assume, the error is they put the height in mm instead of cm! No other patience less than a year is in the dataset and with one year old there is other one with more weight. For a more precise data maybe a weight-height chat for age can be used. Then we change these values assuming an error in the unit:
 
 ```{r}
 arrhythmia2[arrhythmia2$Height == 780,3] <- 78   # Height is column 3
@@ -714,12 +688,13 @@ arrhythmia2[arrhythmia2$Height == 608,3] <- 61   # Height is column 3
 
 About the weight in kilograms we have the graph:
 
-```{r}
+```{r Outliers Weight Boxplot, echo=FALSE}
 arrhythmia2 %>% ggplot(aes(Weight)) + geom_boxplot() #+ geom_point()
 ```
-Looking in more detail this patiene:
 
-```{r}
+Looking in more detail this patience:
+
+```{r Outliers Weight Table with Age and Height}
 slice_max(arrhythmia2, order_by = Weight) %>% select(Age,Weight, Height)
 ```
 looks plausible and no change will be made.
@@ -736,55 +711,13 @@ For the predictor above we use our knowledge about the human..a person can not b
 
 
 
-```{r}
-#delete bolow
-M <- as.data.frame(cor_data_numeric2)
-dim(cor_data_numeric2)
-rownames(cor_data_numeric2)
-
-d1 <- cor_data_numeric2
-data1$row_names <- row.names(data1) 
-cor_data_numeric2$cor1 <- row.names(d1)
-cor_data_numeric2 %>% data.frame() %>% gather(corr2,value)
-```
 
 
 
 
-```{r}
-#delete we have them all
-# T interval
-pos.T.interval <- seq(1:ncol(data_numeric))[colnames(data_numeric) == "T interval"]
-#pos.T.interval <- as.numeric(pos.T.interval)
-cor(data_numeric[-pos.T.interval], data_numeric$`T interval`)  %>% data.frame() #%>% filter( . > 0.5 | .  < -0.5)
-```
-
-
-```{r}
-#delete
-# P Vector angles
-cor(data_numuric[-8], data_numuric$`T interval`)
-
-# QRST Vector angles	
-cor(data_numuric[-8], data_numuric$`T interval`)
-
-#Heart rate
-cor(data_numuric[-8], data_numuric$`T interval`)
-
-```
 
 
 
-
-```{r , include = FALSE}
-#deete
-colna <- data.frame(colna)
-colna <- cbind(colna,rownames(colna))
-colnames(colna)[2] <- "Class"
-colnames(colna)[1] <- "n"
-arrhythmia %>% ggplot(aes(is.na(V11))) + geom_bar()
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))  # Rotate axis labels
-```
 
 
 
@@ -792,7 +725,7 @@ arrhythmia %>% ggplot(aes(is.na(V11))) + geom_bar()
 
 After this analysis and cleaning we are ready to create our trining and validation dataset. Because our universe of observation is only `r nrow(arrhythmia)` we are going to split 80%-20%.
 
-```{r , include = FALSE}
+```{r Create train set, validation set, include = FALSE}
 ##########################################################
 # Create train set, validation set (final hold-out test set)
 ##########################################################
@@ -827,277 +760,6 @@ The second prediction, as you probably guess, is if we can categorize the right 
 
 ## no
 
-```{r Exploring edx, echo=TRUE}
-str(train)
-```
-
-Looking some rows:
-
-```{r Some rows of edx, echo=FALSE}
-head(train, 3)
-
-```
-
-
-
-
-
-# Loss function
-
-The decision of better estimate will be based on the residual mean squared error (RMSE) on a test set. We define $y_{u,i}$ as the rating for movie $i$ by user $u$ and denote our prediction with $\hat{y}_{u,i}$. The RMSE is then defined as:
-
-$$
-\mbox{RMSE} = \sqrt{\frac{1}{N} \sum_{u,i}^{} \left( \hat{y}_{u,i} - y_{u,i} \right)^2 }
-$$
-with $N$ being the number of user/movie combinations and the sum occurring over all these combinations.
-
-
-# Data exploration and visualization
-
-## The dataset
-
-The movielens 10M dataset had been split in edx and validation (90% and 10% respectively). Because we do not know nothing about validation (only we deduced from edx) we can see that edx has `r format(nrow(edx),big.mark=",")` rows but this only  `r format(n_distinct(edx$movieId),big.mark=",")` different movies and `r format(n_distinct(edx$userId),big.mark=",")` users. But if we create a matrix of the movies that we have in the dataset and the users we get a matrix of `r format(n_distinct(edx$movieId) * n_distinct(edx$userId), big.mark=",")` elements with a rating witch represent only the `r  format(100 * nrow(edx)/(n_distinct(edx$movieId) * n_distinct(edx$userId)), digits =2, nsmall =2)`% of the matrix. The rest is unknown: the user $u$ did not rate the movie $i$.
-A matrix with mostly empty cells is called sparse, and the opposite to that (a mostly filled matrix) is called dense.
-
-## Exploration
-Each row in this dataset is and rating to the  movie i by the user u. But more info is stored and we will review initially if we can see some aspect we need to considered in the model.
-
-Remember, we have these columns:
-
-```{r edx columns, echo=FALSE}
-names(edx)
-```
-The features/variables/columns in dataset are:
-
-| Name       | Type     | Description     |
-| :--------- | :------: | :-------------- |
-|**movieId**|`r class(edx$movieId)`|  contains the unique identification number for each movie.
-|**title**|`r class(edx$title)`|  contains the title of each movie and the year of release.
-|**genres**|`r class(edx$genres)`| contains a list of pipe-separated of genre of each movie.
-|**userId**|`r class(edx$userId)`| contains the unique identification number for each user.
-|**rating**|`r class(edx$rating)`| contains the rating of one movie by one user. Ratings are made on a 5-Star scale with half-star increments.
-|**timestamp**|`r class(edx$timestamp)`| contains the timestamp for one specific rating provided by one user.
-
-
-
-
-### movieId
-
-The movieId as its name make reference it s the Id of the movies in this dataset. Could be the title of the movie be enough? If that it is true, the number must be equal (a necessary condition is not a sufficient condition):
-
-```{r Distinct movieId in edx}
-n_distinct(edx$movieId)
-```
-
-
-```{r Distinct movie title in edx}
-n_distinct(edx$title)
-
-```
-They are not. This is because some movies has the same title but not the same movieId...Why? 
-
-```{r Show difference between number of movieId and distinct title, echo=FALSE, message=FALSE}
-
-edx %>% group_by(movieId,title) %>% summarize(n()) %>% 
-  group_by(title)%>%summarize(n = n(), movieId = movieId) %>% filter( n != 1)
-
-```
-
-Then we use the movieId for the analysis and the title it is not, except to show the results to make sense to our self.
-
-One aspect to consider is that not all the movies has the same numbers of rating, e. gr., some movies has more vote than the others as we can see in the following histograms:
-
-```{r Histograms of Movies rated, echo=FALSE}
-edx %>% 
-  dplyr::count(movieId) %>% 
-  ggplot(aes(n)) + 
-  geom_histogram(bins = 30, color = "black") + 
-  scale_x_log10() + 
-  ggtitle("Movies rated") +
-  xlab("Number of rate per movie (log scale)")
-```
-You can see some movies has over a thousands of rating but one hundred of rating it is quite usual.
-
-And obviously, not all the movies are rated equally:
-
-```{r Histograms of Movies rating, echo=FALSE}
-edx %>% 
-  group_by(movieId) %>% 
-  summarise(avg_by_movieId = mean(rating), n = n()) %>%
-  ggplot(aes(avg_by_movieId)) + 
-  geom_histogram(bins = 10, color = "black") + 
-  #scale_x_log10() + 
-  ggtitle("Movies rating") +
-  xlab("Rating")
-```
-and here where our prediction system enter in play.
-
-
-### rating
-
-The rating is the value we want to predict but it is present in our dataset. This one allow us to training our system and it is called supervised learning algorithms in the AI.
-
-```{r rating values,echo=FALSE}
-unique(edx$rating) %>% data.frame() %>% arrange_all() %>% t() %>% as.numeric()
-```
-
-As we mention, the output it is a discrete, only 10 possible values.
-
-
-### userId
-
-This is the user who rate or vote. Not all the users rate the same amount of movies as we can see in the following histograms:
-
-```{r Histograms of Users who rate, echo=FALSE}
-edx %>%
-  dplyr::count(userId) %>% 
-  ggplot(aes(n)) + 
-  geom_histogram(bins = 30, color = "black") + 
-  scale_x_log10() +
-  ggtitle("Users who rate") +
-  xlab("Number of users who rate movies (log scale)")
-```
-Yo can see that are user that rate over a one thousand of movies!
-
-Again, not all the user rate the movies in the same way.
-
-```{r Histograms of Rating by the users, echo=FALSE}
-
-edx %>%
-  group_by(userId) %>% 
-  summarise(avg_by_userId = mean(rating), n = n()) %>%
-  ggplot(aes(avg_by_userId)) + 
-  geom_histogram(bins = 20, color = "black") + 
-  ggtitle("Rating by the users") +
-  xlab("rating")
-```
-
-
-
-
-### timestamp
-
-Is the rating process affected by the time? timestamp can help us to find any relationship. First the histogram of the rating:
-
-```{r Histograms of Timestamp of the rate, echo=FALSE}
-edx %>%
-  mutate(date = as.Date(as.POSIXct(timestamp, origin = "1970-01-01"))) %>%
-  dplyr::count(date) %>% 
-  ggplot(aes(n)) + 
-  geom_histogram(bins = 30, color = "black") + 
-  scale_x_log10() +
-  ggtitle("Timestamp of the rate") +
-  xlab("Timestamp of rate movies (log scale)")
-
-
-```
-Here we can not see to much dispersion of the data but it is not constant. Let get more detail.
-
-
-
-Let's see the rating over time:
-
-```{r Histograms of Timestamp of the rated movie, echo=FALSE}
-edx %>%
-  dplyr::count(timestamp) %>% 
-  ggplot(aes(as.Date(as.POSIXct(timestamp, origin = "1970-01-01")))) + 
-  geom_histogram(bins = 30) + 
-  ggtitle("Timestamp of the rated movie") +
-  xlab("Year") +
-  ylab("count")
-```
-We see it is not constant. But all year the user are rating equal? This histogram shows they do not.
-
-```{r Histograms of Rating by Timestamp of the movie, echo=FALSE}
-edx %>%
-  group_by(timestamp) %>% 
-  summarise(avg_by_tm = mean(rating), n = n()) %>%
-  ggplot(aes(avg_by_tm)) + 
-  geom_histogram(bins = 10, color = "black") + 
-  ggtitle("Rating by Timestamp of the movie") +
-  xlab("Rating")
-```
-It is not to different from the previous rating graphs.
-
-
-### genres
-
-The genres in an arbitrary attribute that a move has. Actually can have more than one gender that in this dataset is separated in this column by pile line.
-
-
-```{r Distinct original genres}
-n_distinct(edx$genres)
-```
-Then we have a lot of genres and they are not equally distributed!
-
-
-```{r Histograms of Genres of the movie, echo=FALSE}
-edx %>% group_by(genres) %>%
-  summarise(n = n(), rat_gen = mean(rating)) %>%
-  ggplot(aes(rat_gen)) + 
-  geom_histogram(bins = 30, color = "black") + 
-  ggtitle("Genres of the movie") +
-  xlab("rating")
-```
-
-```{r edx genres, echo=FALSE}
-head(edx) %>%
-    select(title, genres)
-```
-
-
-
-We can create a new dataset that separate this genres, making the dataset bigger and taking care of 2 aspects:
-
-1.- If we do in the training set we have to do it in the validation set
-
-2.- **Only** use for genres analysis, because we are going to change the dataset and any other analysis will be mislead
-
-```{r Creating edx_genres}
-
-# Creating a new dataset that contain one genre by row 
-edx_genres <- edx %>% 
-   mutate(genre = fct_explicit_na(genres, na_level = "(no genres listed)")
-          ) %>%
-   separate_rows(genre, sep = "\\|")
-head(edx_genres)
-```
-This process of separate the genres took a lot of memory: with less than 8 Gb in a linux system the R version 3.6.3 crash!
-
-The number of the new genre predictor:
-
-```{r Number of the new genre predictor}
-n_distinct(edx_genres$genre)
-```
-
-
-```{r New genre predictor}
-unique(edx_genres$genre)
-```
-
-Now we can repeat the same question about the gender, now with this new classification of genres:
-
-```{r Histograms of New Genre of the movie, echo=FALSE}
-edx_genres %>% group_by(genre) %>%
-  summarise(n = n(), rat_gen = mean(rating)) %>%
-  ggplot(aes(rat_gen)) + 
-  geom_histogram(bins = 30, color = "black") + 
-  ggtitle("Genrer of the movie") +
-  xlab("rating")
-```
-
-And we can see that different genres has different average rating:
-
-```{r Plot of Rating by the Genre, echo=FALSE}
-edx_genres %>% group_by(genre) %>%
-  summarise(n = n(), rat_gen = mean(rating)) %>%
-  ggplot(aes(x= genre, y=rat_gen)) + 
-  geom_point() + 
-  ggtitle("Rating by the Genre") +
-  xlab("Genre") +
-  ylab("rating") +
-  theme(axis.text.x = element_text(angle = 60))   # Rotate axis labels
-```
 
 
 We just saw these data that came in the edx. Now the question is: How is it the rating affected by this predictors?

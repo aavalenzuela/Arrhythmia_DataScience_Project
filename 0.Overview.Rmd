@@ -1,9 +1,3 @@
----
-output:
-  html_document: default
-  pdf_document: default
----
-
 # Overview/Executive Summary
 
 *In this section we describe the dataset and summarizes the goal of the project and key steps that were performed.*
@@ -15,18 +9,6 @@ For this project, the [Cardiac Arrhythmia](https://archive.ics.uci.edu/ml/datase
 * This database contains 279 attributes, 206 of which are linear valued and the rest are nominal.
 
 * Concerning the study of H. Altay Guvenir: "The aim is to distinguish between the presence and absence of cardiac arrhythmia and to classify it in one of the 16 groups. Class 01 refers to 'normal' ECG classes 02 to 15 refers to different classes of arrhythmia and class 16 refers to the rest of unclassified ones. For the time being, there exists a computer program that makes such a classification. However there are differences between the cardiolog's and the programs classification. Taking the cardiolog's as a gold standard we aim to minimise this difference by means of machine learning tools." 
-
-
-
-### no
-create a movie recommendation system using the MovieLens dataset. There are several versions of this movielens, for example the one included in the dslabs package is just a small subset of a much larger dataset and the one we are going to use with a dataset with 10 millions of ratings, called Movielens 10M. This big dataset add the difficulty of more data require more time y computing resources, that force to discard some high consume resource algorithm because it can not ran in R with this volume but it gives the opportunity to work with more realistic big data.
-
-This prediction systems will be validated using part of this dataset, part that is not used in the training.
-
-Recommendation systems are referred to as systems and tools that provide suggestions for the items, in this case a movie, the user uses. Recommendation systems are more complicated machine learning challenges because each outcome has a different set of predictors. For example, different users rate a different number of movies and rate the movies in different ways. The inputs to these systems are item’s data, user profile and most importantly, the behavior of each user's access to the items, which in our case it is the rating. System outputs is a collection of products and items that the user will mostly like.
-
-The MovieLens dataset is a table witch each row it is rating to a movie provided by one user and has the following structure:
-
 
 
 
@@ -69,10 +51,10 @@ arrhythmia.uci[arrhythmia.uci == "?"] <- NA
 ```
 
 ## Characteristics of dataset
-The Arrhythmia dataset is a table witch each row it is collection of health measurement for each patience and the last one says if this persons it is a normal health or has same of the 15 arrhythmia.
+The Arrhythmia dataset is a table witch each row it is collection of health measurement for each patience and the last one says if this persons it is a normal health or has some of the 15 arrhythmia.
 
 
-```{r}
+```{r Overview Characteristics of dataset}
 # dimension
 dim(arrhythmia.uci)
 # Display predictors (columns)
@@ -83,7 +65,7 @@ You can see there are few patients but a lot of elements to consider. This eleme
 
 
 
-```{r, include = FALSE}
+```{r Overview Class definition, include = FALSE}
 
 Class <- data.frame(`Class code`= 01, `Class name` = "Normal", check.names = FALSE)
 Class <- bind_rows( Class,
@@ -123,14 +105,14 @@ Class$`Class code` <- as.factor(Class$`Class code`)
 About the output, the last column give us the Class code. 1 is for "Normal" and all the rest are arrhythmia. First we are going to display de distribution in a table, where you can see that "Normal" take a preponderance percentage and later a graph where we can see how the different arrhythmia are distributed in our dataset
 
 
-```{r, include = FALSE}
+```{r Overview class as factor, include = FALSE}
 # Initial Redefine some type of the predictor from initial read from files. if using R 3.6 or earlier:
 arrhythmia <- arrhythmia.uci %>% mutate(`Class code` = as.factor(`Class code`)
                                         )
 ```
 
 
-```{r, echo=FALSE, message=FALSE}
+```{r Overview Class code table, echo=FALSE, message=FALSE}
 left_join(arrhythmia, Class, by = "Class code") %>% 
   group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
   knitr::kable()
@@ -139,12 +121,12 @@ left_join(arrhythmia, Class, by = "Class code") %>%
 
 You can see than some arrytmia type are not present in our dataset (11,12 and 13).
 
-```{r, echo=FALSE, warning=FALSE}
+```{r Overview Distribution of Cardiac Arrhythmia Class, echo=FALSE, warning=FALSE}
 left_join(arrhythmia, Class, by = "Class code") %>% ggplot(aes(`Class name`)) + geom_histogram(stat="count") +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))  + # Rotate axis labels
   xlab("Cardiac Arrhythmia Classification") +
   ylab("Number of Patiences") +
-  ggtitle("Distribution of Cardiac Arrhythmia")
+  ggtitle("Distribution of Cardiac Arrhythmia Class")
 ```
 
 
@@ -161,21 +143,6 @@ The develop of this predicting Cardiac Arrhythmia classification can be explaine
 3.- Works with several classification supervised machines to get a better accuracy in our predictions. Evaluate sensitivity and specificity.
 
 4.- Review the results
-
-###### no
-
-setting properly and analyze the better option to get a good predictor.
-
-
-Start creating the model and explained why this approach was taken. The main, but not the only, approach is in base of Data Science: Machine Learning from	Harvard University (course HarvardX+PH125.8x). The objective of the final model it is to get and get a **RMSE < 0.86490** in the validation set.
-
-The algorithm is developed using the training (train) set. For a final test of the final algorithm, predict Cardiac Arrhythmia classification in the validation set (the final hold-out test set) as if they were unknown. In others words, the validation data (the final hold-out test set) should NOT be used for training, developing, or selecting your algorithm and it should ONLY be used for evaluating the error in the final algorithm.
-
-2.- Present the algorithm, train with the train data, adjust the parameter and concluded with a tuned machine
-
-3.- Continue with the final validation with this trained algorithm 
-
-
 
 
 
