@@ -119,18 +119,15 @@ left_join(arrhythmia, Class, by = "Class code") %>%
   
 ```
 
-You can see than some arrytmia type are not present in our dataset (11,12 and 13).
+You can see than some arrytmia type are not present in our dataset (11, 12 and 13).
 
 ```{r Overview Distribution of Cardiac Arrhythmia Class, echo=FALSE, warning=FALSE}
 left_join(arrhythmia, Class, by = "Class code") %>% ggplot(aes(`Class name`)) + geom_histogram(stat="count") +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))  + # Rotate axis labels
   xlab("Cardiac Arrhythmia Classification") +
-  ylab("Number of Patiences") +
-  ggtitle("Distribution of Cardiac Arrhythmia Class")
+  ylab("Number of Patiences with the Disease") +
+  ggtitle("Class Distribution of Cardiac Arrhythmia Dataset")
 ```
-
-
-
 
 
 ## Approach
