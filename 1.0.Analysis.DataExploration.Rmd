@@ -732,9 +732,9 @@ After this analysis and cleaning we are ready to create our trining and validati
 
 # Validation set will be 10% of data
 set.seed(1, sample.kind="Rounding") # if using R 3.5 or earlier, use `set.seed(1)`
-test_index <- createDataPartition(y = arrhythmia$`Class code`, times = 1, p = 0.2, list = FALSE)
-train_set <- arrhythmia[-test_index,]
-validation_set <- arrhythmia[test_index,]
+test_index <- createDataPartition(y = arrhythmia2$`Class code`, times = 1, p = 0.2, list = FALSE)
+train_set <- arrhythmia2[-test_index,]
+validation_set <- arrhythmia2[test_index,]
 
 
 dim(train_set)
@@ -743,10 +743,13 @@ dim(validation_set)
 
 
 
-rm(dl, ratings, movies, test_index, temp, movielens, removed)
+rm(dl, ratings, movies, test_index, temp, removed)
 ```
 
-We are going to use "Class code" as an outcome to predict. Becasue some outcome are too fwe as we saw before, they are not present in the validation set, but we are going to keep them because two kind of prediction we are going to perform.
+We are going to use "Class code" as an outcome to predict. Because some outcome are too few as we saw before, we need that they are present in the train_set and validation_set.
+
+
+they are not present in the validation set, but we are going to keep them because two kind of prediction we are going to perform.
 
 ```{r}
 unique(train_set$`Class code`) %>% sort()
@@ -758,7 +761,72 @@ The second prediction, as you probably guess, is if we can categorize the right 
 
 
 
-## no
+## check train
+
+
+```{r  xxx, echo=FALSE, message=FALSE}
+left_join(train_set, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
+  knitr::kable()
+  
+```
+
+```{r  ddd, echo=FALSE, message=FALSE}
+left_join(validation_set, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
+  knitr::kable()
+  
+```
+
+```{r}
+values_count <- sapply(lapply(train_set, unique), length)  # Identify variables with 1 value
+sum(values_count  == 1)                                      # Print counts of different values
+variable.names(train_set[values_count == 1])
+```
+
+
+
+```{r}
+train_set1 <- train_set[,values_count > 1]
+validation_set1 <- validation_set[,values_count > 1]
+```
+
+.........
+Error in `contrasts<-`(`*tmp*`, value = contr.funs[1 + isOF[nn]]) : contrasts can be applied only to factors with 2 or more levels
+ $ Channel V5 Existence of ragged R wave                  : Factor w/ 1 level "0": 1 1 1 1 1 1 1 1 1 1 ...
+
+
+Looking at the error message and your dataset's variables, the variable BorrowerMetropolitanArea has only one level (Actually it has no predictive value at all if all samples have the same value). I guess this is causing the problem in the contrasts function when you use PCA to pre-process the dataset.
+
+Try calling the train funcion on the dataset without the the variable BorrowerMetropolitanArea.
+
+
+The reason for this is that one of our predictor variables has only one factor level.
+
+
+We can do that by using the sapply and lapply functions in combination with the unique and length functions:
+
+values_count <- sapply(lapply(data, unique), length)  # Identify variables with 1 value
+values_count                                          # Print counts of different values
+# x1 x2 x3  y 
+#  4  3  1  5
+
+The previous R code returned a named vector showing the number of different values in each of our columns. As you can see, the variable x3 contains the same value in each data cell.
+
+We can now use this vector to subset our data frame within the lm function so that only variables with more than one value are used as predictors:
+
+lm(y ~ ., data[ , values_count > 1])                  # Apply lm() to subset of data
+# Call:
+# lm(formula = y ~ ., data = data[, values_count > 1])
+# 
+# Coefficients:
+# (Intercept)           x1           x2  
+#      5.8534      -0.4788      -0.2409
+
+The lm functions returns a valid output – looks good!
+
+
+
 
 
 
