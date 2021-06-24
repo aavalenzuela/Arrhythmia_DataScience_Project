@@ -8,6 +8,8 @@ b. Classification of cardiac arrhythmia.
 
 In our first prediction for detection of cardiac arrhythmia, the data points are classified into two classes: “Normal” & “Arrhythmia”. This model only identifies if the patient is normal (class 1) or suffers from any form of arrhythmia (class 2 to 16). Then the output is a binary variable (is a variable that has two possible outcomes). The arrhythmia class will be treated as the ‘Positive’ class.
 
+all the instances belonging to classes 2 to 16 were merged to one class.........
+
 We are going to see the following evaluation metrics:
 
 * accuracy is defined as the overall proportion that is predicted correctly.
@@ -15,26 +17,23 @@ We are going to see the following evaluation metrics:
 * specificity is defined as the ability of an algorithm to not predict a positive when the actual outcome is not a positive.
 
 
-We can summarize in the following way:
-
-High accuracy: $Y=1⟹\hat{Y}=1$ and $Y=0⟹\hat{Y}=0$
-
-High sensitivity: $Y=1⟹\hat{Y}=1$
-
-High specificity: $Y=0⟹\hat{Y}=0$
+We can summarize in the following way:  
+High accuracy: $Y=1⟹\hat{Y}=1$ and $Y=0⟹\hat{Y}=0$  
+High sensitivity: $Y=1⟹\hat{Y}=1$  
+High specificity: $Y=0⟹\hat{Y}=0$  
 
 
-We are looking for accuracy and sensitivity. Why? it is much more important to maximize sensitivity over specificity: failing to predict a arrhythmia ("Positive" class) can put the health/life of the patience in risk. It is better than this patience make all the exams/procedure and when validate that he or she is ok.
+We are looking for accuracy and sensitivity. Why? it is much more important to maximize sensitivity over specificity: failing to predict a arrhythmia  can put the health/life of the patience in risk. It is better than this patience classified as "Arrhythmia" and make all the exams/procedure and when validate that he or she is ok.
 
 
 In our prediction model for classification of cardiac arrhythmia classified the patient into one of 16 classes, with class 1 representing “Normal” and classes 2 to 16 representing a condition of cardiac arrhythmia. Here we continue with the accuracy concept but now sensitivity is for class.
 
 
-Let's show the standard definition in an binary variable:\\
-True Positive (TN) – This is correctly classified as the class if interest/target.\\
-True Negative (TN) – This is correctly classified as not a class of interest/target.\\
-False Positive (FP) – This is wrongly classified as the class of interest/target.\\
-False Negative (FN) – This is wrongly classified as not a class of interest/target.\\
+Let's show the standard definition in an binary variable:  
+True Positive (TN) – This is correctly classified as the class if interest/target.  
+True Negative (TN) – This is correctly classified as not a class of interest/target.  
+False Positive (FP) – This is wrongly classified as the class of interest/target.  
+False Negative (FN) – This is wrongly classified as not a class of interest/target.  
 
 
 
@@ -43,6 +42,7 @@ False Negative (FN) – This is wrongly classified as not a class of interest/ta
 M <- matrix(c("True Positives (TP)","False Positives (FP)","False Negatives (FN)","True Negatives (TN)"),2,byrow = TRUE) #%>%
 rownames(M) <- c("Predicted Positive","Predicted Negative")
 colnames(M) <- c("Actually Positive", "Actually Negative")
+
 M %>% knitr::kable()
 ```
 An these are the definitions:
@@ -97,31 +97,47 @@ $y_{mode}$ the "true" class for all patience and  $\varepsilon_{i,u}$ an indepen
 
 
 
-
+In the code, for the prediction for the two purposes, we are going to use different dataset to make easier to read the code: the first one, that concern about “Normal” & “Arrhythmia” only, the "Code class" can only has these two values.
+In the case of Classification of cardiac arrhythmia, the "Code class" has all the values allowed (13).
+Because it is not a big dataset, this duplicity does not affect the computer resources available fo this project.
 
 
 
 Let's works with the first Prediction
+```{r Define new dataset for first Prediction, include=FALSE}
+
+# The first "Class code" is "Normal" and all the rest are some kind of "Arrhythmia"
+# Train dataset prediction1
+train_set1_p1 <- train_set1
+train_set1_p1$`Class code` <- ifelse(train_set1_p1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
+
+# validation for prediction1
+validation_set1_p1 <- validation_set1
+validation_set1_p1$`Class code` <- ifelse(validation_set1_p1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
+
+# Expected value for validation for prediction1
+expected_value_val_p1 <- ifelse(validation_set$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
+
+```
+
+
 ```{r Model just the most common first Prediction,echo=FALSE, warning=FALSE}
-
-train_set1_p1$`Class code` <- ifelse(train_set1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
-
-expected_value_1 <- ifelse(validation_set$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
 predicted_value <- rep("Normal", times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
-cm <- confusionMatrix(predicted_value, expected_value_1)  # or positive = "Arrhythmia"
-#confusionMatrix(predicted_value, expected_value_1)$overall["Accuracy"]
-#confusionMatrix(predicted_value, expected_value_1)$byClass["Sensitivity"]
-#confusionMatrix(predicted_value, expected_value_1)$byClass["Specificity"]
+cm <- confusionMatrix(predicted_value, validation_set1_p1$`Class code`)  # or positive = "Arrhythmia"
+#confusionMatrix(predicted_value, expected_value_val_p1)$overall["Accuracy"]
+#confusionMatrix(predicted_value, expected_value_val_p1)$byClass["Sensitivity"]
+#confusionMatrix(predicted_value, expected_value_val_p1)$byClass["Specificity"]
 cm$overall["Accuracy"]
 cm$byClass["Sensitivity"]
 cm$byClass["Specificity"]
 ```
 
 
-```{r}
-table(expected_value_1,predicted_value)
+```{r, eval=FALSE}
+table(expected_value_val_p1,predicted_value)
 ```
-With the class 2 (arrhythmia) as Positive. Because an algorithm that calls everything negative ($\hat{y} = 0$ no matter what) has perfect specificity, but worse Sensitivity. These are completely opposite if we set as less common. The Accuracy obtained will be are base one.
+Because an algorithm that calls everything positive ($\hat{y} = 1$ no matter what) has perfect specificity, but worse Sensitivity. These are completely opposite if we set as less common.
+The Accuracy obtained will be are base one.
 
 
 
@@ -130,9 +146,12 @@ With the class 2 (arrhythmia) as Positive. Because an algorithm that calls every
 #install.packages('gmodels')
 #import required library 
 library(gmodels)
- 
+
+# Table names
+Predicted <- predicted_value
+Actually <- validation_set1_p1$`Class code`
 #Computes the crosstable calculations
-CrossTable(predicted_value, expected_value_1)
+CrossTable(Predicted, Actually)
 ```
 
 For our record, we keep this first model:
@@ -140,25 +159,689 @@ For our record, we keep this first model:
 Pred1_results <- data.frame(Model = "Just the most common",
                                      Accuracy = cm$overall["Accuracy"],
                                      Sensitivity = cm$byClass["Sensitivity"],
-                                     Specificity = cm$byClass["Specificity"] )
-Pred1_results %>% knitr::kable()
+                                     Specificity = cm$byClass["Specificity"] , row.names = NULL)
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary")
 
 # Pred1_results <- bind_rows(rmse_results,
 
 ```
 
 
-Second Predictions:
-```{r ,warning=FALSE}
+Second Predictions, that considered all the classes, the accuracy is the same, but now we have Sensitivity and Specificity by calss:
+```{r ,echo=FALSE, warning=FALSE}
 y_hat <- rep(1, times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
 cm <- confusionMatrix(y_hat, validation_set$`Class code`)
 
-confusionMatrix(y_hat, validation_set$`Class code`)$overall["Accuracy"]
-confusionMatrix(y_hat, validation_set$`Class code`)$byClass[,1:2]
+#confusionMatrix(y_hat, validation_set$`Class code`)$overall["Accuracy"]
+#confusionMatrix(y_hat, validation_set$`Class code`)$byClass[,1:2]
 cm$overall["Accuracy"]
 cm$byClass[,1:2]
 ```
 
+```{r Redefinition of CrossTable of gmodels on base of rev2.2, include=FALSE}
+# Revision 2.2.1 2021/06/23
+# Minor change in Column and Row Total Headings, now only 4 character for table size
+
+# Revision 2.2 2006/05/02
+# Fix a bug when a matrix is passed as the 'x' argument
+# Reported by Prof. Albert Sorribas same day
+# Fix involved creating default values for RowData and ColData
+# when there are no dimnames for the matrix
+
+# Revision 2.1 2005/06/26
+# Added 'dnn' argument to enable specification of dimnames
+# as per table()
+# Correct bug in SPSS output for 1d table, where proportions
+# were being printed and not percentages ('%' output)
+
+
+# Revision 2.0 2005/04/27
+# Added 'format = "d"' to all table count output
+# so that large integers do not print in
+# scientific notation
+
+
+CrossTable1 <- function (x, y,
+                        digits = 3,
+                        max.width = 5,
+                        expected = FALSE,
+                        prop.r = TRUE,
+                        prop.c = TRUE,
+                        prop.t = TRUE,
+                        prop.chisq = TRUE,
+                        chisq = FALSE,
+                        fisher = FALSE,
+                        mcnemar = FALSE,
+                        resid = FALSE,
+                        sresid = FALSE,
+                        asresid = FALSE,
+                        missing.include = FALSE,
+                        format = c("SAS", "SPSS"),
+                        dnn = NULL,
+                        ...
+                        )
+{
+
+  format = match.arg(format)
+
+  RowData <- deparse(substitute(x))
+  if (!missing(y))
+    ColData <- deparse(substitute(y))
+
+  ## Ensure that max.width >= 1
+  if (max.width < 1)
+    stop("max.width must be >= 1")
+  ## Set 'x' vector flag
+  vector.x <- FALSE
+  ## Ensure that if (expected), a chisq is done
+  if (expected)
+    chisq <- TRUE
+
+  if (missing(y))
+    {
+      ## is x a vector?
+      if (is.null(dim(x)))
+        {
+          if (missing.include)
+            x <- factor(x,exclude=NULL)
+          else
+            ## Remove any unused factor levels
+            x <- factor(x)
+          
+          t <- t(as.matrix(table(x)))
+          vector.x <- TRUE
+        }
+      ## is x a matrix?
+      else if (length(dim(x) == 2))
+        {
+          if(any(x < 0) || any(is.na(x)))
+            stop("all entries of x must be nonnegative and finite")
+
+          ## Check to see if x has names(dimnames) defined. If yes, use these for
+          ## 'RowData' and 'ColData' labels, else create blank ones
+          ## This can be overridden by setting 'dnn' values
+          if (is.null(names(dimnames(x))))
+            {
+              RowData <- ""
+              ColData <- ""
+            } else {            
+              RowData <- names(dimnames(x))[1]
+              ColData <- names(dimnames(x))[2]
+            }
+          
+          ## Add generic column and rownames if required
+          ## check each separately, in case user has defined one or the other
+          if (is.null(rownames(x)))
+            rownames(x) <- paste("[", 1:nrow(x), ",]", sep = "")
+          if (is.null(colnames(x)))
+            colnames(x) <- paste("[,", 1:ncol(x), "]", sep = "")
+
+          t <- x
+        }
+      else
+        stop("x must be either a vector or a 2 dimensional matrix, if y is not given")
+    }
+  else
+    {
+      if(length(x) != length(y))
+        stop("x and y must have the same length")
+
+      if (missing.include)
+        {
+          x <- factor(x, exclude=c())
+          y <- factor(y, exclude=c())
+        }
+      else
+        {
+          ## Remove unused factor levels from vectors
+          x <- factor(x)
+          y <- factor(y)
+        }
+      ## Generate table
+      t <- table(x, y)
+    }
+
+  ## Create Titles for Table From Vector Names
+  ## At least 2 x 2 table only (for now)
+  if (all(dim(t) >= 2))
+  {
+    if (!is.null(dnn))
+    {
+      if (length(dnn) != 2)
+        stop("dnn must have length of 2, one element for each table dimension")
+      else
+      {
+        RowData <- dnn[1]
+        ColData <- dnn[2]
+      }
+    }  
+  }
+  
+  ## if t is not at least a 2 x 2, do not do stats
+  ## even if any set to TRUE. Do not do col/table props
+  if (any(dim(t) < 2))
+    {
+      prop.c <- prop.r <- prop.chisq <- chisq <- expected <- fisher <- mcnemar <- FALSE
+    }
+
+  ## Generate cell proportion of row
+  CPR <- prop.table(t, 1)
+
+  ## Generate cell proportion of col
+  CPC <- prop.table(t, 2)
+
+  ## Generate cell proportion of total
+  CPT <- prop.table(t)
+
+  ## Generate summary counts
+  GT <- sum(t)
+  RS <- rowSums(t)
+  CS <- colSums(t)
+
+  if (length(dim(x) == 2))
+    TotalN <- GT
+  else
+    TotalN <- length(x)
+  
+  
+  ## Column and Row Total Headings
+  ColTotal <- "ColumnT"
+  RowTotal <- "RowT"
+
+  ## Set consistent column widths based upon dimnames and table values
+  CWidth <- max(digits + 2, c(nchar(t), nchar(dimnames(t)[[2]]), nchar(RS), nchar(CS), nchar(RowTotal)))
+  RWidth <- max(c(nchar(dimnames(t)[[1]]), nchar(ColTotal)))
+
+  ## Adjust first column width if Data Titles present
+  if (exists("RowData"))
+    RWidth <- max(RWidth, nchar(RowData))
+
+  ## Create row separators
+  RowSep <- paste(rep("-", CWidth + 2), collapse = "")
+  RowSep1 <- paste(rep("-", RWidth + 1), collapse = "")
+  SpaceSep1 <- paste(rep(" ", RWidth), collapse = "")
+  SpaceSep2 <- paste(rep(" ", CWidth), collapse = "")
+
+  ## Create formatted Names
+  FirstCol <- formatC(dimnames(t)[[1]], width = RWidth, format = "s")
+  ColTotal <- formatC(ColTotal, width = RWidth, format = "s")
+  RowTotal <- formatC(RowTotal, width = CWidth, format = "s")
+
+  ## Perform Chi-Square Tests
+  ## Needs to be before the table output, in case (expected = TRUE)
+  if (chisq)
+    {
+      if (all(dim(t) == 2))
+        CSTc <- chisq.test(t, correct = TRUE, ...)
+
+      CST <- chisq.test(t, correct = FALSE, ...)
+    }
+  else   
+    CST <- suppressWarnings(chisq.test(t, correct = FALSE))
+  if (asresid & !vector.x)
+    ASR <- (CST$observed-CST$expected)/sqrt(CST$expected*((1-RS/GT) %*% t(1-CS/GT)))
+  
+  print.CrossTable.SAS <- function()
+    {
+      if (exists("RowData"))
+        {
+          cat(SpaceSep1, "|", ColData, "\n")
+          cat(formatC(RowData, width = RWidth, format= "s"), 
+              formatC(dimnames(t)[[2]], width = CWidth, format = "s"), 
+              RowTotal, sep = " | ", collapse = "\n")
+        }
+      else
+        cat(SpaceSep1, formatC(dimnames(t)[[2]], width = CWidth, 
+                               format = "s"), RowTotal, sep = " | ",
+            collapse = "\n")
+      cat(RowSep1, rep(RowSep, ncol(t) + 1), sep = "|", collapse = "\n")
+      ## Print table cells
+
+      for (i in 1:nrow(t))
+        {
+          cat(FirstCol[i], formatC(c(t[i, ], RS[i]), width = CWidth, format = "d"), 
+              sep = " | ", collapse = "\n")
+          if (expected) 
+            cat(SpaceSep1, formatC(CST$expected[i, ], digits = digits, 
+                                   format = "f", width = CWidth),
+                SpaceSep2, sep = " | ", 
+                collapse = "\n")
+          if (prop.chisq)
+            cat(SpaceSep1, formatC((((CST$expected[i, ]-t[i, ])^2)/CST$expected[i, ]),
+                width = CWidth, digits = digits, format = "f"), SpaceSep2, 
+                sep = " | ", collapse = "\n")
+          if (prop.r) 
+            cat(SpaceSep1, formatC(c(CPR[i, ], RS[i]/GT), 
+                                   width = CWidth, digits = digits, format = "f"), 
+                sep = " | ", collapse = "\n")
+          if (prop.c) 
+            cat(SpaceSep1, formatC(CPC[i, ], width = CWidth, 
+                                   digits = digits, format = "f"), SpaceSep2, 
+                sep = " | ", collapse = "\n")
+          if (prop.t) 
+            cat(SpaceSep1, formatC(CPT[i, ], width = CWidth, 
+                                   digits = digits, format = "f"), SpaceSep2, 
+                sep = " | ", collapse = "\n")
+          cat(RowSep1, rep(RowSep, ncol(t) + 1), sep = "|", 
+              collapse = "\n")
+        }
+      
+      ## Print Column Totals
+      cat(ColTotal, formatC(c(CS, GT), width = CWidth, format = "d"), sep = " | ", 
+          collapse = "\n")
+      if (prop.c) 
+        cat(SpaceSep1, formatC(CS/GT, width = CWidth, digits = digits, 
+                               format = "f"), SpaceSep2, sep = " | ", collapse = "\n")
+      cat(RowSep1, rep(RowSep, ncol(t) + 1), sep = "|", collapse = "\n")
+    } ## End Of print.Crosstable.SAS function
+  
+  print.CrossTable.SPSS <- function()
+    {
+      ## similar to SPSS behaviour
+      
+      ## Print Column headings
+      if (exists("RowData"))
+        {
+          cat(SpaceSep1, "|", ColData, "\n")
+          cat(cat(formatC(RowData, width = RWidth, format = "s"),sep=" | ",
+                  collapse=""),
+              cat(formatC(dimnames(t)[[2]], width = CWidth-1, format = "s"),
+                  sep="  | ", collapse=""),
+              cat(RowTotal, sep = " | ", collapse = "\n"), sep="", collapse="")
+        }
+      else
+        cat(SpaceSep1, formatC(dimnames(t)[[2]], width = CWidth, format = "s"), RowTotal,
+            sep = " | ", collapse = "\n")
+
+      cat(RowSep1, rep(RowSep, ncol(t) + 1), sep = "|", collapse = "\n")
+
+      ## Print table cells
+      for (i in 1:nrow(t))
+        {
+          cat(cat(FirstCol[i], sep=" | ", collapse=""),
+              cat(formatC(c(t[i, ], RS[i]), width = CWidth-1, format = "d"),
+                  sep = "  | ", collapse = "\n"), sep="", collapse="")
+
+          if (expected)
+            cat(cat(SpaceSep1, sep=" | ", collapse=""),
+                cat(formatC(CST$expected[i, ], digits = digits, format = "f",
+                            width = CWidth-1), sep="  | ", collapse=""),
+                cat(SpaceSep2, sep = " | ", collapse = "\n"), sep="", collapse="")
+
+          if (prop.chisq)
+            cat(cat(SpaceSep1, sep=" | ", collapse=""),
+                cat(formatC((((CST$expected[i, ]-t[i, ])^2)/CST$expected[i, ]),
+                    digits = digits, format = "f",
+                            width = CWidth-1), sep="  | ", collapse=""),
+                cat(SpaceSep2, sep = " | ", collapse = "\n"), sep="", collapse="")
+          if (prop.r)
+            cat(cat(SpaceSep1, sep=" | ", collapse=""),
+                cat(formatC(c(CPR[i, ]*100, 100*RS[i] / GT),
+                            width = CWidth-1, digits = digits, format = "f"),
+                    sep = "% | ", collapse = "\n"), sep="", collapse="")
+
+          if (prop.c)
+            cat(cat(SpaceSep1, sep=" | ", collapse=""),
+                cat(formatC(CPC[i, ]*100, width = CWidth-1,
+                            digits = digits, format = "f"), sep="% | ", collapse=""),
+                cat(SpaceSep2, sep = " | ", collapse = "\n"), sep="", collapse="")
+
+          if (prop.t)
+            cat(cat(SpaceSep1, sep=" | ", collapse=""),
+                cat(formatC(CPT[i, ]*100, width = CWidth-1, digits = digits,
+                            format = "f"), sep="% | ", collapse=""),
+                cat(SpaceSep2, sep = " | ", collapse = "\n"), sep="", collapse="")
+          
+          if (resid)
+            cat(cat(SpaceSep1,sep=" | ",collapse = ""),
+                cat(formatC(CST$observed[i, ]-CST$expected[i, ], digits = digits,
+                            format = "f", width = CWidth-1), sep = "  | ",
+                    collapse = ""),
+                cat(SpaceSep2,sep = " | ", collapse = "\n"),sep="",collapse="")
+
+          if (sresid)
+            cat(cat(SpaceSep1,sep=" | ",collapse = ""),
+                cat(formatC(CST$residual[i, ], digits = digits,
+                            format = "f", width = CWidth-1), sep = "  | ",
+                    collapse = ""),
+                cat(SpaceSep2,sep = " | ", collapse = "\n"),sep="",collapse="")
+
+          if (asresid)
+            cat(cat(SpaceSep1,sep=" | ",collapse = ""),
+                cat(formatC(ASR[i, ], digits = digits,
+                            format = "f", width = CWidth-1), sep = "  | ",
+                    collapse = ""),
+                cat(SpaceSep2,sep = " | ", collapse = "\n"),sep="",collapse="")
+
+          cat(RowSep1, rep(RowSep, ncol(t) + 1), sep = "|", collapse = "\n")
+        }
+
+      ## Print Column Totals
+      cat(cat(ColTotal,sep=" | ",collapse=""),
+          cat(formatC(c(CS, GT), width = CWidth-1, format = "d"), sep = "  | ",
+              collapse = "\n"),sep="",collapse="")
+
+      if (prop.c)
+        cat(cat(SpaceSep1,sep=" | ",collapse=""),
+            cat(formatC(100*CS/GT, width = CWidth-1, digits = digits,
+                        format = "f"),sep = "% | ", collapse = ""),
+            cat(SpaceSep2,sep = " | ", collapse = "\n"),sep="",collapes="")
+
+      cat(RowSep1, rep(RowSep, ncol(t) + 1), sep = "|", collapse = "\n")
+    } ## End of print.CrossTable.SPSS function
+
+  ## Print Function For 1 X N Vector In SAS Format
+  print.CrossTable.vector.SAS <- function()
+    {
+      if (length(t) > max.width)
+        {
+          ## set breakpoints for output based upon max.width
+          final.row <- length(t) %% max.width
+          max <- length(t) - final.row
+          ## Define breakpoint indices for each row
+          start <- seq(1, max, max.width)
+          end <- start + (max.width - 1)
+          ## Add final.row if required
+          if (final.row > 0)
+            {
+              start <- c(start, end[length(end)] + 1)
+              end <- c(end, end[length(end)] + final.row)
+            }
+        }
+      else
+        {
+          ## Each value printed horizontally in a single row
+          start <- 1
+          end <- length(t)
+        }
+
+      SpaceSep3 <- paste(SpaceSep2, " ", sep = "")
+
+      for (i in 1:length(start))
+        {
+          ## print column labels
+          cat(SpaceSep2, formatC(dimnames(t)[[2]][start[i]:end[i]], width = CWidth, format = "s"),
+              sep = " | ", collapse = "\n")
+
+          cat(SpaceSep3, rep(RowSep, (end[i] - start[i]) + 1), sep = "|", collapse = "\n")
+          cat(SpaceSep2, formatC(t[, start[i]:end[i]], width = CWidth, format = "d"), sep = " | ", collapse = "\n")
+          cat(SpaceSep2, formatC(CPT[, start[i]:end[i]], width = CWidth, digits = digits, format = "f"),
+              sep = " | ", collapse = "\n")
+          cat(SpaceSep3, rep(RowSep, (end[i] - start[i]) + 1), sep = "|", collapse = "\n")
+          cat("\n\n")
+        }
+
+    } ## End of print.Crosstable.vector.SAS function
+
+  
+  ## Print function for 1 X N vector in SPSS format
+  print.CrossTable.vector.SPSS <- function()
+    {
+      if (length(t) > max.width)
+        {
+          ## set breakpoints for output based upon max.width
+          final.row <- length(t) %% max.width
+          max <- length(t) - final.row
+          ## Define breakpoint indices for each row
+          start <- seq(1, max, max.width)
+          end <- start + (max.width - 1)
+          ## Add final.row if required
+          if (final.row > 0)
+            {
+              start <- c(start, end[length(end)] + 1)
+              end <- c(end, end[length(end)] + final.row)
+            }
+        }
+      else
+        {
+          ## Each value printed horizontally in a single row
+          start <- 1
+          end <- length(t)
+        }
+
+      SpaceSep3 <- paste(SpaceSep2, " ", sep = "")
+      
+
+      for (i in 1:length(start))
+        {
+          cat(cat(SpaceSep2,sep=" | ",collapse=""),
+              cat(formatC(dimnames(t)[[2]][start[i]:end[i]],
+                          width = CWidth-1, format = "s"), sep = "  | ", collapse = "\n"),
+              sep="",collapse="")
+          cat(SpaceSep3, rep(RowSep, (end[i] - start[i]) +
+                             1), sep = "|", collapse = "\n")
+          cat(cat(SpaceSep2,sep=" | ",collapse=""),
+              cat(formatC(t[, start[i]:end[i]], width = CWidth-1, format = "d"),
+                  sep = "  | ", collapse = "\n"),
+              sep="",collapse="")
+          cat(cat(SpaceSep2, sep=" | ",collapse=""),
+              cat(formatC(CPT[, start[i]:end[i]] * 100, width = CWidth-1,
+                          digits = digits, format = "f"), sep = "% | ",
+                  collapse = ""),sep="",collapse="\n")
+          cat(SpaceSep3, rep(RowSep, (end[i] - start[i]) +
+                             1), sep = "|", collapse = "\n")
+
+        }  ## End of for (i in 1:length(start))
+
+      if (GT < TotalN)
+        cat("\nNumber of Missing Observations: ",TotalN-GT," (",100*(TotalN-GT)/TotalN,"%)\n",sep="")
+
+
+    } ## End of print.CrossTable.vector.SPSS Function
+
+
+
+
+  
+  print.statistics <- function()
+    {
+      ## Print Statistics
+      if (chisq)
+        {
+          cat(rep("\n", 2))
+          cat("Statistics for All Table Factors\n\n\n")
+
+          cat(CST$method,"\n")
+          cat("------------------------------------------------------------\n")
+          cat("Chi^2 = ", CST$statistic, "    d.f. = ", CST$parameter, "    p = ", CST$p.value, "\n\n")
+
+          if (all(dim(t) == 2))
+            {
+              cat(CSTc$method,"\n")
+              cat("------------------------------------------------------------\n")
+              cat("Chi^2 = ", CSTc$statistic, "    d.f. = ", CSTc$parameter, "    p = ", CSTc$p.value, "\n")
+            }
+        }
+
+      ## Perform McNemar tests
+      if (mcnemar)
+        {
+          McN <- mcnemar.test(t, correct = FALSE)
+          cat(rep("\n", 2))
+          cat(McN$method,"\n")
+          cat("------------------------------------------------------------\n")
+          cat("Chi^2 = ", McN$statistic, "    d.f. = ", McN$parameter, "    p = ", McN$p.value, "\n\n")
+
+          if (all(dim(t) == 2))
+            {
+              McNc <- mcnemar.test(t, correct = TRUE)
+              cat(McNc$method,"\n")
+              cat("------------------------------------------------------------\n")
+              cat("Chi^2 = ", McNc$statistic, "    d.f. = ", McNc$parameter, "    p = ", McNc$p.value, "\n")
+            }
+        }
+
+      ## Perform Fisher Tests
+      if (fisher)
+        {
+          cat(rep("\n", 2))
+          FTt <- fisher.test(t, alternative = "two.sided")
+
+          if (all(dim(t) == 2))
+            {
+              FTl <- fisher.test(t, alternative = "less")
+              FTg <- fisher.test(t, alternative = "greater")
+            }
+
+          cat("Fisher's Exact Test for Count Data\n")
+          cat("------------------------------------------------------------\n")
+
+          if (all(dim(t) == 2))
+            {
+              cat("Sample estimate odds ratio: ", FTt$estimate, "\n\n")
+
+              cat("Alternative hypothesis: true odds ratio is not equal to 1\n")
+              cat("p = ", FTt$p.value, "\n")
+              cat("95% confidence interval: ", FTt$conf.int, "\n\n")
+
+              cat("Alternative hypothesis: true odds ratio is less than 1\n")
+              cat("p = ", FTl$p.value, "\n")
+              cat("95% confidence interval: ", FTl$conf.int, "\n\n")
+
+              cat("Alternative hypothesis: true odds ratio is greater than 1\n")
+              cat("p = ", FTg$p.value, "\n")
+              cat("95% confidence interval: ", FTg$conf.int, "\n\n")
+            }
+          else
+            {
+              cat("Alternative hypothesis: two.sided\n")
+              cat("p = ", FTt$p.value, "\n")
+            }
+        } ## End Of If(Fisher) Loop
+
+      cat(rep("\n", 2))
+
+      ## Create list of results for invisible()
+
+      CT <- list(t = t, prop.row = CPR, prop.col = CPC, prop.tbl = CPT)
+
+      if (any(chisq, fisher, mcnemar))
+        {
+          if (all(dim(t) == 2))
+            {
+              if (chisq)
+                CT <- c(CT, list(chisq = CST, chisq.corr = CSTc))
+
+              if (fisher)
+                CT <- c(CT, list(fisher.ts = FTt, fisher.tl = FTl, fisher.gt = FTg))
+
+              if (mcnemar)
+                CT <- c(CT, list(mcnemar = McN, mcnemar.corr = McNc))
+            }
+          else
+            {
+              if (chisq)
+                CT <- c(CT, list(chisq = CST))
+
+              if (fisher)
+                CT <- c(CT, list(fisher.ts = FTt))
+
+              if (mcnemar)
+                CT <- c(CT, list(mcnemar = McN))
+            }
+        } ## End of if(any(chisq, fisher, mcnemar)) loop
+
+      
+      ## return list(CT)
+      invisible(CT)
+
+    } ## End of print.statistics function
+
+
+  ## Printing the tables
+  if (format=="SAS")
+    {
+      ## Print Cell Layout
+      
+      cat(rep("\n", 2))
+      cat("   Cell Contents\n")
+
+      cat("|-------------------------|\n")
+      cat("|                       N |\n")
+      if (expected)
+        cat("|              Expected N |\n")
+      if (prop.chisq)
+        cat("| Chi-square contribution |\n")
+      if (prop.r)
+        cat("|           N / Row Total |\n")
+      if (prop.c)
+        cat("|           N / Col Total |\n")
+      if (prop.t)
+        cat("|         N / Table Total |\n")
+      cat("|-------------------------|\n")
+      cat(rep("\n", 2))
+      cat("Total Observations in Table: ", GT, "\n")
+      cat(rep("\n", 2))
+
+      if (!vector.x)
+        print.CrossTable.SAS()
+      else
+        print.CrossTable.vector.SAS()
+
+      print.statistics()
+    }
+  else if (format == "SPSS")
+    {
+      
+      ## Print Cell Layout
+      cat("\n")
+      cat("   Cell Contents\n")
+      cat("|-------------------------|\n")
+      cat("|                   Count |\n")
+      if (!vector.x)
+        {
+          if (expected)
+            cat("|         Expected Values |\n")
+          if (prop.chisq)
+            cat("| Chi-square contribution |\n")
+          if (prop.r)
+            cat("|             Row Percent |\n")
+          if (prop.c)
+            cat("|          Column Percent |\n")
+          if (prop.t)
+            cat("|           Total Percent |\n")
+          if (resid)
+            cat("|                Residual |\n")
+          if (sresid)
+            cat("|            Std Residual |\n")
+          if (asresid)
+            cat("|           Adj Std Resid |\n")
+        }
+      else
+        cat("|             Row Percent |\n")
+      cat("|-------------------------|\n")
+      cat("\n")
+      cat("Total Observations in Table: ", GT, "\n")
+      cat("\n")
+      if (!vector.x)
+        print.CrossTable.SPSS()
+      else print.CrossTable.vector.SPSS()
+
+      print.statistics()
+
+      
+      if (any(dim(t) >= 2) & any(chisq,mcnemar,fisher))
+        {
+          MinExpF = min(CST$expected)
+          cat('       Minimum expected frequency:',MinExpF,"\n")
+          NMinExpF = length(CST$expected[which(CST$expected<5)])
+          if (NMinExpF > 0)
+            {
+              NCells = length(CST$expected)
+              cat('Cells with Expected Frequency < 5: ',NMinExpF,' of ',NCells," (",100*NMinExpF/NCells,"%)\n",sep="")
+            }
+          cat("\n")
+
+        } ## End of if (any(dim(t)...
+      
+    } ## End of if(format=="SPSS") loop
+  else
+    stop("unknown format")
+
+  
+  
+} ## End of the main function Crosstable.R
+```
 
 
 ```{r}
@@ -166,9 +849,38 @@ cm$byClass[,1:2]
 #install.packages('gmodels')
 #import required library 
 library(gmodels)
- 
+
+# Table names
+Predicted <- y_hat
+Actually <- validation_set1$`Class code`
 #Computes the crosstable calculations
-CrossTable(y_hat, validation_set$`Class code`)
+CrossTable1(Predicted, Actually, digits = 2)
+#table(Predicted, Actually)
+
+
+
+
+
+#Computes the crosstable calculations
+#CrossTable(y_hat, validation_set$`Class code`, format=c("SPSS"), dnn = c("Predicted","Actually"))
+```
+
+
+We can see that only class 1 has good Sensitivity, as we expected.
+
+
+For our record, we keep this first model:
+```{r ,echo=FALSE}
+Pred2_results <- data.frame(Model = "Just the most common",
+                            Accuracy = cm$overall["Accuracy"],
+                            Class.code = row.names(cm$byClass),
+                            Class.Sensitivity = cm$byClass[,1],
+                            Class.Specificity = cm$byClass[,2]
+                            , row.names = NULL)
+Pred2_results %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
+
+# Pred1_results <- bind_rows(rmse_results,
+
 ```
 
 
@@ -199,15 +911,19 @@ fit
 
 
 
-## Model knn
+## K-Nearest Neighbors Model
+
+Now we continue with the K-Nearest Neighbors.
+
+In base of the concept of distance, this method attempts to find K nearest points of the train data point to the test data point and assigns the class to it on basis of majority for K nearest points. Then the basic question is which value of k give a better solution.
+
+Because we have to few data to train, we use cross-validation in our training process.
 
 Let's works with the first Prediction
-```{r ,warning=FALSE}
-train_set1_p1 <- train_set1
+```{r K-Nearest Neighbors Model first Prediction train,warning=FALSE}
+#train_set1_p1$`Class code` <- ifelse(train_set1$`Class code` == 1,1,2) %>% factor()
 
-train_set1_p1$`Class code` <- ifelse(train_set1$`Class code` == 1,1,2) %>% factor()
-
-expected_value_1 <- ifelse(validation_set$`Class code` == 1,1,2) %>% factor()
+#expected_value_1 <- ifelse(validation_set$`Class code` == 1,1,2) %>% factor()
 #predicted_value <- ifelse(train_set$`Class code` == 1,1,2) %>% factor()
 
 knn.control <- trainControl(method = "repeatedcv", number = 20, repeats = 3)#,
@@ -219,24 +935,53 @@ fit_knn <- train(`Class code` ~ .,  method = "knn",
              tuneGrid = data.frame(k = seq(2, 20, 2)),
              data = train_set1_p1, na.action=na.pass)
 
-ggplot(fit_knn)
-fit_knn$bestTune$k
+ggplot(fit_knn) + ggtitle("K-Nearest Neighbors")
+
 fit_knn$finalModel
-#  1   2   3   4   5   6   7   8   9  10  14  15  16 
-#121  21   7   6   6  12   1   1   4  25   2   2  11 
+```
+
+We get k = `r fit_knn$bestTune$k`. Now the variables that this model considers more important are:
+
+```{r K-Nearest Neighbors Model first Prediction Variable Importance,warning=FALSE}
 varImp(fit_knn)
+```
 
+With this model we now take the validation dataset to see how well this apply:
 
-
-y_hat_knn <- predict(fit_knn, validation_set, type = "raw")
-cm <- confusionMatrix(data = y_hat_knn, reference = expected_value_1, positive = "2") #$overall["Accuracy"]
+```{r K-Nearest Neighbors Model first Prediction Prediction,warning=FALSE}
+y_hat_knn <- predict(fit_knn, validation_set1_p1, type = "raw")
+cm <- confusionMatrix(data = y_hat_knn, reference = expected_value_val_p1) #$overall["Accuracy"]
 cm
+```
+
+We see improvement in accuracy and sensitivity.
+
+```{r}
+# Table names
+Predicted <- y_hat_knn
+Actually <- validation_set1_p1$`Class code`
+#Computes the crosstable calculations
+CrossTable(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+For our record, we add this model:
+```{r ,echo=FALSE}
+Pred1_results <- bind_rows(Pred1_results,
+                           data.frame(Model = "K-Nearest Neighbors",
+                                     Accuracy = cm$overall["Accuracy"],
+                                     Sensitivity = cm$byClass["Sensitivity"],
+                                     Specificity = cm$byClass["Specificity"], row.names = NULL ))
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary")
+
+# Pred1_results <- bind_rows(rmse_results,
+
 ```
 
 
 ```{r ,warning=FALSE}
 #delete
-cm <- confusionMatrix(predicted_value, expected_value_1, positive = "2")
+cm <- confusionMatrix(predicted_value, expected_value_val_p1)
 #confusionMatrix(predicted_value, expected_value_1)$overall["Accuracy"]
 #confusionMatrix(predicted_value, expected_value_1)$byClass["Sensitivity"]
 #confusionMatrix(predicted_value, expected_value_1)$byClass["Specificity"]
@@ -244,6 +989,15 @@ cm$overall["Accuracy"]
 cm$byClass["Sensitivity"]
 cm$byClass["Specificity"]
 ```
+
+
+
+
+
+KNN has a very poor sensitivity and very good specificity as classification of normal case is quite accurate KNN uses a small number of neighbors here i.e. 3 and small enough threshold to yield a complex classifier favoring the normal class........
+
+
+
 
 
 Let's works with the second Prediction
@@ -266,28 +1020,27 @@ knn.control <- trainControl(method = "cv", number = 5, #number = 10
 knn.control <- trainControl(method = "repeatedcv", number = 20, repeats = 3)
 
 set.seed(1, sample.kind="Rounding")
-fit_knn <- train(`Class code` ~ .,  method = "knn", 
-             tuneGrid = data.frame(k = seq(1, 17, 2)),
-             data = train_set1, na.action=na.pass)  # set train_set latter, arrhythmia2
 
-
-
-
-                        
 
 fit_knn <- train(`Class code` ~ .,  method = "knn", 
              tuneGrid = data.frame(k = seq(1, 17, 1)),
              trControl = knn.control,
-             data = train_set1, na.action=na.pass)  # set train_set latter, arrhythmia2
+             data = train_set1, na.action=na.pass)  
 ggplot(fit_knn)
 fit_knn$bestTune$k
 fit_knn$finalModel
-#  1   2   3   4   5   6   7   8   9  10  14  15  16 
-#121  21   7   6   6  12   1   1   4  25   2   2  11 
+
 varImp(fit_knn)
 ```
 
 
+```{r}
+# Table names
+Predicted <- y_hat_knn
+Actually <- validation_set1$`Class code`
+#Computes the crosstable calculations
+CrossTable1(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
 
 
 ```{r}
@@ -301,6 +1054,12 @@ y_hat_knn <- predict(fit_knn, validation_set, type = "raw")
 confusionMatrix(data = y_hat_knn, reference = validation_set$`Class code`) #$overall["Accuracy"]
 
 ```
+
+
+
+As seen above, KNN cannot accurately classify test observations for classes 2 and 5 whereas, it completely misclassifies them for class 4. Most of the misclassified observations have been classified to class 1.......
+
+
 
 ```{r, eval = FALSE}
 #no used
@@ -343,8 +1102,17 @@ aaaa
                         ymax = Accuracy + AccuracySD))
 ```
 
+
+
+
+
+
+KNN is a non-parametric method and makes no assumptions. It classifies a test observation to the class that is most common among its neighbors, which in this case is class 1 since the dataset is imbalanced and skewed towards class 1. Hence, a considerable number of patients who suffer from arrhythmia will not be correctly diagnosed if we follow this model. We find the optimal K that achieves the best accuracy is 7, as seen from the graph, by performing repeated crossvalidation. We use 20 different values to try for each parameter here. Overall AUC of KNN is 0.7097 which means the weighted average of efficiency over all the classes to rightly classify observations into their respective classes is only 0.7097.........
+
+
 ### Model rpart
 
+Decision Tree
 
 Let's works with the first Prediction
 
@@ -363,7 +1131,7 @@ fit_rpart <- train(Class.code ~ ., method = "rpart",
                      data = train_set2, na.action=na.pass)
 
 
-ggplot(fit_rpart)
+ggplot(fit_rpart) + ggtitle("Decision Tree")
 
 # access the final model and plot it
 plot(fit_rpart$finalModel, margin = 0.1)
