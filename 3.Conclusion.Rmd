@@ -1,6 +1,12 @@
 # Conclusion
 *This section that gives a brief summary of the report, its limitations and future work.*
 
+
+
+We will need to do some work before deploying this in the real­world. Data mining is not about pressing abutton and expecting an accurate predictive model to be created. We need to develop viable features that canactually predict the label that we’re interested in. This needs to be done carefully and is a field known asfeature engineering​, properly building features to predict for the label we want; we cannot expect to obtainviable predictions without good features.One thing to note is that we have large input­dimensionality while the number of training observations is reallylow. In most cases where this is true, we will suffer from the ​curse of dimensionality​ ­ a general phenomenonwhere data mining methods fail to work in high­dimensional spaces. This is an informal term and happens for avariety of reasons related to the large input feature space. We also do not have a lt of training data points tobuild a model on, I doubt we can actually capture the underlying relationship with only 452 samples. Someresearchers, artificially expand the size of the dataset by multiplying some observations. This can work ­ butmust be done with care. If we duplicate rows in our dataset, we could duplicate noise and create a dataset thatis composed of all noise. Not only will our model have been constructed on noise, but we will report highaccuracy scores......
+
+
+=========
 We get our better RMSE =  which is under the target of 0.86490. The most important predictor are  movie and  user. After that a few improvement where obtained. The use of the year of the movie and the timestamp give too little improvement that the result was not presented.
 
 The division of the edx between train and test was not absolutely necessary but show us that the result in the test was a little different that in the validation set.
