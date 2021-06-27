@@ -20,7 +20,7 @@
 # scientific notation
 
 
-CrossTable1 <- function (x, y,
+CrossTableNarrow <- function (x, y,
                          digits = 3,
                          max.width = 5,
                          expected = FALSE,
