@@ -41,7 +41,7 @@ M <- matrix(c("True Positives (TP)","False Positives (FP)","False Negatives (FN)
 rownames(M) <- c("Predicted Positive","Predicted Negative")
 colnames(M) <- c("Actually Positive", "Actually Negative")
 
-M %>% knitr::kable()
+M %>% knitr::kable(full_width = F)
 ```
 An these are the definitions:
 
@@ -163,7 +163,7 @@ Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary")
 ```
 
 ### Second Predictions
-Second Predictions, that considered all the classes, the accuracy is the same, but now we have Sensitivity and Specificity by calss:
+Second Predictions, that considered all the classes, the accuracy is the same, but now we have sensitivity and specificity by class:
 ```{r Model just the most common Second Prediction, echo=FALSE, warning=FALSE}
 y_hat <- rep(1, times = nrow(validation_set1)) %>% factor() # Using Normal class (1) as the only answer
 cm <- confusionMatrix(y_hat, validation_set1$`Class code`)
@@ -191,45 +191,48 @@ For our record, we keep this second model:
 ```{r Model just the most common Second Prediction Result, echo=FALSE}
 Pred2_results <- data.frame(Model = "Just the most common",
                             Accuracy = cm$overall["Accuracy"],
-                            Class.1.Code = row.names(cm$byClass)[1],
-                            Class.1.Sensitivity = cm$byClass[1,1],
-                            Class.1.Specificity = cm$byClass[1,2],
-                            Class.2.Code = row.names(cm$byClass)[2],
-                            Class.2.Sensitivity = cm$byClass[2,1],
-                            Class.2.Specificity = cm$byClass[2,2],
-                            Class.3.Code = row.names(cm$byClass)[3],
-                            Class.3.Sensitivity = cm$byClass[3,1],
-                            Class.3.Specificity = cm$byClass[3,2],
-                            Class.4.Code = row.names(cm$byClass)[4],
-                            Class.4.Sensitivity = cm$byClass[4,1],
-                            Class.4.Specificity = cm$byClass[4,2],
-                            Class.5.Code = row.names(cm$byClass)[5],
-                            Class.5.Sensitivity = cm$byClass[5,1],
-                            Class.5.Specificity = cm$byClass[5,2],
-                            Class.6.Code = row.names(cm$byClass)[6],
-                            Class.6.Sensitivity = cm$byClass[6,1],
-                            Class.6.Specificity = cm$byClass[6,2],
-                            Class.7.Code = row.names(cm$byClass)[7],
-                            Class.7.Sensitivity = cm$byClass[7,1],
-                            Class.7.Specificity = cm$byClass[7,2],
-                            Class.8.Code = row.names(cm$byClass)[8],
-                            Class.8.Sensitivity = cm$byClass[8,1],
-                            Class.8.Specificity = cm$byClass[8,2],
-                            Class.9.Code = row.names(cm$byClass)[9],
-                            Class.9.Sensitivity = cm$byClass[9,1],
-                            Class.9.Specificity = cm$byClass[9,2],
-                            Class.10.Code = row.names(cm$byClass)[10],
-                            Class.10.Sensitivity = cm$byClass[10,1],
-                            Class.10.Specificity = cm$byClass[10,2],
-                            Class.11.Code = row.names(cm$byClass)[11],
-                            Class.11.Sensitivity = cm$byClass[11,1],
-                            Class.11.Specificity = cm$byClass[11,2],
-                            Class.12.Code = row.names(cm$byClass)[12],
-                            Class.12.Sensitivity = cm$byClass[12,1],
-                            Class.12.Specificity = cm$byClass[12,2],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
                             row.names = NULL)
-Pred2_results[,1:8] %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
-
+Pred2_results[,1:11] %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary", "html") %>%
+add_header_above(header = c(" " = 2, "Class 1" = 3, "Class 2" = 3, "Class 3" = 3))
 ```
 
 
@@ -305,7 +308,7 @@ cm <- confusionMatrix(data = y_hat_knn, reference = validation_set1_p1$`Class co
 cm
 ```
 
-We see improvement in accuracy and sensitivity.
+We see a good improvement in accuracy and sensitivity over the previous mode approach.
 
 ```{r K-Nearest Neighbors Model first Prediction Table, echo=FALSE}
 # Table names
@@ -343,7 +346,7 @@ cm$byClass["Specificity"]
 
 
 
-KNN has a very poor sensitivity and very good specificity. If "Arrhythmia" es predicted we have a good chance to be correct, but if we predict "Normal" we have a good chance to be wrong! We need to improve sensitivity.
+KNN in overall, has a poor sensitivity and very good specificity. If "Arrhythmia" es predicted we have a good chance to be correct, but if we predict "Normal" we have a good chance to be wrong! We need to improve sensitivity.
 
 
 
@@ -380,8 +383,9 @@ Now the variables that this model considers more important are:
 options(digits =2)
 varImp(fit_knn)
 options(digits =7) # default
-ggplot(varImp(fit_knn), top = 20) + ggtitle("K-Nearest Neighbors Model Top 20 feature")
+ggplot(varImp(fit_knn), top = 8) + ggtitle("K-Nearest Neighbors Model Top 8 feature")
 ```
+We noted that the variable are not the same ompare with the same model but only looking to predict Normal/Arrthymia , some of them appear in other importance position and other are new.
 
 
 Now see how well it is the prediction in the validation set:  
@@ -392,9 +396,12 @@ Now see how well it is the prediction in the validation set:
 
 #knn_fit <- knn3(`Class code` ~ Sex+Age, data = train_set, k=11)
 
+options(digits =2)
+
 y_hat_knn <- predict(fit_knn, validation_set, type = "raw")
 cm <- confusionMatrix(data = y_hat_knn, reference = validation_set$`Class code`) #$overall["Accuracy"]
 cm
+options(digits =7) # default
 ```
 
 
@@ -416,42 +423,45 @@ For our record, we keep this result:
 Pred2_results <- bind_rows(Pred2_results,
                            data.frame(Model = "K-Nearest Neighbors",
                             Accuracy = cm$overall["Accuracy"],
-                            Class.1.Code = row.names(cm$byClass)[1],
-                            Class.1.Sensitivity = cm$byClass[1,1],
-                            Class.1.Specificity = cm$byClass[1,2],
-                            Class.2.Code = row.names(cm$byClass)[2],
-                            Class.2.Sensitivity = cm$byClass[2,1],
-                            Class.2.Specificity = cm$byClass[2,2],
-                            Class.3.Code = row.names(cm$byClass)[3],
-                            Class.3.Sensitivity = cm$byClass[3,1],
-                            Class.3.Specificity = cm$byClass[3,2],
-                            Class.4.Code = row.names(cm$byClass)[4],
-                            Class.4.Sensitivity = cm$byClass[4,1],
-                            Class.4.Specificity = cm$byClass[4,2],
-                            Class.5.Code = row.names(cm$byClass)[5],
-                            Class.5.Sensitivity = cm$byClass[5,1],
-                            Class.5.Specificity = cm$byClass[5,2],
-                            Class.6.Code = row.names(cm$byClass)[6],
-                            Class.6.Sensitivity = cm$byClass[6,1],
-                            Class.6.Specificity = cm$byClass[6,2],
-                            Class.7.Code = row.names(cm$byClass)[7],
-                            Class.7.Sensitivity = cm$byClass[7,1],
-                            Class.7.Specificity = cm$byClass[7,2],
-                            Class.8.Code = row.names(cm$byClass)[8],
-                            Class.8.Sensitivity = cm$byClass[8,1],
-                            Class.8.Specificity = cm$byClass[8,2],
-                            Class.9.Code = row.names(cm$byClass)[9],
-                            Class.9.Sensitivity = cm$byClass[9,1],
-                            Class.9.Specificity = cm$byClass[9,2],
-                            Class.10.Code = row.names(cm$byClass)[10],
-                            Class.10.Sensitivity = cm$byClass[10,1],
-                            Class.10.Specificity = cm$byClass[10,2],
-                            Class.11.Code = row.names(cm$byClass)[11],
-                            Class.11.Sensitivity = cm$byClass[11,1],
-                            Class.11.Specificity = cm$byClass[11,2],
-                            Class.12.Code = row.names(cm$byClass)[12],
-                            Class.12.Sensitivity = cm$byClass[12,1],
-                            Class.12.Specificity = cm$byClass[12,2],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
                             row.names = NULL))
 Pred2_results[,1:8] %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
 
@@ -511,9 +521,12 @@ aaaa
 KNN is a non-parametric method and makes no assumptions. It classifies a test observation to the class that is most common among its neighbors, which in this case is class 1 since the dataset is imbalanced and skewed towards class 1. Hence, a considerable number of patients who suffer from arrhythmia will not be correctly diagnosed if we follow this model. We find the optimal K that achieves the best accuracy is 7, as seen from the graph, by performing repeated crossvalidation. We use 20 different values to try for each parameter here. Overall AUC of KNN is 0.7097 which means the weighted average of efficiency over all the classes to rightly classify observations into their respective classes is only 0.7097.........
 
 
-### rpart Model
+### Decision Tree Model
 
-Decision Tree
+Decision Tree is the most intuitive solution that we get from data, and it s very popular en health industry, that the system give you a quick rule to answer your question.
+
+for this model we are going to user the rpart package and the cp (complexity parameter) is our parameter to start moving to get a better accuracy.
+
 
 ### First Prediction
 Let's works with the first Prediction
@@ -522,7 +535,7 @@ Let's works with the first Prediction
 
 ### Second Predictions
 Let's works with the second Prediction
-```{r rpart Model Second Prediction train, echo=FALSE, warning=FALSE}
+```{r Decision Tree Model Second Prediction train, echo=FALSE, warning=FALSE}
 # use cross validation to choose cp
 #library(caret)
 
@@ -535,23 +548,32 @@ fit_rpart <- train(Class.code ~ ., method = "rpart",
 
 
 ggplot(fit_rpart) + ggtitle("Decision Tree")
+fit_rpart
+```
 
+The cp is `r fit_rpart$bestTune` and we get the following decision tree with this:
+
+
+```{r Decision Tree Model Second Prediction plot, echo=FALSE, warning=FALSE}
 # access the final model and plot it
 plot(fit_rpart$finalModel, margin = 0.1)
 text(fit_rpart$finalModel, cex = 0.75)
 ```
 
 
-```{r rpart Model Second Prediction Predict, echo=FALSE, warning=FALSE}
+```{r Decision Tree Model Second Prediction Predict, echo=FALSE, warning=FALSE}
 # compute accuracy
+options(digits =2)
+
 y_hat_rpart <- predict(fit_rpart, data.frame(validation_set1), type = "raw")
 cm <- confusionMatrix(y_hat_rpart, reference = validation_set1$`Class code`)#$overall["Accuracy"]
 cm
+options(digits =7) # default
 ```
 
-Let's prune this:
+Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy:
 
-```{r rpart Model Second Prediction Prune, echo=FALSE, warning=FALSE}
+```{r Decision Tree Model Second Prediction Prune, echo=FALSE, warning=FALSE}
 # prune the tree 
 #library(rpart)
 fit <- rpart(Class.code ~ ., data = train_set2, control = rpart.control(cp = 0.033, minsplit = 2))
@@ -561,53 +583,61 @@ text(pruned_fit, cex = 0.75)
 
 # compute accuracy
 #y_hat_rpart <- predict(fit, data.frame(validation_set), type = "raw")
+options(digits =2)
+
 y_hat_rpart <- predict(pruned_fit, data.frame(validation_set1), type = "class")
 
 cm <- confusionMatrix(y_hat_rpart, reference = validation_set1$`Class code`)#$overall["Accuracy"]
 cm
+options(digits =7) # default
 ```
+We can not any improvement, but the decision tree is similar but not equall under tge change made by prune.
+
 
 For our record, we keep this result:
-```{r rpart Model Second Prediction Result, echo=FALSE}
+```{r Decision Tree Model Second Prediction Result, echo=FALSE}
 Pred2_results <- bind_rows(Pred2_results,
                            data.frame(Model = "Decision Tree Classifier",
                             Accuracy = cm$overall["Accuracy"],
-                            Class.1.Code = row.names(cm$byClass)[1],
-                            Class.1.Sensitivity = cm$byClass[1,1],
-                            Class.1.Specificity = cm$byClass[1,2],
-                            Class.2.Code = row.names(cm$byClass)[2],
-                            Class.2.Sensitivity = cm$byClass[2,1],
-                            Class.2.Specificity = cm$byClass[2,2],
-                            Class.3.Code = row.names(cm$byClass)[3],
-                            Class.3.Sensitivity = cm$byClass[3,1],
-                            Class.3.Specificity = cm$byClass[3,2],
-                            Class.4.Code = row.names(cm$byClass)[4],
-                            Class.4.Sensitivity = cm$byClass[4,1],
-                            Class.4.Specificity = cm$byClass[4,2],
-                            Class.5.Code = row.names(cm$byClass)[5],
-                            Class.5.Sensitivity = cm$byClass[5,1],
-                            Class.5.Specificity = cm$byClass[5,2],
-                            Class.6.Code = row.names(cm$byClass)[6],
-                            Class.6.Sensitivity = cm$byClass[6,1],
-                            Class.6.Specificity = cm$byClass[6,2],
-                            Class.7.Code = row.names(cm$byClass)[7],
-                            Class.7.Sensitivity = cm$byClass[7,1],
-                            Class.7.Specificity = cm$byClass[7,2],
-                            Class.8.Code = row.names(cm$byClass)[8],
-                            Class.8.Sensitivity = cm$byClass[8,1],
-                            Class.8.Specificity = cm$byClass[8,2],
-                            Class.9.Code = row.names(cm$byClass)[9],
-                            Class.9.Sensitivity = cm$byClass[9,1],
-                            Class.9.Specificity = cm$byClass[9,2],
-                            Class.10.Code = row.names(cm$byClass)[10],
-                            Class.10.Sensitivity = cm$byClass[10,1],
-                            Class.10.Specificity = cm$byClass[10,2],
-                            Class.11.Code = row.names(cm$byClass)[11],
-                            Class.11.Sensitivity = cm$byClass[11,1],
-                            Class.11.Specificity = cm$byClass[11,2],
-                            Class.12.Code = row.names(cm$byClass)[12],
-                            Class.12.Sensitivity = cm$byClass[12,1],
-                            Class.12.Specificity = cm$byClass[12,2],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
                             row.names = NULL))
 Pred2_results[,1:8] %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
 
@@ -617,7 +647,11 @@ Pred2_results[,1:8] %>% knitr::kable(caption = "Prediction All Arrhytmia Classif
 
 ## Random Forests Model
 
+We see one decison tree in the previous section. Applying prune we have a different one but with similar accuracy. The idea behind random forest is that we created multiple trees and the class who get more "votes" among all the tress is the predicted value.
 
+In other words, among the tress, witch prediction is the most popular.
+
+Here we have like parameters the value of mtry that wwe are trying to use to get the better accuracy.
 
 ### Second Predictions
 ```{r Random Forests Model Second Predictions train, echo=FALSE, warning=FALSE}
@@ -630,10 +664,11 @@ fit_rf <- train(`Class code` ~ ., method = "rf",
                      tuneGrid = data.frame(mtry = seq(10, 100, len = 25)),
                      data = train_set1)
 
-fit_rf
+
 #fit <- randomForest(`Class code` ~ ., data = trr) 
 #plot(fit_rf)
 ggplot(fit_rf) + ggtitle("Random Forests")
+fit_rf
 ```
 
 ```{r Random Forests Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
@@ -666,42 +701,45 @@ For our record, we keep this result:
 Pred2_results <- bind_rows(Pred2_results,
                            data.frame(Model = "Random Forest Classifier",
                             Accuracy = cm$overall["Accuracy"],
-                            Class.1.Code = row.names(cm$byClass)[1],
-                            Class.1.Sensitivity = cm$byClass[1,1],
-                            Class.1.Specificity = cm$byClass[1,2],
-                            Class.2.Code = row.names(cm$byClass)[2],
-                            Class.2.Sensitivity = cm$byClass[2,1],
-                            Class.2.Specificity = cm$byClass[2,2],
-                            Class.3.Code = row.names(cm$byClass)[3],
-                            Class.3.Sensitivity = cm$byClass[3,1],
-                            Class.3.Specificity = cm$byClass[3,2],
-                            Class.4.Code = row.names(cm$byClass)[4],
-                            Class.4.Sensitivity = cm$byClass[4,1],
-                            Class.4.Specificity = cm$byClass[4,2],
-                            Class.5.Code = row.names(cm$byClass)[5],
-                            Class.5.Sensitivity = cm$byClass[5,1],
-                            Class.5.Specificity = cm$byClass[5,2],
-                            Class.6.Code = row.names(cm$byClass)[6],
-                            Class.6.Sensitivity = cm$byClass[6,1],
-                            Class.6.Specificity = cm$byClass[6,2],
-                            Class.7.Code = row.names(cm$byClass)[7],
-                            Class.7.Sensitivity = cm$byClass[7,1],
-                            Class.7.Specificity = cm$byClass[7,2],
-                            Class.8.Code = row.names(cm$byClass)[8],
-                            Class.8.Sensitivity = cm$byClass[8,1],
-                            Class.8.Specificity = cm$byClass[8,2],
-                            Class.9.Code = row.names(cm$byClass)[9],
-                            Class.9.Sensitivity = cm$byClass[9,1],
-                            Class.9.Specificity = cm$byClass[9,2],
-                            Class.10.Code = row.names(cm$byClass)[10],
-                            Class.10.Sensitivity = cm$byClass[10,1],
-                            Class.10.Specificity = cm$byClass[10,2],
-                            Class.11.Code = row.names(cm$byClass)[11],
-                            Class.11.Sensitivity = cm$byClass[11,1],
-                            Class.11.Specificity = cm$byClass[11,2],
-                            Class.12.Code = row.names(cm$byClass)[12],
-                            Class.12.Sensitivity = cm$byClass[12,1],
-                            Class.12.Specificity = cm$byClass[12,2],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
                             row.names = NULL))
 Pred2_results[,1:8] %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
 
@@ -733,24 +771,57 @@ confusionMatrix(predict(train_rf_2, mnist_27$test), mnist_27$test$y)$overall["Ac
 
 
 
-## SVM Model 
+## Support Vector Machines Model 
+
+
+The Support Vector Machines (SVM), was created as an objective  a fast and dependable classification algorithm that performs very well with a limited amount of data to analyze. This create a n-dimensional space, one for each predictor, an try to get the space of the output.
+
+A support vector machine allows you to classify data that’s linearly separable, but if it is not linearly separable, you can use the kernel trick to make it work. In this case we let the algorithm to select the kernel and later the parameters cost and gamma.
+
 
 ### Second Predictions
 
-```{r SVM Model Second Prediction train, echo=FALSE, warning=FALSE}
+```{r Support Vector Machines Model Second Prediction train, echo=FALSE, warning=FALSE}
 #Support Vector Classifier:
 #library(e1071)
 set.seed(1)
-train_svm <- svm(`Class code` ~ .,kernel = "linear",cost = 1,
+train_svm <- svm(`Class code` ~ ., data = train_set1)
+train_svm
+
+y_hat_svm <- predict(train_svm,validation_set1)
+
+options(digits =2)
+cm <- confusionMatrix(data = y_hat_svm, reference = validation_set1$`Class code`) #$overall["Accuracy"]
+cm
+options(digits =7) # default
+
+#Tuning SVM to find the best cost and gamma ..
+train_svm_tune <- tune(svm, `Class code` ~ .,data = train_set1, 
+              kernel="radial", ranges=list(cost=10^(-1:2), gamma=c(.5,1,2)))
+
+train_svm_tune
+
+y_hat_svm_tune <- predict(train_svm_tune$best.model,validation_set1)
+
+options(digits =2)
+cm <- confusionMatrix(data = y_hat_svm_tune, reference = validation_set1$`Class code`) #$overall["Accuracy"]
+cm
+options(digits =7) # default
+```
+
+
+```{r , echo=FALSE, warning=FALSE, eval=FALSE}
+#delete
+train_svmxx <- svm(`Class code` ~ .,kernel = "polynomial",cost = 1,
                      #tuneGrid = data.frame(ranges = seq(0, 2, len = 10)),
                      data = train_set1)
 
 #svc <- svm(Y~.,data = df_train.boruta,kernel = "linear",cost = 1)
-tune.out <- tune(svm,`Class code` ~ .,data = train_set1,ranges = list(cost= c(0.001,0.05,0.01,0.1,1,5,10,100)), kernel = "linear")
+tune.out <- tune(svm,`Class code` ~ .,data = train_set1,ranges = list(cost= c(0.001,0.05,0.01,0.1,1,5,10,100)), kernel = "polynomial")
 bestsvc <- tune.out$best.model
 summary(bestsvc)
 svcpred <- predict(bestsvc,validation_set1)
-svcpred <- predict(train_svm,validation_set1)
+svcpred1 <- predict(train_svm,validation_set1)
 
 
 #y_hat_rpart <- predict(train_rpart, validation_set, type = "raw")
@@ -764,46 +835,49 @@ options(digits =7) # default
 ```
 
 For our record, we keep this result:
-```{r SVM Model Second Prediction Result, echo=FALSE}
+```{r Support Vector Machines Model Second Prediction Result, echo=FALSE}
 Pred2_results <- bind_rows(Pred2_results,
                            data.frame(Model = "SVM Classifier",
                             Accuracy = cm$overall["Accuracy"],
-                            Class.1.Code = row.names(cm$byClass)[1],
-                            Class.1.Sensitivity = cm$byClass[1,1],
-                            Class.1.Specificity = cm$byClass[1,2],
-                            Class.2.Code = row.names(cm$byClass)[2],
-                            Class.2.Sensitivity = cm$byClass[2,1],
-                            Class.2.Specificity = cm$byClass[2,2],
-                            Class.3.Code = row.names(cm$byClass)[3],
-                            Class.3.Sensitivity = cm$byClass[3,1],
-                            Class.3.Specificity = cm$byClass[3,2],
-                            Class.4.Code = row.names(cm$byClass)[4],
-                            Class.4.Sensitivity = cm$byClass[4,1],
-                            Class.4.Specificity = cm$byClass[4,2],
-                            Class.5.Code = row.names(cm$byClass)[5],
-                            Class.5.Sensitivity = cm$byClass[5,1],
-                            Class.5.Specificity = cm$byClass[5,2],
-                            Class.6.Code = row.names(cm$byClass)[6],
-                            Class.6.Sensitivity = cm$byClass[6,1],
-                            Class.6.Specificity = cm$byClass[6,2],
-                            Class.7.Code = row.names(cm$byClass)[7],
-                            Class.7.Sensitivity = cm$byClass[7,1],
-                            Class.7.Specificity = cm$byClass[7,2],
-                            Class.8.Code = row.names(cm$byClass)[8],
-                            Class.8.Sensitivity = cm$byClass[8,1],
-                            Class.8.Specificity = cm$byClass[8,2],
-                            Class.9.Code = row.names(cm$byClass)[9],
-                            Class.9.Sensitivity = cm$byClass[9,1],
-                            Class.9.Specificity = cm$byClass[9,2],
-                            Class.10.Code = row.names(cm$byClass)[10],
-                            Class.10.Sensitivity = cm$byClass[10,1],
-                            Class.10.Specificity = cm$byClass[10,2],
-                            Class.11.Code = row.names(cm$byClass)[11],
-                            Class.11.Sensitivity = cm$byClass[11,1],
-                            Class.11.Specificity = cm$byClass[11,2],
-                            Class.12.Code = row.names(cm$byClass)[12],
-                            Class.12.Sensitivity = cm$byClass[12,1],
-                            Class.12.Specificity = cm$byClass[12,2],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
                             row.names = NULL))
 Pred2_results[,1:8] %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
 
