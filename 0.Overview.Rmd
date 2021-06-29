@@ -47,6 +47,8 @@ source(file="CrossTableNarrow.R") # Minor change in Column and Row Total Heading
 source(file="../kableExtra/R/add_header_above.R") 
 source(file="../kableExtra/R/util.R")
 source(file="../kableExtra/R/from_knitr.R")
+source(file="../kableExtra/R/kable_styling.R") # to center table
+source(file="../kableExtra/R/scroll_box.R")
 
 
 # Cardiac Arrhythmia dataset:
