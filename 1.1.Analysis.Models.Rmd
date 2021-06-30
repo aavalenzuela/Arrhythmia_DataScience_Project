@@ -6,7 +6,7 @@ As we mention previously, we are going to implement models for two purposes:
 a. **Detection of cardiac arrhythmia** 
 b. **Classification of cardiac arrhythmia**
 
-In our first prediction for detection of cardiac arrhythmia, the data points are classified into two classes: “Normal” & “Arrhythmia”. This model only identifies if the patient is normal (class 1) or suffers from any form of arrhythmia (class 2 to 16). Then the output is a binary variable (is a variable that has two possible outcomes). This will possible if all the instances belonging to classes 2 to 16 were merged to one class. The arrhythmia class will be treated as the ‘Positive’ class.
+In our **first** prediction for detection of cardiac arrhythmia, the data points are classified into two classes: “Normal” & “Arrhythmia”. This model only identifies if the patient is normal (class 1) or suffers from any form of arrhythmia (class 2 to 16). Then the output is a binary variable (is a variable that has two possible outcomes). This will possible if all the instances belonging to classes 2 to 16 were merged to one class. The arrhythmia class will be treated as the ‘Positive’ class.
 
 We are going to see the following evaluation metrics:
 
@@ -24,7 +24,7 @@ We can summarize in the following way:
 We are looking for accuracy and sensitivity. Why? it is much more important to maximize sensitivity over specificity: failing to predict a arrhythmia  can put the health/life of the patience in risk. It is better than this patience classified as "Arrhythmia" and make all the exams/procedure and when validate that he or she is ok.
 
 
-In our prediction model for classification of cardiac arrhythmia classified the patient into one of 16 classes, with class 1 representing “Normal” and classes 2 to 16 representing a condition of cardiac arrhythmia. Here we continue with the accuracy concept but now sensitivity and specificity is for class.
+In our **second** prediction model for classification of cardiac arrhythmia classified the patient into one of 16 classes, with class 1 representing “Normal” and classes 2 to 16 representing a condition of cardiac arrhythmia. Here we continue with the accuracy concept but now sensitivity and specificity is for class.
 
 
 Let's show the standard definition in an binary variable:  
@@ -85,7 +85,7 @@ $$
 
 ## First Model...just the most common
 
-We are now to create our models. For that we are not to use the validation, we are going to use train dataset.
+We are now to create our models. For that we are not to use the validation, we are going to use only train dataset.
 
 
 The most basic and quick approach it is consider that the most common class (mode), in this case it is the "Normal" class, is the best guess. Then the model is:
@@ -137,7 +137,7 @@ cm$byClass["Specificity"]
 
 
 Because an algorithm that calls everything positive ($Y = 1$ no matter what) has perfect specificity, but worse sensitivity. These are completely opposite if we set as less common.
-The Accuracy obtained will be are base one.
+The Accuracy obtained will be our base one.
 
 
 
@@ -159,6 +159,8 @@ Pred1_results <- data.frame(Model = "Just the most common",
 Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
   kable_styling(full_width = F)
 ```
+
+
 
 ### Second Predictions
 Second Predictions, that considered all the classes, the accuracy is the same, but now we have sensitivity and specificity by class:
@@ -233,14 +235,14 @@ Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Class
 ```
 
 
-
+Then this first approach give us a base line to the next ones.
 
 
 
 
 ## K-Nearest Neighbors Model
 
-Now we continue with the K-Nearest Neighbors.
+Our first algorithm will be the K-Nearest Neighbors. KNN is a non-parametric method and makes no assumptions.
 
 In base of the concept of distance, this method attempts to find K nearest points of the train data point to the test data point and assigns the class to it on basis of majority for K nearest points. Then the basic question is which value of k give a better solution.
 
@@ -350,7 +352,7 @@ options(digits =7) # default
 ggplot(varImp(fit_knn), top = 8) + ggtitle("K-Nearest Neighbors Model Top 8 feature")
 ```
 
-We noted that the variable are not the same ompare with the same model but only looking to predict Normal/Arrthymia , some of them appear in other importance position and other are new.
+We noted that the variable are not the same compare with the same model but only looking to predict Normal/Arrhythmia, some of them appear in other importance position and other are new.
 
 
 Now see how well it is the prediction in the validation set:  
@@ -379,7 +381,9 @@ CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FAL
 ```
 
 
-As seen above, KNN cannot accurately classify test observations for classes 2 and 5 whereas, it completely misclassifies them for class 4. Most of the misclassified observations have been classified to class 1.......
+As seen above, KNN cannot accurately classify test observations for classes 5 to 8 and between class11 to 16. In total 7 classes with sensitivity = 0 and specificity = 1.
+Almost completely misclassifies in class 2 that are observations have been classified to class 1.
+A perfect match in class 3 and 9.
 
 
 
@@ -437,18 +441,123 @@ Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Class
 
 
 
-KNN is a non-parametric method and makes no assumptions. It classifies a test observation to the class that is most common among its neighbors, which in this case is class 1 since the dataset is imbalanced and skewed towards class 1. Hence, a considerable number of patients who suffer from arrhythmia will not be correctly diagnosed if we follow this model. We find the optimal K that achieves the best accuracy is 7, as seen from the graph, by performing repeated crossvalidation. We use 20 different values to try for each parameter here. Overall AUC of KNN is 0.7097 which means the weighted average of efficiency over all the classes to rightly classify observations into their respective classes is only 0.7097.........
+The k of 6 or 7 for these method look a good number and this method perform much better with binary output than the multi-value output.
+
+
 
 
 ### Decision Tree Model
 
 Decision Tree is the most intuitive solution that we get from data, and it s very popular en health, that the system give you a quick rule to answer your question.
 
-for this model we are going to user the rpart package and the cp (complexity parameter) is our parameter to start moving to get a better accuracy.
+For this model we are going to user the rpart package and the cp (complexity parameter) is our parameter to start moving to get a better accuracy.
 
 
 ### First Prediction
 Let's works with the first Prediction
+
+```{r Decision Tree Model First Prediction train, echo=FALSE, warning=FALSE}
+# use cross validation to choose cp
+#library(caret)
+
+# rpart need Valid Column Names 
+train_set2_p1 <- data.frame(train_set1_p1)
+set.seed(1, sample.kind="Rounding")
+fit_rpart <- train(Class.code ~ ., method = "rpart",
+                     tuneGrid = data.frame(cp = seq(0, 0.05, len = 25)),
+                     data = train_set2_p1, na.action=na.pass)
+
+
+ggplot(fit_rpart) + ggtitle("Decision Tree")
+fit_rpart
+```
+
+The cp is `r fit_rpart$bestTune` and we get the following decision tree with this:
+
+
+```{r Decision Tree Model First Prediction plot, echo=FALSE, warning=FALSE}
+# access the final model and plot it
+plot(fit_rpart$finalModel, margin = 0.1)
+text(fit_rpart$finalModel, cex = 0.75)
+```
+
+The variable importance for this method is:
+
+```{r Decision Tree Model First Prediction Variable Importance, echo=FALSE, warning=FALSE}
+options(digits =2)
+varImp(fit_rpart)
+options(digits =7) # default
+```
+
+These predictor are present in the tree too, not all of them because the tree shows less than 20 predictors, and the overall it is not directly related with the order in the decision tree. Now see how well it is the prediction in the validation set:
+
+```{r Decision Tree Model First Prediction Predict, echo=FALSE, warning=FALSE}
+# compute accuracy
+options(digits =2)
+
+y_hat_rpart <- predict(fit_rpart, data.frame(validation_set1_p1), type = "raw")
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set1_p1$`Class code`)#$overall["Accuracy"]
+cm
+options(digits =7) # default
+```
+
+Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy:
+
+```{r Decision Tree Model First Prediction Prune, echo=FALSE, warning=FALSE}
+# prune the tree 
+#library(rpart)
+fit <- rpart(Class.code ~ ., data = train_set2_p1, control = rpart.control(cp = 0.027, minsplit = 2))
+pruned_fit <- prune(fit, cp = 0.01)
+plot(pruned_fit, margin = 0.1)
+text(pruned_fit, cex = 0.75)
+
+# compute accuracy
+#y_hat_rpart <- predict(fit, data.frame(validation_set), type = "raw")
+options(digits =2)
+
+y_hat_rpart <- predict(pruned_fit, data.frame(validation_set1_p1), type = "class")
+
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set1_p1$`Class code`)#$overall["Accuracy"]
+cm
+options(digits =7) # default
+```
+
+We can not see any improvement, but the decision tree is similar but not equal under the change made by prune.
+
+```{r Decision Tree Model First Prediction Table, echo=FALSE}
+# Table names
+Predicted <- y_hat_rpart
+Actually <- validation_set1$`Class code`
+#Computes the crosstable calculations
+CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+For our record, we keep this result:
+```{r Decision Tree Model First Prediction Result, echo=FALSE}
+Pred1_results <- bind_rows(Pred1_results,
+                           data.frame(Model = "Decision Tree Classifier",
+                                     Accuracy = cm$overall["Accuracy"],
+                                     Sensitivity = cm$byClass["Sensitivity"],
+                                     Specificity = cm$byClass["Specificity"], row.names = NULL ))
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+  kable_styling(full_width = F)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -480,6 +589,12 @@ text(fit_rpart$finalModel, cex = 0.75)
 ```
 
 
+```{r Decision Tree Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
+options(digits =2)
+varImp(fit_rpart)
+options(digits =7) # default
+```
+
 ```{r Decision Tree Model Second Prediction Predict, echo=FALSE, warning=FALSE}
 # compute accuracy
 options(digits =2)
@@ -510,7 +625,16 @@ cm <- confusionMatrix(y_hat_rpart, reference = validation_set1$`Class code`)#$ov
 cm
 options(digits =7) # default
 ```
-We can not any improvement, but the decision tree is similar but not equall under the change made by prune.
+We can not see any improvement neither, but the decision tree is similar but not equal under the change made by prune.
+
+
+```{r Decision Tree Model Second Prediction Table, echo=FALSE}
+# Table names
+Predicted <- y_hat_rpart
+Actually <- validation_set1$`Class code`
+#Computes the crosstable calculations
+CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
 
 
 For our record, we keep this result:
@@ -562,6 +686,12 @@ Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Class
 ```
 
 
+We see improvements in Accuracy and	Sensitivity and a worse value for	Specificity that it is not crucial for this case. The prune applied in this model does not give any improvement in our results.
+In 5 classes we can not predict any case (Sensitivity =0 & Specificity=1) and Class 9 we have all the cases rigth!
+
+
+
+
 
 ## Random Forests Model
 
@@ -569,7 +699,73 @@ We see one decison tree in the previous section. Applying prune we have a differ
 
 In other words, among the tress, witch prediction is the most popular.
 
-Here we have like parameters the value of mtry that wwe are trying to use to get the better accuracy.
+Here we have like parameters the value of mtry that we are trying to use to get the better accuracy.
+
+
+### First Predictions
+```{r Random Forests Model First Predictions train, echo=FALSE, warning=FALSE}
+#Random Forests
+
+#library(randomForest)
+
+set.seed(1, sample.kind="Rounding")
+fit_rf <- train(`Class code` ~ ., method = "rf",
+                     tuneGrid = data.frame(mtry = seq(10, 100, len = 25)),
+                     data = train_set1_p1)
+
+
+#fit <- randomForest(`Class code` ~ ., data = trr) 
+#plot(fit_rf)
+ggplot(fit_rf) + ggtitle("Random Forests")
+fit_rf
+```
+
+the mtry we get is `r fit_rf$bestTune`. The variable importance for this method are:
+
+
+```{r Random Forests Model First Prediction Variable Importance, echo=FALSE, warning=FALSE}
+options(digits =2)
+varImp(fit_rf)
+#ggplot(varImp(fit_knn))
+options(digits =7) # default
+```
+
+Now see how well it is the prediction in the validation set:
+
+```{r Random Forests Model First Prediction Prediction, echo=FALSE, warning=FALSE}
+options(digits =2)
+y_hat_rf <- predict(fit_rf, validation_set1_p1, type = "raw")
+cm <- confusionMatrix(data = y_hat_rf, reference = validation_set1_p1$`Class code`) #$overall["Accuracy"]
+cm
+options(digits =7) # default
+```
+
+```{r Random Forests Model First Prediction Table, echo=FALSE}
+# Table names
+Predicted <- y_hat_rf
+Actually <- validation_set1_p1$`Class code`
+#Computes the crosstable calculations
+CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+
+For our record, we keep this result:
+```{r Random Forests Model First Prediction Result, echo=FALSE}
+Pred1_results <- bind_rows(Pred1_results,
+                           data.frame(Model = "Random Forest Classifier",
+                                     Accuracy = cm$overall["Accuracy"],
+                                     Sensitivity = cm$byClass["Sensitivity"],
+                                     Specificity = cm$byClass["Specificity"], row.names = NULL ))
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+  kable_styling(full_width = F)
+```
+
+
+
+Random Forests get better result over decision tree and previous ones.
+
+
 
 ### Second Predictions
 ```{r Random Forests Model Second Predictions train, echo=FALSE, warning=FALSE}
@@ -589,12 +785,18 @@ ggplot(fit_rf) + ggtitle("Random Forests")
 fit_rf
 ```
 
+the mtry we get is `r fit_rf$bestTune`. The variable importance for this method are:
+
+
 ```{r Random Forests Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
 varImp(fit_rf)
 #ggplot(varImp(fit_knn))
 options(digits =7) # default
 ```
+
+Now see how well it is the prediction in the validation set:
+
 
 ```{r Random Forests Model Second Prediction Prediction, echo=FALSE, warning=FALSE}
 options(digits =2)
@@ -663,7 +865,9 @@ Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Class
 ```
 
 
-
+We see improvements in Accuracy.
+In 6 classes we can not predict any case (Sensitivity =0 & Specificity=1) and Class 3 and 9 we have all the cases right!
+One aspect to consider is that this method spend more CPU time over the rest.
 
 
 ## Support Vector Machines Model 
@@ -674,7 +878,86 @@ The Support Vector Machines (SVM), was created as an objective  a fast and depen
 A support vector machine allows you to classify data that’s linearly separable, but if it is not linearly separable, you can use the kernel trick to make it work. In this case we let the algorithm to select the kernel and later the parameters cost and gamma.
 
 
+
+### First Predictions
+
+For this part we are going to use the caret train method that perform better than svm from e1071 library.
+
+```{r Support Vector Machines Model First Prediction train, echo=FALSE, warning=FALSE}
+#Support Vector Classifier:
+#library(e1071)
+set.seed(1)
+#train_svm <- svm(`Class code` ~ ., data = train_set1_p1)
+#train_svm
+
+fit_svm <- train(`Class code` ~ ., data = train_set1_p1, method="svmRadial")  # caret train method 
+fit_svm
+
+#y_hat_svm <- predict(train_svm,validation_set1_p1)
+y_hat_svm <- predict(fit_svm,validation_set1_p1)
+
+options(digits =2)
+cm <- confusionMatrix(data = y_hat_svm, reference = validation_set1_p1$`Class code`) #$overall["Accuracy"]
+cm
+options(digits =7) # default
+
+#Tuning SVM to find the best cost and gamma ..
+#train_svm_tune <- tune(svm, `Class code` ~ .,data = train_set1_p1, 
+#              kernel="radial", ranges=list(cost=10^(-1:2), gamma=c(.5,1,2)))
+#train_svm_tune
+#train_svm_after_tune <- svm(`Class code` ~ ., data = train_set1_p1, kernel="radial", cost=0.1, gamma=0.5)
+#y_hat_svm_tune <- predict(train_svm_after_tune,validation_set1_p1)
+```
+
+The values that get the better result are `r fit_svm$bestTune`.
+
+The important variables are:
+
+```{r Support Vector Machines Model First Prediction Variable Importance, echo=FALSE, warning=FALSE}
+options(digits =2)
+varImp(fit_svm)
+#ggplot(varImp(fit_knn))
+options(digits =7) # default
+```
+
+
+The try to get a tune over the SVM but it fail, for that we keep the original value.
+
+```{r Support Vector Machines Model first Prediction Table, echo=FALSE}
+# Table names
+Predicted <- y_hat_svm
+Actually <- validation_set1_p1$`Class code`
+#Computes the crosstable calculations
+CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+For our record, we keep this result:
+```{r Support Vector Machines Model First Prediction Result, echo=FALSE}
+
+Pred1_results <- bind_rows(Pred1_results,
+                           data.frame(Model = "SVM Classifier",
+                                     Accuracy = cm$overall["Accuracy"],
+                                     Sensitivity = cm$byClass["Sensitivity"],
+                                     Specificity = cm$byClass["Specificity"], row.names = NULL ))
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+  kable_styling(full_width = F)
+```
+
+
+This method did not perform as expected and it is close to KNN and decison tree in result.
+
+
+
+
+
+
+
+
+
+
 ### Second Predictions
+
+The svm from e1071 library works better for multiple output than the caret train method, that why we changed in this part.
 
 ```{r Support Vector Machines Model Second Prediction train, echo=FALSE, warning=FALSE}
 #Support Vector Classifier:
@@ -690,18 +973,28 @@ cm <- confusionMatrix(data = y_hat_svm, reference = validation_set1$`Class code`
 cm
 options(digits =7) # default
 
-#Tuning SVM to find the best cost and gamma ..
-train_svm_tune <- tune(svm, `Class code` ~ .,data = train_set1, 
-              kernel="radial", ranges=list(cost=10^(-1:2), gamma=c(.5,1,2)))
 
-train_svm_tune
+```
 
-y_hat_svm_tune <- predict(train_svm_tune$best.model,validation_set1)
+The values that get the better result are `r fit_svm$bestTune`.
 
+The important variables are:
+
+```{r Support Vector Machines Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
-cm <- confusionMatrix(data = y_hat_svm_tune, reference = validation_set1$`Class code`) #$overall["Accuracy"]
-cm
+varImp(fit_svm)
+#ggplot(varImp(fit_knn))
 options(digits =7) # default
+```
+
+
+
+```{r Support Vector Machines Model Second Prediction Table, echo=FALSE}
+# Table names
+Predicted <- y_hat_svm
+Actually <- validation_set1_p1$`Class code`
+#Computes the crosstable calculations
+CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
 ```
 
 
@@ -755,6 +1048,7 @@ Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Class
 ```
 
 
+This method did not perform as expected with multi-variable too and it is close to KNN and decision tree in result as before.
 
 
 
@@ -797,10 +1091,6 @@ $$
 
 
 
-```{r Result Regularization Movie_User and Genre Based Model, eval=FALSE}
-rmse_results %>% knitr::kable()
-rm(new_test_set) 
-```
 
 
 The new RMSE get a little better but enough to reach the target. Then this is our model that we are going to use with validation dataset.
