@@ -58,7 +58,8 @@ source(file="../kableExtra/R/util.R")
 
 
 arrhythmia.uci <- read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/arrhythmia/arrhythmia.data"),
-                     header=FALSE)
+                     header=FALSE,
+                     stringsAsFactors = FALSE)
 
 
 colnames(arrhythmia.uci)[280] <- "Class code"

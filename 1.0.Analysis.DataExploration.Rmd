@@ -655,7 +655,7 @@ and this predictor has very low correlation with all the rest of the predictor
 
 
 #### Less Correlation
-Less correlated predictors are also presented and they are:
+Less correlated predictors are also presented and as we saw in the histogram, they are the most common. For example for the correlation between -0.001 and 0.001 we have:
 ```{r Correlation Less Correlated, echo=FALSE}
 limit <- 0.0001
 cor_arrhythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::kable("html", caption = "Less Correlated Preditors") %>%
@@ -669,18 +669,19 @@ cor_arrhythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::ka
 
 ## Outliers
 
-Let's take a look to some predictors to see if we can find some outliers. Let's start with Age.
+Let's take a look to some predictors to see if we can find some outliers. Outliers in statistics are considered as the data values which differ considerably from the bulk of a given data set. These data values lie outside the overall trend, which could be lies in the data.
+Let's start with some familiar predictors like Age.
 
 ```{r Outliers Age Boxplot, echo=FALSE}
-arrhythmia %>% ggplot(aes(Age)) + geom_boxplot() + ggtitle("Age Boxplot")
+arrhythmia %>% ggplot(aes(Age)) + geom_boxplot() + ggtitle("Age Outliers")
 ```
 
 It does not show any value we can detect as outlier.
 
-Let's continue with Height Height are in centimeters.
+Let's continue with Height. Height are in centimeters.
 
 ```{r Outliers Height Boxplot, echo=FALSE}
-arrhythmia %>% ggplot(aes(Height)) + geom_boxplot() + ggtitle("Height Boxplot")
+arrhythmia %>% ggplot(aes(Height)) + geom_boxplot() + ggtitle("Height Outliers")
 ```
 
 We see two vales out of natural range:
@@ -705,7 +706,7 @@ arrhythmia[arrhythmia$Height == 608,3] <- 61   # Height is column 3
 About the weight in kilograms we have the graph:
 
 ```{r Outliers Weight Boxplot, echo=FALSE}
-arrhythmia %>% ggplot(aes(Weight)) + geom_boxplot() + ggtitle("Weight Boxplot")
+arrhythmia %>% ggplot(aes(Weight)) + geom_boxplot() + ggtitle("Weight Outliers")
 ```
 
 Looking in more detail this patience:
@@ -715,7 +716,24 @@ slice_max(arrhythmia, order_by = Weight) %>% select(Age,Weight, Height)
 ```
 looks plausible and no change will be made.
 
-For the predictor above we use our knowledge about the human..a person can not be 7 meter tall, but for the rest, we can review them but for evaluate if it is an outlier and which value can be used to fixed required medical knowledge.
+
+About the Heart rate in frequency in minutes (Number of heart beats per minute) we have the graph:
+
+```{r Outliers Heart rate Boxplot, echo=FALSE}
+arrhythmia %>% ggplot(aes(`Heart rate`)) + geom_boxplot() + ggtitle("Heart rate Outliers")
+```
+
+In the upper numbers:
+
+```{r Outliers Heart rate in detail, echo=FALSE}
+slice_max(arrhythmia, order_by = `Heart rate`, n = 2) %>% select(Age,Weight, Height,`Heart rate`)
+```
+
+It is look like a possible value (I am not a medical doctor!)
+
+
+
+For the predictor above we use our knowledge about the human. A person can not be 7 meter tall, but for the rest, we can review them but for evaluate if it is an outlier and which value can be used to fixed required medical knowledge.
 
 
 
@@ -779,7 +797,7 @@ We can see in detail the Class code distribution in both dataset.
 
 ```{r  Create train set check train_set, echo=FALSE, message=FALSE}
 left_join(train_set, Class, by = "Class code") %>% 
-  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(train_set),digits = 1)) %>%
   knitr::kable("html", caption = "Presence of codes in train_set dataset")
   
 ```
@@ -788,10 +806,12 @@ left_join(train_set, Class, by = "Class code") %>%
 
 ```{r  Create train set check validation_set, echo=FALSE, message=FALSE}
 left_join(validation_set, Class, by = "Class code") %>% 
-  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(validation_set),digits = 1)) %>%
   knitr::kable("html", caption = "Presence of codes in validation_set dataset")
   
 ```
+
+We can see that the percentage of the different classes are not equally distributes in both dataset. Why? Because it is not possible to have the same percentage when there is a few sample in some of them in the initial dataset. For example, Class 8	"Supraventricular Premature Contraction" has only 2 samples, them the function distribute in the 2 dataset and because the total number of samples are different, its percentage is different. This change if we move the partition from 80%-20% to 50%-50% but less samples are left for training propose. This is part of the consideration when we chose this proportion at the beginning.
 
 But this is not the only check we need to perform: we need to see if all the data (predictors) are not equal in this new dataset.
 Remember that we check initially in the arrhythmia dataset that this situation does not occurs, but this can be present in this new (and small) dataset. Particularly with factors, if we have one value only we can get the error: "contrasts can be applied only to factors with 2 or more levels" with the train() function.
