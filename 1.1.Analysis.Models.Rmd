@@ -313,14 +313,14 @@ Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", 
 
 
 
-KNN in overall, has a poor sensitivity and very good specificity. If "Arrhythmia" es predicted we have a good chance to be correct, but if we predict "Normal" we have a good chance to be wrong! We need to improve sensitivity.
+With this first model we have a good improvement. KNN in overall, has a poor sensitivity and very good specificity. If "Arrhythmia" es predicted we have a good chance to be correct, but if we predict "Normal" we have a good chance to be wrong! We need to improve sensitivity.
 
 
 
 
 
 ### Second Predictions
-Let's works with the second Prediction:  
+Let's works with the second Prediction, that include all the classes:  
 ```{r K-Nearest Neighbors Model Second Prediction train, echo=FALSE, warning=FALSE}
 # Predict region using KNN
 
@@ -343,7 +343,7 @@ ggplot(fit_knn) + ggtitle("K-Nearest Neighbors")
 fit_knn
 ```
 
-Now the value of k = `r fit_knn$bestTune$k` is slightly bigger than in the first prediction.
+Now the value of k = `r fit_knn$bestTune$k` is  smaller than in the first prediction.
 Now the variables that this model considers more important are:
 
 ```{r K-Nearest Neighbors Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
@@ -444,9 +444,6 @@ Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Class
 
 
 
-The k of 6 or 7 for these method look a good number and this method perform much better with binary output than the multi-value output.
-
-
 
 
 ### Decision Tree Model
@@ -480,8 +477,8 @@ The cp is `r fit_rpart$bestTune` and we get the following decision tree with thi
 
 ```{r Decision Tree Model First Prediction plot, echo=FALSE, warning=FALSE}
 # access the final model and plot it
-plot(fit_rpart$finalModel, margin = 0.1)
-text(fit_rpart$finalModel, cex = 0.75)
+#plot(fit_rpart$finalModel, margin = 0.1)
+#text(fit_rpart$finalModel, cex = 0.75)
 
 rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
   box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
@@ -514,10 +511,15 @@ Let's prune this, using the previous result but applying a new cp value (cp = 0.
 ```{r Decision Tree Model First Prediction Prune, echo=FALSE, warning=FALSE}
 # prune the tree 
 #library(rpart)
-fit <- rpart(Class.code ~ ., data = train_set2_p1, control = rpart.control(cp = 0.027, minsplit = 2))
-pruned_fit <- prune(fit, cp = 0.01)
+fit_rpart <- rpart(Class.code ~ ., data = train_set2_p1, control = rpart.control(cp = 0.027, minsplit = 2))
+pruned_fit <- prune(fit_rpart, cp = 0.01)
+
 plot(pruned_fit, margin = 0.1)
 text(pruned_fit, cex = 0.75)
+
+#rpart.plot(pruned_fit$finalModel, extra = 2, roundint=FALSE,
+#  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
+#    "GyGy", "GyGn")) # specify 13 colors)
 
 # compute accuracy
 #y_hat_rpart <- predict(fit, data.frame(validation_set), type = "raw")
@@ -592,8 +594,8 @@ The cp is `r fit_rpart$bestTune` and we get the following decision tree with thi
 
 ```{r Decision Tree Model Second Prediction plot, echo=FALSE, warning=FALSE}
 # access the final model and plot it
-plot(fit_rpart$finalModel, margin = 0.1)
-text(fit_rpart$finalModel, cex = 0.75)
+#plot(fit_rpart$finalModel, margin = 0.1)
+#text(fit_rpart$finalModel, cex = 0.75)
 
 rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
   box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
@@ -623,15 +625,15 @@ Let's prune this, using the previous result but applying a new cp value (cp = 0.
 ```{r Decision Tree Model Second Prediction Prune, echo=FALSE, warning=FALSE}
 # prune the tree 
 #library(rpart)
-fit <- rpart(Class.code ~ ., data = train_set2, control = rpart.control(cp = 0.033, minsplit = 2))
-pruned_fit <- prune(fit, cp = 0.01)
+fit_rpart <- rpart(Class.code ~ ., data = train_set2, control = rpart.control(cp = 0.033, minsplit = 2))
+pruned_fit <- prune(fit_rpart, cp = 0.01)
 
 plot(pruned_fit, margin = 0.1)
 text(pruned_fit, cex = 0.75)
 
-rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
-  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
-    "GyGy", "GyGn")) # specify 13 colors)
+#rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
+#  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
+#    "GyGy", "GyGn")) # specify 13 colors)
 
 # compute accuracy
 #y_hat_rpart <- predict(fit, data.frame(validation_set), type = "raw")
@@ -929,8 +931,8 @@ options(digits =7) # default
 #y_hat_svm_tune <- predict(train_svm_after_tune,validation_set_p1)
 ```
 
-The values that get the better result are sigma = `r fit_svm$bestTune[1]` and C = `r fit_svm$bestTune[2].
-The SVM-Kernel is radial   xxxxxx
+The values that get the better result are sigma = `r fit_svm$bestTune[1]` and C = `r fit_svm$bestTune[2]`.
+The SVM-Kernel is radial.
 
 The important variables are:
 
@@ -985,10 +987,10 @@ The svm from e1071 library works better for multiple output than the caret train
 #Support Vector Classifier:
 #library(e1071)
 set.seed(1)
-train_svm <- svm(`Class code` ~ ., data = train_set)
-train_svm
+fit_svm <- svm(`Class code` ~ ., data = train_set)
+fit_svm
 
-y_hat_svm <- predict(train_svm,validation_set)
+y_hat_svm <- predict(fit_svm,validation_set)
 
 options(digits =2)
 cm <- confusionMatrix(data = y_hat_svm, reference = validation_set$`Class code`) #$overall["Accuracy"]
@@ -998,8 +1000,7 @@ options(digits =7) # default
 
 ```
 
-The values that get the better result are sigma = `r fit_svm$bestTune[1]` and C = `r fit_svm$bestTune[2].
-The SVM-Kernel is radial   xxxxxx
+The SVM-Kernel is radial.
 
 The important variables are:
 

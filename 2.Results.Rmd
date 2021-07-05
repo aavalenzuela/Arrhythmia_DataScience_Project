@@ -5,13 +5,13 @@ We start checking the data and see if it is leading us to a wrong conclusion. Cl
 
 ```{r}
 results <- data.frame(`Class code` = 11,
-                            Prediction = "No data")
+                            Prediction = "No data", check.names = FALSE)
 results <- bind_rows(results,
                      data.frame(`Class code` = 12,
-                            Prediction = "No data"))
+                            Prediction = "No data", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 13,
-                            Prediction = "No data"))
+                            Prediction = "No data", check.names = FALSE))
 ```
 
 
@@ -45,10 +45,10 @@ Which predictors help to get this percentage? Reviewing the models we used, exce
 
 
 ```{r}
-varImp(fit_knn)$importance
-varImp(fit_rpart)$importance
-varImp(fit_rf)$importance
-varImp(fit_svm)$importance
+#varImp(fit_knn)$importance
+#varImp(fit_rpart)$importance
+#varImp(fit_rf)$importance
+#varImp(fit_svm)$importance
 
 # get an overall for knn, because it give us a detail for output class
 rowMeans(varImp(fit_knn)$importance)
@@ -93,22 +93,22 @@ The numbers of occurrences maybe be explains for few patients with these arrhyth
 ```{r}
 results <- bind_rows(results,
                      data.frame(`Class code` = 5,
-                            Prediction = "No Predictable"))
+                            Prediction = "No Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 7,
-                            Prediction = "No Predictable"))
+                            Prediction = "No Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 8,
-                            Prediction = "No Predictable"))
+                            Prediction = "No Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 14,
-                            Prediction = "No Predictable"))
+                            Prediction = "No Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 15,
-                            Prediction = "No Predictable"))
+                            Prediction = "No Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 16,
-                            Prediction = "No Predictable"))
+                            Prediction = "No Predictable", check.names = FALSE))
 ```
 
 Class 9, in the other hand, in 3 models has a perfect score: sensitivity = 1 and specificity = 1. Too good to be true? The only point to see it is the low numbers of patients of this disease, only the 2%.
@@ -118,10 +118,10 @@ Similar situation is with Class 3, but it combines the perfect score and the wor
 ```{r}
 results <- bind_rows(results,
                      data.frame(`Class code` = 9,
-                            Prediction = "Predictable"))
+                            Prediction = "Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 3,
-                            Prediction = "Predictable"))
+                            Prediction = "Predictable", check.names = FALSE))
 ```
 
 Looking the rest of the classes, we see:
@@ -141,28 +141,29 @@ we have a "realistic" results, not to good to be true or too bad.
 ```{r}
 results <- bind_rows(results,
                      data.frame(`Class code` = 1,
-                            Prediction = "Predictable"))
+                            Prediction = "Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 2,
-                            Prediction = "Predictable"))
+                            Prediction = "Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 4,
-                            Prediction = "Predictable"))
+                            Prediction = "Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 6,
-                            Prediction = "Predictable"))
+                            Prediction = "Predictable", check.names = FALSE))
 results <- bind_rows(results,
                      data.frame(`Class code` = 10,
-                            Prediction = "Predictable"))
+                            Prediction = "Predictable", check.names = FALSE))
 ```
 
 
 Like a summary, we have
 
 ```{r Overview Class code table, echo=FALSE, message=FALSE}
-left_join(arrhythmia, Class, by = "Class code") %>% 
-  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
-   left_join(results, by = "Class code") %>% 
+tmp <- left_join(arrhythmia, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1))
+results <- results %>% mutate(`Class code` = as.factor(`Class code`))
+left_join(tmp,results, by = "Class code") %>% 
   knitr::kable(caption = "Result by class codes in our validation dataset")
   
 ```
@@ -190,10 +191,10 @@ gc()
 ```{r}
 #delete
 #install.packages("rpart.plot")
-library(rpart.plot)
-rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
-  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
-    "GyGy", "GyGn")) # specify 13 colors)
+#library(rpart.plot)
+#rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
+#  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
+#    "GyGy", "GyGn")) # specify 13 colors)
 ```
 
 
