@@ -24,7 +24,7 @@ For this project, the [Cardiac Arrhythmia](https://archive.ics.uci.edu/ml/datase
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
-#if(!require(kableExtra)) install.packages("kableExtra")
+#if(!require(kableExtra)) install.packages("kableExtra")  # does not works in Linux
 if(!require(gmodels)) install.packages('gmodels')
 if(!require(rpart)) install.packages('rpart')
 if(!require(randomForest)) install.packages('randomForest')
@@ -34,7 +34,7 @@ if(!require(e1071)) install.packages('e1071')
 library(tidyverse)
 library(caret)
 library(data.table)
-#library(kableExtra)
+#library(kableExtra) # does not works in Linux
 library(gmodels)
 library(rpart)
 library(randomForest)
@@ -43,13 +43,13 @@ library(xml2) #Kable
 
 
 source(file="CrossTableNarrow.R") # Minor change in Column and Row Total Headings of gmodels::CrossTable
-# To use KableExtra in linux
-source(file="../kableExtra/R/add_header_above.R") 
-source(file="../kableExtra/R/util.R")
-source(file="../kableExtra/R/from_knitr.R")
+# To use KableExtra works in linux
+#source(file="../kableExtra/R/add_header_above.R") 
+#source(file="../kableExtra/R/util.R")
+#source(file="../kableExtra/R/from_knitr.R")
 source(file="../kableExtra/R/kable_styling.R") # to center table
 source(file="../kableExtra/R/scroll_box.R")
-
+source(file="../kableExtra/R/util.R")
 
 # Cardiac Arrhythmia dataset:
 # https://archive.ics.uci.edu/ml/datasets/Arrhythmia
@@ -69,7 +69,7 @@ arrhythmia.uci[arrhythmia.uci == "?"] <- NA
 ```
 
 ## Characteristics of dataset
-The Arrhythmia dataset is a table witch each row it is collection of health measurement for each patience and the last one says if this persons it is a normal health or has some of the 15 arrhythmia.
+The Arrhythmia dataset is a table witch each row it is collection of health measurement for one patience and the last column says if this persons it is a normal health or has some of the 15 arrhythmia.
 
 
 ```{r Overview Characteristics of dataset}
@@ -133,11 +133,11 @@ arrhythmia <- arrhythmia.uci %>% mutate(`Class code` = as.factor(`Class code`)
 ```{r Overview Class code table, echo=FALSE, message=FALSE}
 left_join(arrhythmia, Class, by = "Class code") %>% 
   group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
-  knitr::kable()
+  knitr::kable(caption = "Presence of codes in our dataset")
   
 ```
 
-You can see than some arrytmia type are not present in our dataset (11, 12 and 13).
+You can see than some arrhythmias type are not present in our dataset (11, 12 and 13).
 
 ```{r Overview Distribution of Cardiac Arrhythmia Class, echo=FALSE, warning=FALSE}
 left_join(arrhythmia, Class, by = "Class code") %>% ggplot(aes(`Class name`)) + geom_histogram(stat="count") +
@@ -151,13 +151,15 @@ left_join(arrhythmia, Class, by = "Class code") %>% ggplot(aes(`Class name`)) + 
 ## Approach
 The develop of this predicting Cardiac Arrhythmia classification can be explained in the follows steps:
 
-1.- Start analyzing the dataset, cleaning, working on missing values that we found, review predictors that does not add value and define the outcomes that we are going to predict.
+1.- Start analyzing the dataset, cleaning, working on missing values that we found, look for outsider than can be invalid data, review predictors that does not add value and define the outcomes that we are going to predict.
 
-2.- Create the training and validation, or test, dataset
+2.- Create the training and validation, or test, dataset.
 
 3.- Works with several classification supervised machines to get a better accuracy in our predictions. Evaluate sensitivity and specificity.
 
-4.- Review the results
+4.- Review the results.
+
+5.- Conclusion.
 
 
 

@@ -353,6 +353,7 @@ ggplot(varImp(fit_knn), top = 8) + ggtitle("K-Nearest Neighbors Model Top 8 feat
 ```
 
 We noted that the variable are not the same compare with the same model but only looking to predict Normal/Arrhythmia, some of them appear in other importance position and other are new.
+This important variables is for each output, that give us more detail that the other measurement that we see in the others mdels used in this analysis.
 
 
 Now see how well it is the prediction in the validation set:  
@@ -489,7 +490,7 @@ varImp(fit_rpart)
 options(digits =7) # default
 ```
 
-These predictor are present in the tree too, not all of them because the tree shows less than 20 predictors, and the overall it is not directly related with the order in the decision tree. Now see how well it is the prediction in the validation set:
+These arevpredictors are present in the tree too, not all of them because the tree shows less than 20 predictors, and the overall does not show all of them, only 30 are rated, and it is not directly related with the order in the decision tree. Now see how well it is the prediction in the validation set:
 
 ```{r Decision Tree Model First Prediction Predict, echo=FALSE, warning=FALSE}
 # compute accuracy
@@ -501,7 +502,7 @@ cm
 options(digits =7) # default
 ```
 
-Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy:
+Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy and see how it performs:
 
 ```{r Decision Tree Model First Prediction Prune, echo=FALSE, warning=FALSE}
 # prune the tree 
@@ -546,7 +547,7 @@ Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", 
 
 
 
-
+We see improvements in Accuracy and	Sensitivity and a worse value for	Specificity that it is not crucial for this case. The prune applied in this model does not give any improvement in our results.
 
 
 
@@ -686,8 +687,8 @@ Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Class
 ```
 
 
-We see improvements in Accuracy and	Sensitivity and a worse value for	Specificity that it is not crucial for this case. The prune applied in this model does not give any improvement in our results.
-In 5 classes we can not predict any case (Sensitivity =0 & Specificity=1) and Class 9 we have all the cases rigth!
+We see a good improvements in Accuracy. The prune applied in this model does not give any improvement in our results.
+In 5 classes we can not predict any case (Sensitivity =0 & Specificity=1) and Class 9 we have all the cases right!
 
 
 
@@ -909,7 +910,8 @@ options(digits =7) # default
 #y_hat_svm_tune <- predict(train_svm_after_tune,validation_set1_p1)
 ```
 
-The values that get the better result are `r fit_svm$bestTune`.
+The values that get the better result are sigma = `r fit_svm$bestTune[1]` and C = `r fit_svm$bestTune[2].
+The SVM-Kernel is radial   xxxxxx
 
 The important variables are:
 
@@ -976,7 +978,8 @@ options(digits =7) # default
 
 ```
 
-The values that get the better result are `r fit_svm$bestTune`.
+The values that get the better result are sigma = `r fit_svm$bestTune[1]` and C = `r fit_svm$bestTune[2].
+The SVM-Kernel is radial   xxxxxx
 
 The important variables are:
 
@@ -1049,51 +1052,6 @@ Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Class
 
 
 This method did not perform as expected with multi-variable too and it is close to KNN and decision tree in result as before.
-
-
-
-## no
-
-Some movies are over the average and other under it. Can be see that in the data? Is there some preference for some movies over others? This is the code assuming that there is one effect for the movie itself (one item has better preference than other)
-
-$$
- y_{u,i} = \mu + b_{i} + \varepsilon_{i,u}
-$$
-
- $\mu$ the "true" rating for all movies and $b_{i}$ the average rating for movie i or the "movie effect" and $\varepsilon_{i,u}$ independent errors sampled from the same distribution centered at 0.
- 
- 
- 
-
-
-
-We see that adding the movie we get a great improvement in our prediction. But we need to continue because we did not get to the target 
-
-
-
-
-
-One aspect in the machine learning is to check the data and see id it is leading us to a wrong conclusion. We start with the best and worst movie according to the rating:
-
-
-The best movies we do not see the ones we expected. Is this an error in our knowledge of movies? Take a look to the column n, which n stand for the number of rated received: it is a value as low as 1 or 2 rated. Let see what is happening with the worse movies:
-
-
-We see the same behavior.
-
-This lead us to anew model
-
-$$
- y_{u,i} = \mu + b_{i,r} + \varepsilon_{i,u}
-$$
- $\mu$ the "true" rating for all movies and $b_{i,r}$ the average rating for movie i or the "movie effect" considering the numbers of votes that the move has and $\varepsilon_{i,u}$ independent errors sampled from the same distribution centered at 0.
-
-
-
-
-
-
-The new RMSE get a little better but enough to reach the target. Then this is our model that we are going to use with validation dataset.
 
 
 

@@ -1,11 +1,181 @@
 # Results
 *This section presents the modeling results and discusses the model performance.*
 
+We start checking the data and see if it is leading us to a wrong conclusion. Cleaning the data, taking out some predictors that does not have enough information, taking out or fixing some outsiders was the initial work and see that some arrhythmias type are not present in our dataset (class 11, 12 and 13).
+
+```{r}
+results <- data.frame(`Class code` = 11,
+                            Prediction = "No data")
+results <- bind_rows(results,
+                     data.frame(`Class code` = 12,
+                            Prediction = "No data"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 13,
+                            Prediction = "No data"))
+```
+
+
+
+Later we see, despite to have to many predictors, we have several with high correlation.
+
+And the data, some output in the class are not present or they are not equally distributed, unless in our first division between “Normal” & “Arrhythmia”, then the prediction of certain class are very difficult to established. This lack of flat distribution affect the partition of traing and test dataset as well as the algorithm that trying to create the better prediction.
+
+In the Analysis, we divided the question of the prediction in two:
+
+a. **Detection of cardiac arrhythmia** 
+b. **Classification of cardiac arrhythmia**
+
+
+
+As a summary of **Detection of cardiac arrhythmia** we have (it was shown above):
+
+```{r Results First Prediction Result, echo=FALSE}
+
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+  kable_styling(full_width = F)
+```
+
+
+Then with this, we get a accuracy of `r max(Pred1_results$Accuracy) * 100`% with random forest, e. gr., our prediction of “Normal” & “Arrhythmia” is correct `r max(Pred1_results$Accuracy) * 100`% of the time and if the patience actually has Arrhythmia with the sensitivity of `r max(Pred1_results$Sensitivity) * 100`%, this is the percentage of patience detected correctly ( 1 - sensitivity are patients with arrhythmia detected as normal). Remember, the arrhythmia class was treated as the ‘Positive’ class.
+
+
+Which predictors help to get this percentage? Reviewing the models we used, except the decision tree that does not rank all the predictors, we have the top among them:
+
+
+
+
+```{r}
+varImp(fit_knn)$importance
+varImp(fit_rpart)$importance
+varImp(fit_rf)$importance
+varImp(fit_svm)$importance
+
+# get an overall for knn, because it give us a detail for output class
+rowMeans(varImp(fit_knn)$importance)
+```
+
+
+
+
+As a summary of **Classification of cardiac arrhythmia** we have (it was shown above too):
+
+```{r Results Second Prediction Result, echo=FALSE}
+#Pred2_results <- Pred2_results[-1]
+Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
+```
+
+
+
+Here, we get a accuracy of `r max(Pred2_results$Accuracy) * 100`%, e. gr., we have this percentage of be correct in the kind of arrhythmia, where "normal" is one class and the more frequent one. This value es lower than the first prediction and we expected because we do not have too many patients and the distribution is is not equal among the classes. 
+
+In sensitivity for class 1 ("Normal") is quite good and better than in the first prediction. And the better result is `r max(Pred2_results$Sensitivity.1) * 100`% is in the SVM model. Is this good?  xxxx
+Here the arrhythmia class is not the ‘Positive’ class as before, then the concept of sensitivity change in relation to the previous prediction. Here we are considering the sensitivity and specificity in each class.
+
+We see some classes with sensitivity = 0 and specificity = 1. This means that all the prediction for these classes are wrong! This happened with all the models for these classes:
+* Class: 7
+* Class: 8
+* Class: 14
+* Class: 15
+* Class: 16
+
+and in the case of Class 5, the situation it is the same, except for decision tree shows a little better numbers.
+
+```{r Results Class code table, echo=FALSE, message=FALSE}
+left_join(arrhythmia, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
+   filter(`Class code` %in% c(5, 7, 8, 14, 15, 16)) %>%
+  knitr::kable(caption = "Presence of codes in our dataset")
+  
+```
+
+The numbers of occurrences maybe be explains for few patients with these arrhythmia in the dataset, except for class 5 and 16 which has more that class 9 and this last one can be resolved for some methods. These few occurrences should be related that no predictor has a high correlation with this classes, particularly for Class 16, as its same say "Others" maybe is a group of not homogeneous class and for that no model can detect it.
+
+```{r}
+results <- bind_rows(results,
+                     data.frame(`Class code` = 5,
+                            Prediction = "No Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 7,
+                            Prediction = "No Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 8,
+                            Prediction = "No Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 14,
+                            Prediction = "No Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 15,
+                            Prediction = "No Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 16,
+                            Prediction = "No Predictable"))
+```
+
+Class 9, in the other hand, in 3 models has a perfect score: sensitivity = 1 and specificity = 1. Too good to be true? The only point to see it is the low numbers of patients of this disease, only the 2%.
+Similar situation is with Class 3, but it combines the perfect score and the worse score depending the model. Because the random forest give it the perfect score, we can have a good classification for this class.
+
+
+```{r}
+results <- bind_rows(results,
+                     data.frame(`Class code` = 9,
+                            Prediction = "Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 3,
+                            Prediction = "Predictable"))
+```
+
+Looking the rest of the classes, we see:
+
+```{r}
+Pred2_results %>% select(Accuracy, Code.1, Sensitivity.1, Specificity.1,
+                         Code.2, Sensitivity.2, Specificity.2,
+                         #Code.3, Sensitivity.3, Specificity.3,
+                         Code.4, Sensitivity.4, Specificity.4,
+                         #Code.5, Sensitivity.5, Specificity.5,
+                         Code.6, Sensitivity.6, Specificity.6,
+                         Code.10, Sensitivity.10, Specificity.10)
+```
+
+we have a "realistic" results, not to good to be true or too bad.
+
+```{r}
+results <- bind_rows(results,
+                     data.frame(`Class code` = 1,
+                            Prediction = "Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 2,
+                            Prediction = "Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 4,
+                            Prediction = "Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 6,
+                            Prediction = "Predictable"))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 10,
+                            Prediction = "Predictable"))
+```
+
+
+Like a summary, we have
+
+```{r Overview Class code table, echo=FALSE, message=FALSE}
+left_join(arrhythmia, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
+   left_join(results, by = "Class code") %>% 
+  knitr::kable(caption = "Result by class codes in our validation dataset")
+  
+```
+
+
+
+
+
 
 In the previous section we use edx to build a model can give us a RMSE under the target. Now we are going to use the same steps, but with the edx to construct the model in the same way and the validation the dataset to test if we reach our target.
 
 
-
+One aspect in the machine learning is to 
 
 ```{r Results housekeeping, echo=FALSE, results='hide'}
 #Delete data that we do not need
@@ -15,123 +185,14 @@ gc()
     
 
 
-## Fisrt Model...just the average movie rating
-
-We start with the average of the movie as the initial predictor.
-```{r Results Fisrt Model}
-# Average in edx dataset
-mu <- mean(edx$rating)
-# Predict the RMSE on the validation set
-rmse_naive_mean_model_result <- RMSE(validation$rating, mu)
-# Creating a results dataframe that contains all RMSE results
-rmse_results_v <- data.frame(model="Naive Mean-Baseline Model", RMSE=rmse_naive_mean_model_result)
-```
-
-```{r, echo=FALSE}
-rmse_results_v %>% knitr::kable()
-```
-
-## Movie-Based Model
-
-We continue taking in consideration the movie effect:
-```{r Results Movie-Based Model}
-# Calculate the average by movie
-movie_avgs <- edx %>%
-   group_by(movieId) %>%
-   summarize(b_i = mean(rating - mu))
-
-# Compute the predicted ratings on validation dataset
-predicted_ratings <- validation %>%
-   left_join(movie_avgs, by='movieId') %>%
-   mutate(pred = mu + b_i) %>%
-   .$pred
-```
 
 
-```{r, echo=FALSE}
-rmse_movie_model_result <- RMSE(validation$rating, predicted_ratings)
-# Adding the results to the results dataset
-rmse_results_v <- rmse_results_v %>% add_row(model="Movie-Based Model", RMSE=rmse_movie_model_result)
-```
-
-```{r, echo=FALSE}
-rmse_results_v %>% knitr::kable()
-```
-
-As before, we get a good improvement.
-
-
-## User effect
-
-Now continue with the user effect.
-```{r Results User effect}
-# Calculate the average by user
-user_avgs <- edx %>%
-   left_join(movie_avgs, by='movieId') %>%
-   group_by(userId) %>%
-   summarize(b_u = mean(rating - mu - b_i))
-
-# Compute the predicted ratings on validation dataset
-predicted_ratings <- validation %>%
-   left_join(movie_avgs, by='movieId') %>%
-   left_join(user_avgs, by='userId') %>%
-   mutate(pred = mu + b_i + b_u) %>%
-   .$pred
-```
-
-
-```{r, echo=FALSE}
-rmse_movie_user_model_result <- RMSE(validation$rating, predicted_ratings)
-
-# Adding the results to the results dataset
-rmse_results_v <- rmse_results_v %>% add_row(model="Movie-Based + User Effects Model", RMSE=rmse_movie_user_model_result)
-```
-
-
-```{r, echo=FALSE}
-rmse_results_v %>% knitr::kable()
-```
-The improvement is as expected.
-
-
-## Regularization
-
-Fer regularization, we already know the we get better result considering both movie and user regularization at the same time. We are going to use $\lambda$ calculated before (`r lambda`)
-
-```{r Results Regularization}
-# We use lambda calculated previously
-
-# Using lambda to redefine b_i and b_u
-movie_reg_avgs <- edx %>% 
-     group_by(movieId) %>% 
-     summarize(b_i = sum(rating - mu)/(n()+lambda), n_i = n()) 
-
-user_reg_avgs <- edx %>% 
-          left_join(movie_reg_avgs, by="movieId") %>%
-          group_by(userId) %>%
-          summarize(b_u = sum(rating - b_i - mu)/(n()+lambda))
-
- # Calculate the
-     predicted_ratings <- 
-          validation %>% 
-          left_join(movie_reg_avgs, by = "movieId") %>%
-          left_join(user_reg_avgs, by = "userId") %>%
-          mutate(pred = mu + b_i + b_u ) %>%
-          .$pred
-     
-```
-
-
-
-```{r, echo=FALSE}
-rmse_movie_user_model_regularization_result <- RMSE(predicted_ratings, validation$rating)
-rmse_results_v <- bind_rows(rmse_results_v,
-                          data.frame(model="Regularization(Movie-Based + User Effects Model)",  
-                                     RMSE = rmse_movie_user_model_regularization_result ))
-```
-
-```{r, echo=FALSE}
-rmse_results_v %>% knitr::kable()
+```{r}
+#install.packages("rpart.plot")
+library(rpart.plot)
+rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
+  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
+    "GyGy", "GyGn")) # specify 13 colors)
 ```
 
 
@@ -140,52 +201,6 @@ rmse_results_v %>% knitr::kable()
 
 
 
-## Genre
-
-As the last step it is use the genre of the movie as a predictor. For that we are going to separate each movie in each genre as we did before with the variable edx_genres.
-
-```{r Results adding genre}
-#First we create a new dataset with one genre by row
-edx_genres <- edx %>% 
-   mutate(genre = fct_explicit_na(genres, na_level = "(no genres listed)")
-          ) %>%
-   separate_rows(genre, sep = "\\|")
-
-# Calculate the average by genre
-genre_avgs <- edx_genres %>% 
-   left_join(movie_reg_avgs, by='movieId') %>%
-   left_join(user_reg_avgs, by='userId') %>%
-   group_by(genres) %>%
-   summarize(b_u_g = mean(rating - mu - b_i - b_u ))
 
 
-validation_genres <- validation %>% 
-   mutate(genres = fct_explicit_na(genres, na_level = "(no genres listed)")
-          ) %>%
-   separate_rows(genres, sep = "\\|")
-
-# Compute the predicted ratings on validation dataset
-     predicted_ratings <- 
-          validation_genres %>% 
-          left_join(movie_reg_avgs, by = "movieId") %>%
-          left_join(user_reg_avgs, by = "userId") %>%
-          left_join(genre_avgs, by = "genres") %>%
-          mutate(pred = mu + b_i + b_u + ifelse(is.na(b_u_g),0,b_u_g)) %>%
-          .$pred
-     
-
-```
-
-
-```{r, echo=FALSE}
-rmse_movie_user_genre_model_result <- RMSE(predicted_ratings, validation_genres$rating)
-# Adding the results to the results dataset
-rmse_results_v <- rmse_results_v %>% add_row(model="Regularization(Movie+User) + Genre Based Model", RMSE=rmse_movie_user_genre_model_result)
-```
-
-
-
-```{r Final result with Regularization of Movie_User and Genre Based Model, echo=FALSE}
-rmse_results_v %>% knitr::kable()
-```
 \newpage
