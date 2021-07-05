@@ -29,7 +29,7 @@ if(!require(gmodels)) install.packages('gmodels')
 if(!require(rpart)) install.packages('rpart')
 if(!require(randomForest)) install.packages('randomForest')
 if(!require(e1071)) install.packages('e1071')
-
+if(!require(rpart.plot)) install.packages("rpart.plot")
 
 library(tidyverse)
 library(caret)
@@ -40,6 +40,7 @@ library(rpart)
 library(randomForest)
 library(e1071) # SVM
 library(xml2) #Kable
+library(rpart.plot)
 
 
 source(file="CrossTableNarrow.R") # Minor change in Column and Row Total Headings of gmodels::CrossTable

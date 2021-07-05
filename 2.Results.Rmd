@@ -170,7 +170,7 @@ left_join(arrhythmia, Class, by = "Class code") %>%
 
 
 
-
+...................
 
 In the previous section we use edx to build a model can give us a RMSE under the target. Now we are going to use the same steps, but with the edx to construct the model in the same way and the validation the dataset to test if we reach our target.
 
@@ -188,6 +188,7 @@ gc()
 
 
 ```{r}
+#delete
 #install.packages("rpart.plot")
 library(rpart.plot)
 rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,

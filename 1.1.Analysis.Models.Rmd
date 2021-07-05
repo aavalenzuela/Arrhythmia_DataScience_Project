@@ -111,12 +111,12 @@ Let's works with the first Prediction
 
 # The first "Class code" is "Normal" and all the rest are some kind of "Arrhythmia"
 # Train dataset prediction1
-train_set1_p1 <- train_set1
-train_set1_p1$`Class code` <- ifelse(train_set1_p1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
+train_set_p1 <- train_set
+train_set_p1$`Class code` <- ifelse(train_set_p1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
 
 # validation for prediction1
-validation_set1_p1 <- validation_set1
-validation_set1_p1$`Class code` <- ifelse(validation_set1_p1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
+validation_set_p1 <- validation_set
+validation_set_p1$`Class code` <- ifelse(validation_set_p1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
 
 # Expected value for validation for prediction1
 #expected_value_val_p1 <- ifelse(validation_set$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
@@ -126,7 +126,7 @@ validation_set1_p1$`Class code` <- ifelse(validation_set1_p1$`Class code` == 1,"
 
 ```{r Model just the most common first Prediction, echo=FALSE, warning=FALSE}
 predicted_value <- rep("Normal", times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
-cm <- confusionMatrix(predicted_value, validation_set1_p1$`Class code`)  # or positive = "Arrhythmia"
+cm <- confusionMatrix(predicted_value, validation_set_p1$`Class code`)  # or positive = "Arrhythmia"
 #confusionMatrix(predicted_value, expected_value_val_p1)$overall["Accuracy"]
 #confusionMatrix(predicted_value, expected_value_val_p1)$byClass["Sensitivity"]
 #confusionMatrix(predicted_value, expected_value_val_p1)$byClass["Specificity"]
@@ -145,7 +145,7 @@ The Accuracy obtained will be our base one.
 
 # Table names
 Predicted <- predicted_value
-Actually <- validation_set1_p1$`Class code`
+Actually <- validation_set_p1$`Class code`
 #Computes the crosstable calculations
 CrossTable(Predicted, Actually)
 ```
@@ -165,8 +165,8 @@ Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", 
 ### Second Predictions
 Second Predictions, that considered all the classes, the accuracy is the same, but now we have sensitivity and specificity by class:
 ```{r Model just the most common Second Prediction, echo=FALSE, warning=FALSE}
-y_hat <- rep(1, times = nrow(validation_set1)) %>% factor() # Using Normal class (1) as the only answer
-cm <- confusionMatrix(y_hat, validation_set1$`Class code`)
+y_hat <- rep(1, times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
+cm <- confusionMatrix(y_hat, validation_set$`Class code`)
 
 #confusionMatrix(y_hat, validation_set$`Class code`)$overall["Accuracy"]
 #confusionMatrix(y_hat, validation_set$`Class code`)$byClass[,1:2]
@@ -178,7 +178,7 @@ cm$byClass[,1:2]
 ```{r Model just the most common Second Prediction Table, echo=FALSE}
 # Table names
 Predicted <- y_hat
-Actually <- validation_set1$`Class code`
+Actually <- validation_set$`Class code`
 #Computes the crosstable calculations
 CrossTableNarrow(Predicted, Actually, digits = 2)
 ```
@@ -259,7 +259,7 @@ knn.control <- trainControl(method = "repeatedcv", number = 20, repeats = 3)
 set.seed(1, sample.kind="Rounding")
 fit_knn <- train(`Class code` ~ .,  method = "knn", 
              tuneGrid = data.frame(k = seq(2, 20, 2)),
-             data = train_set1_p1, na.action=na.pass)
+             data = train_set_p1, na.action=na.pass)
 
 ggplot(fit_knn) + ggtitle("K-Nearest Neighbors")
 
@@ -270,6 +270,7 @@ We get k = `r fit_knn$bestTune$k`. Now the variables that this model considers m
 
 ```{r K-Nearest Neighbors Model first Prediction Variable Importance, echo=FALSE, warning=FALSE}
 varImp(fit_knn)
+varimp_knn_p1 <- varImp(fit_knn)$importance
 ggplot(varImp(fit_knn), top = 20) + ggtitle("K-Nearest Neighbors Model Top 20 feature")
 ```
 
@@ -280,8 +281,8 @@ ggplot(varImp(fit_knn), top = 20) + ggtitle("K-Nearest Neighbors Model Top 20 fe
 With this model we now take the validation dataset to see how well this apply:
 
 ```{r K-Nearest Neighbors Model first Prediction Prediction, echo=FALSE, warning=FALSE}
-y_hat_knn <- predict(fit_knn, validation_set1_p1, type = "raw")
-cm <- confusionMatrix(data = y_hat_knn, reference = validation_set1_p1$`Class code`) #$overall["Accuracy"]
+y_hat_knn <- predict(fit_knn, validation_set_p1, type = "raw")
+cm <- confusionMatrix(data = y_hat_knn, reference = validation_set_p1$`Class code`) #$overall["Accuracy"]
 cm
 ```
 
@@ -290,7 +291,7 @@ We see a good improvement in accuracy and sensitivity over the previous mode app
 ```{r K-Nearest Neighbors Model first Prediction Table, echo=FALSE}
 # Table names
 Predicted <- y_hat_knn
-Actually <- validation_set1_p1$`Class code`
+Actually <- validation_set_p1$`Class code`
 #Computes the crosstable calculations
 CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
 ```
@@ -335,7 +336,7 @@ set.seed(1, sample.kind="Rounding")
 fit_knn <- train(`Class code` ~ .,  method = "knn", 
              tuneGrid = data.frame(k = seq(1, 17, 1)),
              trControl = knn.control,
-             data = train_set1, na.action=na.pass)
+             data = train_set, na.action=na.pass)
 
 ggplot(fit_knn) + ggtitle("K-Nearest Neighbors")
 
@@ -348,6 +349,7 @@ Now the variables that this model considers more important are:
 ```{r K-Nearest Neighbors Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
 varImp(fit_knn)
+varimp_knn_p2 <- varImp(fit_knn)$importance
 options(digits =7) # default
 ggplot(varImp(fit_knn), top = 8) + ggtitle("K-Nearest Neighbors Model Top 8 feature")
 ```
@@ -376,7 +378,7 @@ options(digits =7) # default
 ```{r K-Nearest Neighbors Model Second Prediction Table, echo=FALSE}
 # Table names
 Predicted <- y_hat_knn
-Actually <- validation_set1$`Class code`
+Actually <- validation_set$`Class code`
 #Computes the crosstable calculations
 CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
 ```
@@ -462,7 +464,7 @@ Let's works with the first Prediction
 #library(caret)
 
 # rpart need Valid Column Names 
-train_set2_p1 <- data.frame(train_set1_p1)
+train_set2_p1 <- data.frame(train_set_p1)
 set.seed(1, sample.kind="Rounding")
 fit_rpart <- train(Class.code ~ ., method = "rpart",
                      tuneGrid = data.frame(cp = seq(0, 0.05, len = 25)),
@@ -480,6 +482,10 @@ The cp is `r fit_rpart$bestTune` and we get the following decision tree with thi
 # access the final model and plot it
 plot(fit_rpart$finalModel, margin = 0.1)
 text(fit_rpart$finalModel, cex = 0.75)
+
+rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
+  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
+    "GyGy", "GyGn")) # specify 13 colors)
 ```
 
 The variable importance for this method is:
@@ -487,17 +493,18 @@ The variable importance for this method is:
 ```{r Decision Tree Model First Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
 varImp(fit_rpart)
+varimp_rpart_p1 <- varImp(fit_rpart)$importance
 options(digits =7) # default
 ```
 
-These arevpredictors are present in the tree too, not all of them because the tree shows less than 20 predictors, and the overall does not show all of them, only 30 are rated, and it is not directly related with the order in the decision tree. Now see how well it is the prediction in the validation set:
+These are predictors are present in the tree too, not all of them because the tree shows less than 20 predictors, and the overall does not show all of them, only 30 are rated, and it is not directly related with the order in the decision tree. Now see how well it is the prediction in the validation set:
 
 ```{r Decision Tree Model First Prediction Predict, echo=FALSE, warning=FALSE}
 # compute accuracy
 options(digits =2)
 
-y_hat_rpart <- predict(fit_rpart, data.frame(validation_set1_p1), type = "raw")
-cm <- confusionMatrix(y_hat_rpart, reference = validation_set1_p1$`Class code`)#$overall["Accuracy"]
+y_hat_rpart <- predict(fit_rpart, data.frame(validation_set_p1), type = "raw")
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set_p1$`Class code`)#$overall["Accuracy"]
 cm
 options(digits =7) # default
 ```
@@ -516,9 +523,9 @@ text(pruned_fit, cex = 0.75)
 #y_hat_rpart <- predict(fit, data.frame(validation_set), type = "raw")
 options(digits =2)
 
-y_hat_rpart <- predict(pruned_fit, data.frame(validation_set1_p1), type = "class")
+y_hat_rpart <- predict(pruned_fit, data.frame(validation_set_p1), type = "class")
 
-cm <- confusionMatrix(y_hat_rpart, reference = validation_set1_p1$`Class code`)#$overall["Accuracy"]
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set_p1$`Class code`)#$overall["Accuracy"]
 cm
 options(digits =7) # default
 ```
@@ -528,7 +535,7 @@ We can not see any improvement, but the decision tree is similar but not equal u
 ```{r Decision Tree Model First Prediction Table, echo=FALSE}
 # Table names
 Predicted <- y_hat_rpart
-Actually <- validation_set1$`Class code`
+Actually <- validation_set$`Class code`
 #Computes the crosstable calculations
 CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
 ```
@@ -569,7 +576,7 @@ Let's works with the second Prediction
 #library(caret)
 
 # rpart need Valid Column Names 
-train_set2 <- data.frame(train_set1)
+train_set2 <- data.frame(train_set)
 set.seed(1, sample.kind="Rounding")
 fit_rpart <- train(Class.code ~ ., method = "rpart",
                      tuneGrid = data.frame(cp = seq(0, 0.05, len = 25)),
@@ -587,12 +594,17 @@ The cp is `r fit_rpart$bestTune` and we get the following decision tree with thi
 # access the final model and plot it
 plot(fit_rpart$finalModel, margin = 0.1)
 text(fit_rpart$finalModel, cex = 0.75)
+
+rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
+  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
+    "GyGy", "GyGn")) # specify 13 colors)
 ```
 
 
 ```{r Decision Tree Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
 varImp(fit_rpart)
+varimp_rpart_p2 <- varImp(fit_rpart)$importance
 options(digits =7) # default
 ```
 
@@ -600,8 +612,8 @@ options(digits =7) # default
 # compute accuracy
 options(digits =2)
 
-y_hat_rpart <- predict(fit_rpart, data.frame(validation_set1), type = "raw")
-cm <- confusionMatrix(y_hat_rpart, reference = validation_set1$`Class code`)#$overall["Accuracy"]
+y_hat_rpart <- predict(fit_rpart, data.frame(validation_set), type = "raw")
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set$`Class code`)#$overall["Accuracy"]
 cm
 options(digits =7) # default
 ```
@@ -613,16 +625,21 @@ Let's prune this, using the previous result but applying a new cp value (cp = 0.
 #library(rpart)
 fit <- rpart(Class.code ~ ., data = train_set2, control = rpart.control(cp = 0.033, minsplit = 2))
 pruned_fit <- prune(fit, cp = 0.01)
+
 plot(pruned_fit, margin = 0.1)
 text(pruned_fit, cex = 0.75)
+
+rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
+  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
+    "GyGy", "GyGn")) # specify 13 colors)
 
 # compute accuracy
 #y_hat_rpart <- predict(fit, data.frame(validation_set), type = "raw")
 options(digits =2)
 
-y_hat_rpart <- predict(pruned_fit, data.frame(validation_set1), type = "class")
+y_hat_rpart <- predict(pruned_fit, data.frame(validation_set), type = "class")
 
-cm <- confusionMatrix(y_hat_rpart, reference = validation_set1$`Class code`)#$overall["Accuracy"]
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set$`Class code`)#$overall["Accuracy"]
 cm
 options(digits =7) # default
 ```
@@ -632,7 +649,7 @@ We can not see any improvement neither, but the decision tree is similar but not
 ```{r Decision Tree Model Second Prediction Table, echo=FALSE}
 # Table names
 Predicted <- y_hat_rpart
-Actually <- validation_set1$`Class code`
+Actually <- validation_set$`Class code`
 #Computes the crosstable calculations
 CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
 ```
@@ -712,7 +729,7 @@ Here we have like parameters the value of mtry that we are trying to use to get 
 set.seed(1, sample.kind="Rounding")
 fit_rf <- train(`Class code` ~ ., method = "rf",
                      tuneGrid = data.frame(mtry = seq(10, 100, len = 25)),
-                     data = train_set1_p1)
+                     data = train_set_p1)
 
 
 #fit <- randomForest(`Class code` ~ ., data = trr) 
@@ -727,6 +744,7 @@ the mtry we get is `r fit_rf$bestTune`. The variable importance for this method 
 ```{r Random Forests Model First Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
 varImp(fit_rf)
+varimp_rf_p1 <- varImp(fit_rf)$importance
 #ggplot(varImp(fit_knn))
 options(digits =7) # default
 ```
@@ -735,8 +753,8 @@ Now see how well it is the prediction in the validation set:
 
 ```{r Random Forests Model First Prediction Prediction, echo=FALSE, warning=FALSE}
 options(digits =2)
-y_hat_rf <- predict(fit_rf, validation_set1_p1, type = "raw")
-cm <- confusionMatrix(data = y_hat_rf, reference = validation_set1_p1$`Class code`) #$overall["Accuracy"]
+y_hat_rf <- predict(fit_rf, validation_set_p1, type = "raw")
+cm <- confusionMatrix(data = y_hat_rf, reference = validation_set_p1$`Class code`) #$overall["Accuracy"]
 cm
 options(digits =7) # default
 ```
@@ -744,7 +762,7 @@ options(digits =7) # default
 ```{r Random Forests Model First Prediction Table, echo=FALSE}
 # Table names
 Predicted <- y_hat_rf
-Actually <- validation_set1_p1$`Class code`
+Actually <- validation_set_p1$`Class code`
 #Computes the crosstable calculations
 CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
 ```
@@ -777,7 +795,7 @@ Random Forests get better result over decision tree and previous ones.
 set.seed(1, sample.kind="Rounding")
 fit_rf <- train(`Class code` ~ ., method = "rf",
                      tuneGrid = data.frame(mtry = seq(10, 100, len = 25)),
-                     data = train_set1)
+                     data = train_set)
 
 
 #fit <- randomForest(`Class code` ~ ., data = trr) 
@@ -792,6 +810,7 @@ the mtry we get is `r fit_rf$bestTune`. The variable importance for this method 
 ```{r Random Forests Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
 varImp(fit_rf)
+varimp_rf_p2 <- varImp(fit_rf)$importance
 #ggplot(varImp(fit_knn))
 options(digits =7) # default
 ```
@@ -801,8 +820,8 @@ Now see how well it is the prediction in the validation set:
 
 ```{r Random Forests Model Second Prediction Prediction, echo=FALSE, warning=FALSE}
 options(digits =2)
-y_hat_rf <- predict(fit_rf, validation_set1, type = "raw")
-cm <- confusionMatrix(data = y_hat_rf, reference = validation_set1$`Class code`) #$overall["Accuracy"]
+y_hat_rf <- predict(fit_rf, validation_set, type = "raw")
+cm <- confusionMatrix(data = y_hat_rf, reference = validation_set$`Class code`) #$overall["Accuracy"]
 cm
 options(digits =7) # default
 ```
@@ -810,7 +829,7 @@ options(digits =7) # default
 ```{r Random Forests Model Second Prediction Table, echo=FALSE}
 # Table names
 Predicted <- y_hat_rf
-Actually <- validation_set1$`Class code`
+Actually <- validation_set$`Class code`
 #Computes the crosstable calculations
 CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
 ```
@@ -888,26 +907,26 @@ For this part we are going to use the caret train method that perform better tha
 #Support Vector Classifier:
 #library(e1071)
 set.seed(1)
-#train_svm <- svm(`Class code` ~ ., data = train_set1_p1)
+#train_svm <- svm(`Class code` ~ ., data = train_set_p1)
 #train_svm
 
-fit_svm <- train(`Class code` ~ ., data = train_set1_p1, method="svmRadial")  # caret train method 
+fit_svm <- train(`Class code` ~ ., data = train_set_p1, method="svmRadial")  # caret train method 
 fit_svm
 
-#y_hat_svm <- predict(train_svm,validation_set1_p1)
-y_hat_svm <- predict(fit_svm,validation_set1_p1)
+#y_hat_svm <- predict(train_svm,validation_set_p1)
+y_hat_svm <- predict(fit_svm,validation_set_p1)
 
 options(digits =2)
-cm <- confusionMatrix(data = y_hat_svm, reference = validation_set1_p1$`Class code`) #$overall["Accuracy"]
+cm <- confusionMatrix(data = y_hat_svm, reference = validation_set_p1$`Class code`) #$overall["Accuracy"]
 cm
 options(digits =7) # default
 
 #Tuning SVM to find the best cost and gamma ..
-#train_svm_tune <- tune(svm, `Class code` ~ .,data = train_set1_p1, 
+#train_svm_tune <- tune(svm, `Class code` ~ .,data = train_set_p1, 
 #              kernel="radial", ranges=list(cost=10^(-1:2), gamma=c(.5,1,2)))
 #train_svm_tune
-#train_svm_after_tune <- svm(`Class code` ~ ., data = train_set1_p1, kernel="radial", cost=0.1, gamma=0.5)
-#y_hat_svm_tune <- predict(train_svm_after_tune,validation_set1_p1)
+#train_svm_after_tune <- svm(`Class code` ~ ., data = train_set_p1, kernel="radial", cost=0.1, gamma=0.5)
+#y_hat_svm_tune <- predict(train_svm_after_tune,validation_set_p1)
 ```
 
 The values that get the better result are sigma = `r fit_svm$bestTune[1]` and C = `r fit_svm$bestTune[2].
@@ -918,6 +937,7 @@ The important variables are:
 ```{r Support Vector Machines Model First Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
 varImp(fit_svm)
+varimp_svm_p1 <- varImp(fit_svm)$importance
 #ggplot(varImp(fit_knn))
 options(digits =7) # default
 ```
@@ -928,7 +948,7 @@ The try to get a tune over the SVM but it fail, for that we keep the original va
 ```{r Support Vector Machines Model first Prediction Table, echo=FALSE}
 # Table names
 Predicted <- y_hat_svm
-Actually <- validation_set1_p1$`Class code`
+Actually <- validation_set_p1$`Class code`
 #Computes the crosstable calculations
 CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
 ```
@@ -965,13 +985,13 @@ The svm from e1071 library works better for multiple output than the caret train
 #Support Vector Classifier:
 #library(e1071)
 set.seed(1)
-train_svm <- svm(`Class code` ~ ., data = train_set1)
+train_svm <- svm(`Class code` ~ ., data = train_set)
 train_svm
 
-y_hat_svm <- predict(train_svm,validation_set1)
+y_hat_svm <- predict(train_svm,validation_set)
 
 options(digits =2)
-cm <- confusionMatrix(data = y_hat_svm, reference = validation_set1$`Class code`) #$overall["Accuracy"]
+cm <- confusionMatrix(data = y_hat_svm, reference = validation_set$`Class code`) #$overall["Accuracy"]
 cm
 options(digits =7) # default
 
@@ -986,6 +1006,7 @@ The important variables are:
 ```{r Support Vector Machines Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
 varImp(fit_svm)
+varimp_svm_p2 <- varImp(fit_svm)$importance
 #ggplot(varImp(fit_knn))
 options(digits =7) # default
 ```
@@ -995,7 +1016,7 @@ options(digits =7) # default
 ```{r Support Vector Machines Model Second Prediction Table, echo=FALSE}
 # Table names
 Predicted <- y_hat_svm
-Actually <- validation_set1_p1$`Class code`
+Actually <- validation_set_p1$`Class code`
 #Computes the crosstable calculations
 CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
 ```

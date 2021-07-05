@@ -847,6 +847,9 @@ In summary, related with the prediction we are going to perform:
 
 
 
+```{r Analysis delete unwanted onjects, echo=FALSE}
+rm(data_numeric, data2, cor_data_numeric, colna, ix, sd0.list.arrhythmia, sd.arrhythmia, values_count, limit)
+```
 
 
 .........
