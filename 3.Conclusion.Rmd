@@ -1,9 +1,59 @@
 # Conclusion
 *This section that gives a brief summary of the report, its limitations and future work.*
 
+The first thing to note is that we have a big numbers of predictors (large input dimensionality) while the number of observations is really low. This big numbers of predictors has some degree of correlation among them. This is a challenge to the algorithms we use, where random forest look like has some advantages.
+
+For the low number of patients (row in our dataset) we used bootstrapping.
+
+Despite of this low numbers of rows we still divide the dataset in train and validation, because we do not want to brake this rule of independency of the data in the validation set
 
 
-We will need to do some work before deploying this in the real­world. Data mining is not about pressing abutton and expecting an accurate predictive model to be created. We need to develop viable features that canactually predict the label that we’re interested in. This needs to be done carefully and is a field known asfeature engineering​, properly building features to predict for the label we want; we cannot expect to obtainviable predictions without good features.One thing to note is that we have large input­dimensionality while the number of training observations is reallylow. In most cases where this is true, we will suffer from the ​curse of dimensionality​ ­ a general phenomenonwhere data mining methods fail to work in high­dimensional spaces. This is an informal term and happens for avariety of reasons related to the large input feature space. We also do not have a lt of training data points tobuild a model on, I doubt we can actually capture the underlying relationship with only 452 samples. Someresearchers, artificially expand the size of the dataset by multiplying some observations. This can work ­ butmust be done with care. If we duplicate rows in our dataset, we could duplicate noise and create a dataset thatis composed of all noise. Not only will our model have been constructed on noise, but we will report highaccuracy scores......
+The initial task of cleaning the data, using this real data, shows its importance, detecting data incomplete, erroneous data, that can lead us to a bad conclusion. More knowledge of physiology can be useful in detect more erroneous data that we do not applied in this works.
+
+In this classifier problem, when we look between “Normal” & “Arrhythmia”, with random forest we get a good result in accuracy and sensitivity:
+
+```{r}
+Pred1_results[3,] %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+  kable_styling(full_width = F)
+```
+
+then we can feel we have a good result with a dataset with only `r numcolum(arrhythmia)` patients. 
+
+When we work with all the different classification in the arrhythmia, its 15 class, we notices that the distribution of this class are not equal, some of them are not even present in the dataset and the classification of "Others" was no predictable, maybe because under this name several different diseases.
+This characteristics of the dataset can not be resolved properly with the model used, and not model can do it.
+As a summary of the 16 classes (class 1 is normal) we have:
+No data in dataset: 3
+No prediction can be construct with the models used: 6
+Classes can be predicted with our models: 7
+
+
+```{r}
+cols <- c("red", "yellow", "green")
+pie_data_4graph <-results %>% group_by(Prediction) %>% summarise( n=n())
+pie(pie_data_4graph$n, labels = pie_data_4graph$Prediction, col = cols,  main = "Prediction by Classes")
+```
+
+Can this be improved? Yes, if we have more data that cover our lack of patients with some arrhythmia and more the ones with few of them.
+Check if the "Others" can be divided in some way to look for a rule to detect it.
+
+Other approach that we did not take is trying to create another category in base of group of arrhythmia, for example, all the arrhythmia related with Myocardial, or Synus, because I need medical knowledge that I do not have.
+
+
+The original problem was that some software can not detect the arrhythmia properly. With this works we can see we can create some level of confidence in the case of “Normal” & “Arrhythmia” but for a more robust classification in the different kind of arrhythmia more data will be necessary to train our model.
+
+
+
+
+
+
+We will need to do some work before deploying this in the real­world. Data mining is not about pressing abutton and expecting an accurate predictive model to be created. We need to develop viable features that canactually predict the label that we’re interested in. This needs to be done carefully and is a field known asfeature engineering​, properly building features to predict for the label we want; we cannot expect to obtainviable predictions without good features.. In most cases where this is true, we will suffer from the ​curse of dimensionality​ ­ a general phenomenonwhere data mining methods fail to work in high­dimensional spaces. This is an informal term and happens for avariety of reasons related to the large input feature space. We also do not have a lt of training data points tobuild a model on, I doubt we can actually capture the underlying relationship with only 452 samples. Someresearchers, artificially expand the size of the dataset by multiplying some observations. This can work ­ butmust be done with care. If we duplicate rows in our dataset, we could duplicate noise and create a dataset thatis composed of all noise. Not only will our model have been constructed on noise, but we will report highaccuracy scores......
+
+
+
+
+KNN is a non-parametric method and makes no assumptions. It classifies a test observation to the class that is most common among its neighbors, which in this case is class 1 since the dataset is imbalanced and skewed towards class 1. Hence, a considerable number of patients who suffer from arrhythmia will not be correctly diagnosed if we follow this model. We find the optimal K that achieves the best accuracy is 7, as seen from the graph, by performing repeated crossvalidation. We use 20 different values to try for each parameter here. Overall AUC of KNN is 0.7097 which means the weighted average of efficiency over all the classes to rightly classify observations into their respective classes is only 0.7097.........
+
+
 
 
 =========
