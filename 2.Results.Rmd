@@ -1,9 +1,9 @@
 # Results
 *This section presents the modeling results and discusses the model performance.*
 
-We start checking the data and see if it is leading us to a wrong conclusion. Cleaning the data, taking out some predictors that does not have enough information, taking out or fixing some outsiders was the initial work and see that some arrhythmias type are not present in our dataset (class 11, 12 and 13).
+We start checking the data and see if it has some elements that are leading us to a wrong conclusion. Cleaning the data, taking out some predictors that does not have enough information, taking out or fixing some outsiders was the initial work and see that some arrhythmia type are not present in our dataset (class 11, 12 and 13).
 
-```{r}
+```{r Results No data in our dataset about these arrhythmias, echo=FALSE}
 results <- data.frame(`Class code` = 11,
                             Prediction = "No data", check.names = FALSE)
 results <- bind_rows(results,
@@ -18,7 +18,7 @@ results <- bind_rows(results,
 
 Later we see, despite to have to many predictors, we have several with high correlation.
 
-And the data, some output in the class are not present or they are not equally distributed, unless in our first division between “Normal” & “Arrhythmia”, then the prediction of certain class are very difficult to established. This lack of flat distribution affect the partition of traing and test dataset as well as the algorithm that trying to create the better prediction.
+And the data, some output in the class are not present or they are not equally distributed, except in our first division between “Normal” & “Arrhythmia”, then the prediction of certain class are very difficult to established. This lack of flat distribution affect the partition of training and test dataset as well as the algorithm that trying to create the better prediction.
 
 In the Analysis, we divided the question of the prediction in two:
 
@@ -26,57 +26,116 @@ a. **Detection of cardiac arrhythmia**
 b. **Classification of cardiac arrhythmia**
 
 
-
+## Detection of cardiac arrhythmia
 As a summary of **Detection of cardiac arrhythmia** we have (it was shown above):
 
 ```{r Results First Prediction Result, echo=FALSE}
 
-Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
-  kable_styling(full_width = F)
+Pred1_results[-1,] %>% data.frame(row.names = NULL) %>% knitr::kable("html", caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+  kable_styling(full_width = F, position = "left")
 ```
 
 
-Then with this, we get a accuracy of `r max(Pred1_results$Accuracy) * 100`% with random forest, e. gr., our prediction of “Normal” & “Arrhythmia” is correct `r max(Pred1_results$Accuracy) * 100`% of the time and if the patience actually has Arrhythmia with the sensitivity of `r max(Pred1_results$Sensitivity) * 100`%, this is the percentage of patience detected correctly ( 1 - sensitivity are patients with arrhythmia detected as normal). Remember, the arrhythmia class was treated as the ‘Positive’ class.
+Then with this, we get a accuracy of `r round(Pred1_results[4,2],3) * 100`% with random forest, e. gr., our prediction of “Normal” & “Arrhythmia” is correct `r round(Pred1_results[4,2],3) * 100`% of the time and if the patience actually has Arrhythmia with the sensitivity of `r round(Pred1_results[4,3],3) * 100`%, this is the percentage of patience detected correctly ( 1 - sensitivity are patients with arrhythmia detected as normal). Remember, the arrhythmia class was treated as the ‘Positive’ class.
 
 
-Which predictors help to get this percentage? Reviewing the models we used, except the decision tree that does not rank all the predictors, we have the top among them:
+## Variable Importance of Predictors
+Which predictors help to get this percentage? 
+Analyzing first the random forest which has the better results, we have:
 
 
+
+```{r Results random forest varimp in first prediction, echo=FALSE}
+slice_max(varimp_rf_p1, order_by = Overall, n=20)
+```
+
+Reviewing all the models we used, except the decision tree that does not rank all the predictors, only that it use to create the tree, we have the top among them:
+
+
+```{r Results means of varimp in first prediction, echo=FALSE}
+varimp_knn_p1_mean <- rowMeans(varimp_knn_p1)
+varimp_p1_mean <- rowMeans(cbind(varimp_knn_p1_mean, varimp_svm_p1[,1], varimp_rf_p1))
+varimp_p1_mean <- data.frame(varimp_p1_mean)
+slice_max(varimp_p1_mean, order_by =  varimp_p1_mean, n=20)
+```
+
+Let's take a look to the principal predictors
+
+### Heart rate Predictor
+Appear like the most relevant for random forest. Appear in the decision tree too but not in the top 20 in rest of the models.
 
 
 ```{r}
-#varImp(fit_knn)$importance
-#varImp(fit_rpart)$importance
-#varImp(fit_rf)$importance
-#varImp(fit_svm)$importance
-
-# get an overall for knn, because it give us a detail for output class
-rowMeans(varImp(fit_knn)$importance)
+varimp_knn_p1_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
+varimp_svm_p1 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
 ```
 
+We saw in the Analysis that Heart rate does not have correlation with other predictors. Then look that random forest took a good decision in give importance to this predictor.
 
 
+### QRS duration Predictor
+The second Predictor from random forest (QRS duration) appear in others models too (actually in first place).
+
+### Channel V1 Number of intrinsic deflections & Channel V1 R' wave Amplitude Predictors
+These predictors are present in the others models too.
+
+
+### Channel V1 QRSA Predictor
+
+```{r}
+varimp_knn_p2_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
+varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
+```
+This predictor appear only in random forest. Is this something only used for this model? Let's check its correlation:
+
+```{r Correlation of Channel V1 QRSA, echo=FALSE}
+predictor <- "Channel V1 QRSA"
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% predictor | correlated.2 %in% predictor) %>% slice_max(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for Channel V1 QRSA") %>%
+  kable_styling(full_width = F, position = "left")
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% predictor | correlated.2 %in% predictor) %>% slice_min(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for Channel V1 QRSA") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+This predictor has some correlation with "Channel V1 QRSTA" which it is in the others models. Under this, could be that the others models indirectly use this type or information.
+
+Let's see if in the other models appear
+
+```{r}
+varimp_knn_p2_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
+varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
+```
+
+and in KNN has importance.
+
+
+Why is important? Because we have too many predictors but not all of them give us the same "quality" of information to our predictions. Predictors with high correlation "enter in a competition" with other.
+
+
+
+
+
+
+## Classification of cardiac arrhythmia
 
 As a summary of **Classification of cardiac arrhythmia** we have (it was shown above too):
 
 ```{r Results Second Prediction Result, echo=FALSE}
-#Pred2_results <- Pred2_results[-1]
-Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
+Pred2_results[-1,] %>% data.frame(row.names = NULL) %>% t() %>% knitr::kable("html", caption = "Prediction All Arrhytmia Classification Summary")
 ```
 
 
 
-Here, we get a accuracy of `r max(Pred2_results$Accuracy) * 100`%, e. gr., we have this percentage of be correct in the kind of arrhythmia, where "normal" is one class and the more frequent one. This value es lower than the first prediction and we expected because we do not have too many patients and the distribution is is not equal among the classes. 
+Here, we get a accuracy of `r round(Pred2_results[4,2],3) * 100`%, e. gr., we have this percentage of be correct in the kind of arrhythmia, where "normal" is one class and the more frequent one. This value es lower than the first prediction and we expected because we do not have too many patients and the distribution is is not equal among the classes. 
 
-In sensitivity for class 1 ("Normal") is quite good and better than in the first prediction. And the better result is `r max(Pred2_results$Sensitivity.1) * 100`% is in the SVM model. Is this good?  xxxx
-Here the arrhythmia class is not the ‘Positive’ class as before, then the concept of sensitivity change in relation to the previous prediction. Here we are considering the sensitivity and specificity in each class.
+In sensitivity for class 1 ("Normal") is quite good and better than in the first prediction. And the better result is `r round(Pred2_results[5,4],3) * 100`% is in the SVM model. Is this good?
+Here the Arrhythmia class is not the ‘Positive’ class as before, then the concept of sensitivity change in relation to the previous prediction. Here we are considering the sensitivity and specificity in each class, and the result has to be analyzed in this environment.
 
-We see some classes with sensitivity = 0 and specificity = 1. This means that all the prediction for these classes are wrong! This happened with all the models for these classes:
-* Class: 7
-* Class: 8
-* Class: 14
-* Class: 15
-* Class: 16
+We see some classes with sensitivity = 0 and specificity = 1. This means that all the prediction for these classes are wrong! This happened with all the models for these classes: 
+* Class: 7 
+* Class: 8 
+* Class: 14 
+* Class: 15 
+* Class: 16 
 
 and in the case of Class 5, the situation it is the same, except for decision tree shows a little better numbers.
 
@@ -84,13 +143,13 @@ and in the case of Class 5, the situation it is the same, except for decision tr
 left_join(arrhythmia, Class, by = "Class code") %>% 
   group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
    filter(`Class code` %in% c(5, 7, 8, 14, 15, 16)) %>%
-  knitr::kable(caption = "Presence of codes in our dataset")
-  
+  knitr::kable("html", caption = "Presence of codes in our dataset") %>%
+  kable_styling(full_width = F, position = "left")
 ```
 
 The numbers of occurrences maybe be explains for few patients with these arrhythmia in the dataset, except for class 5 and 16 which has more that class 9 and this last one can be resolved for some methods. These few occurrences should be related that no predictor has a high correlation with this classes, particularly for Class 16, as its same say "Others" maybe is a group of not homogeneous class and for that no model can detect it.
 
-```{r}
+```{r Results No Predictable in our dataset about these arrhythmias, echo=FALSE}
 results <- bind_rows(results,
                      data.frame(`Class code` = 5,
                             Prediction = "No Predictable", check.names = FALSE))
@@ -115,7 +174,7 @@ Class 9, in the other hand, in 3 models has a perfect score: sensitivity = 1 and
 Similar situation is with Class 3, but it combines the perfect score and the worse score depending the model. Because the random forest give it the perfect score, we can have a good classification for this class.
 
 
-```{r}
+```{r Results Predictable in our dataset about these arrhythmias, echo=FALSE}
 results <- bind_rows(results,
                      data.frame(`Class code` = 9,
                             Prediction = "Predictable", check.names = FALSE))
@@ -126,19 +185,21 @@ results <- bind_rows(results,
 
 Looking the rest of the classes, we see:
 
-```{r}
+```{r Results Analyzed 5 coded in our dataset about these arrhythmias, echo=FALSE}
 Pred2_results %>% select(Accuracy, Code.1, Sensitivity.1, Specificity.1,
                          Code.2, Sensitivity.2, Specificity.2,
                          #Code.3, Sensitivity.3, Specificity.3,
                          Code.4, Sensitivity.4, Specificity.4,
                          #Code.5, Sensitivity.5, Specificity.5,
                          Code.6, Sensitivity.6, Specificity.6,
-                         Code.10, Sensitivity.10, Specificity.10)
+                         Code.10, Sensitivity.10, Specificity.10)  %>% 
+  t() %>% knitr::kable("html", caption = "Prediction in remaining Arrhytmia Classification") %>%
+  kable_styling(full_width = F, position = "left")
 ```
 
 we have a "realistic" results, not to good to be true or too bad.
 
-```{r}
+```{r Results Predictable in our dataset about these arrhythmias Part 2, echo=FALSE}
 results <- bind_rows(results,
                      data.frame(`Class code` = 1,
                             Prediction = "Predictable", check.names = FALSE))
@@ -157,21 +218,89 @@ results <- bind_rows(results,
 ```
 
 
-Like a summary, we have
+Like a summary, we have considering the whole dataset for Ocurrences and percentage:
 
 ```{r Overview Class code table, echo=FALSE, message=FALSE}
 tmp <- left_join(arrhythmia, Class, by = "Class code") %>% 
   group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1))
 results <- results %>% mutate(`Class code` = as.factor(`Class code`))
 left_join(tmp,results, by = "Class code") %>% 
-  knitr::kable(caption = "Result by class codes in our validation dataset")
-  
+  knitr::kable("html", caption = "Result by class codes in our validation dataset") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+## Variable Importance of Predictors
+
+
+We have the same question again, now for the complete classification. Which predictors help to get this percentage? Are these the same the first prediction?
+Analyzing first the random forest which has the better results, we have:
+
+
+
+```{r Results random forest varimp in second prediction, echo=FALSE}
+slice_max(varimp_rf_p2, order_by = Overall, n=20)
+```
+
+Comparing the Variable Importance for the random forest in the first predition with this one, the 6th first are present in the Top20 and the "Channel V5 T wave Amplitude" in the 7th position that it is not. Then a very good similarity we can see in both predictions.
+
+Reviewing all the models we used, except the decision tree that does not rank all the predictors, only that it use to create the tree, we have the top among them:
+
+
+```{r Results means of varimp in second prediction, echo=FALSE}
+varimp_knn_p2_mean <- rowMeans(varimp_knn_p2)
+varimp_p2_mean <- rowMeans(cbind(varimp_knn_p2_mean, varimp_svm_p2[,1], varimp_rf_p2))
+varimp_p2_mean <- data.frame(varimp_p2_mean)
+slice_max(varimp_p2_mean, order_by =  varimp_p2_mean, n=20)
+```
+
+Let's take a look to the principal predictors
+
+### Heart rate Predictor
+Appear like the most relevant for random forest. In this opportunity it is appear in the decision tree **and** in the top 20 in rest of the models.
+If we like to see more detail, the big change was made by KNN model:
+
+```{r}
+varimp_knn_p2_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
+varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
 ```
 
 
 
+### Channel V1 R' wave Amplitude Predictor
+The second Predictor from random forest (Channel V1 R' wave Amplitude) does not appear in the Top20 of others models. Does si ti appear with some importance?
+
+```{r}
+varimp_knn_p2_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 R' wave Amplitude")
+varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 R' wave Amplitude")
+```
+
+The SVM give it some importance, KNN not.
+
+
+### Channel V1 QRSA Predictor
+This predictor is not present in the op20 of others models
+
+
+In this case, the variables importance that has random forest it is less similar to the one created by the others models compared with the previos prediction. This is because the predction for the other models (knn, svm) cahnge more when we create the fitting for the Noraml/Arrhythmia than we we works with all classes.
+
+........................
+This predictor has some correlation with "Channel V1 QRSTA" which it is in the others models. Under this, could be that the others models indirectly use this type or information.
+Why is important? Because we have too many predictors but not all of them give us the same "quality" of information to our predictions. Predictors with high correlation "enter in a competition" with other.
+
+
 
 ...................
+
+
+```{r}
+#varImp(fit_knn)$importance
+#varImp(fit_rpart)$importance
+#varImp(fit_rf)$importance
+#varImp(fit_svm)$importance
+
+# get an overall for knn, because it give us a detail for output class
+#rowMeans(varImp(fit_knn)$importance)
+```
 
 In the previous section we use edx to build a model can give us a RMSE under the target. Now we are going to use the same steps, but with the edx to construct the model in the same way and the validation the dataset to test if we reach our target.
 

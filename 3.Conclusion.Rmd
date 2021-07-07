@@ -3,24 +3,37 @@
 
 The first thing to note is that we have a big numbers of predictors (large input dimensionality) while the number of observations is really low. This big numbers of predictors has some degree of correlation among them. This is a challenge to the algorithms we use, where random forest look like has some advantages.
 
+Some approach artificially expand the size of the dataset predictors by multiplying/averaging/(other function) some observations. This can work in some cases, required knowledge to be made properly. We are not to aplly this here, besides the last point, we already have to many preictors for our algoristh.
+
 For the low number of patients (row in our dataset) we used bootstrapping.
 
 Despite of this low numbers of rows we still divide the dataset in train and validation, because we do not want to brake this rule of independency of the data in the validation set
 
 
-The initial task of cleaning the data, using this real data, shows its importance, detecting data incomplete, erroneous data, that can lead us to a bad conclusion. More knowledge of physiology can be useful in detect more erroneous data that we do not applied in this works.
+The initial task of cleaning the data, using this real data, shows its importance, detecting data incomplete, erroneous data, that can lead us to a bad conclusion. More knowledge of physiology can be useful in detect more erroneous data that we do not applied in this works for all the predictors
 
 In this classifier problem, when we look between “Normal” & “Arrhythmia”, with random forest we get a good result in accuracy and sensitivity:
 
 ```{r}
-Pred1_results[3,] %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+Pred1_results[4,] %>% data.frame(row.names = NULL) %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
   kable_styling(full_width = F)
 ```
 
-then we can feel we have a good result with a dataset with only `r numcolum(arrhythmia)` patients. 
+then we can feel we have a good result with a dataset with only `r ncol(arrhythmia)` patients. 
 
 When we work with all the different classification in the arrhythmia, its 15 class, we notices that the distribution of this class are not equal, some of them are not even present in the dataset and the classification of "Others" was no predictable, maybe because under this name several different diseases.
 This characteristics of the dataset can not be resolved properly with the model used, and not model can do it.
+
+In the second classifier problem, when we look among all the classification, random forest we get a good result:
+
+
+```{r}
+Pred2_results[4,] %>% data.frame(row.names = NULL) %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary", "html") %>%
+  kable_styling(full_width = F)
+```
+
+5 point in accuracy compared with the first prediction.
+
 As a summary of the 16 classes (class 1 is normal) we have:
 No data in dataset: 3
 No prediction can be construct with the models used: 6
@@ -39,10 +52,10 @@ Check if the "Others" can be divided in some way to look for a rule to detect it
 Other approach that we did not take is trying to create another category in base of group of arrhythmia, for example, all the arrhythmia related with Myocardial, or Synus, because I need medical knowledge that I do not have.
 
 
-The original problem was that some software can not detect the arrhythmia properly. With this works we can see we can create some level of confidence in the case of “Normal” & “Arrhythmia” but for a more robust classification in the different kind of arrhythmia more data will be necessary to train our model.
+The original problem was that some software can not detect the arrhythmia properly. With this works we can see we can create some level of confidence in the case of “Normal” & “Arrhythmia” and for all the classes but for a more robust solution in the different kind of arrhythmia more data will be necessary to train our model.
 
 
-
+...................
 
 
 
