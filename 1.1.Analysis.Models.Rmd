@@ -16,9 +16,9 @@ We are going to see the following evaluation metrics:
 
 
 We can summarize in the following way:  
-**High accuracy**: $Y=1⟹\hat{Y}=1$ and $Y=0⟹\hat{Y}=0$  
-**High sensitivity**: $Y=1⟹\hat{Y}=1$  
-**High specificity**: $Y=0⟹\hat{Y}=0$  
+**High accuracy**: $Y=1 \Rightarrow  \hat{Y}=1$ and $Y=0 \Rightarrow \hat{Y}=0$  
+**High sensitivity**: $Y=1 \Rightarrow \hat{Y}=1$  
+**High specificity**: $Y=0 \Rightarrow \hat{Y}=0$  
 
 
 We are looking for accuracy and sensitivity. Why? it is much more important to maximize sensitivity over specificity: failing to predict a arrhythmia  can put the health/life of the patience in risk. It is better than this patience classified as "Arrhythmia" and make all the exams/procedure and when validate that he or she is ok.
@@ -981,24 +981,27 @@ This method did not perform as expected and it is close to KNN and decison tree 
 
 ### Second Predictions
 
-The svm from e1071 library works better for multiple output than the caret train method, that why we changed in this part.
 
 ```{r Support Vector Machines Model Second Prediction train, echo=FALSE, warning=FALSE}
-#Support Vector Classifier:
-#library(e1071)
+#Support Vector Classifier
+
+ctrl_svm <- trainControl(method = "cv", savePred=T)
 set.seed(1)
-fit_svm <- svm(`Class code` ~ ., data = train_set)
+#fit_svm <- svm(`Class code` ~ ., data = train_set) # See note below in .Rmd file
+fit_svm <- train(`Class code` ~ ., data = train_set, method="svmRadial", trControl = ctrl_svm)  # caret train method 
 fit_svm
 
 y_hat_svm <- predict(fit_svm,validation_set)
 
 options(digits =2)
 cm <- confusionMatrix(data = y_hat_svm, reference = validation_set$`Class code`) #$overall["Accuracy"]
+
 cm
 options(digits =7) # default
 
-
 ```
+
+Note about the code: at the beginning we see that svm from e1071 library works better for multiple output than the caret train method, but a little more investigation shows that with trainControl() we can improve the training with the caret library and then continue using this library as we did with other models.
 
 The SVM-Kernel is radial.
 

@@ -65,7 +65,7 @@ Let's take a look to the principal predictors
 Appear like the most relevant for random forest. Appear in the decision tree too but not in the top 20 in rest of the models.
 
 
-```{r}
+```{r Results of varimp of Heart rate, echo=FALSE}
 varimp_knn_p1_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
 varimp_svm_p1 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
 ```
@@ -82,11 +82,13 @@ These predictors are present in the others models too.
 
 ### Channel V1 QRSA Predictor
 
-```{r}
-varimp_knn_p2_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
-varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
+This predictor appear only in the Top20 of random forest. Is this something only used for this model? Let's see its position in the other models:
+
+```{r Results of varimp of Channel V1 QRSA, echo=FALSE}
+varimp_knn_p1_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
+varimp_svm_p1 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
 ```
-This predictor appear only in random forest. Is this something only used for this model? Let's check its correlation:
+It has importance in knn. Let's check its correlation:
 
 ```{r Correlation of Channel V1 QRSA, echo=FALSE}
 predictor <- "Channel V1 QRSA"
@@ -97,18 +99,14 @@ cor_arrhythmia_numeric %>%  filter( correlated.1 %in% predictor | correlated.2 %
 ```
 
 This predictor has some correlation with "Channel V1 QRSTA" which it is in the others models. Under this, could be that the others models indirectly use this type or information.
-
-Let's see if in the other models appear
-
-```{r}
-varimp_knn_p2_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
-varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
-```
-
-and in KNN has importance.
+Then Channel V1 QRSA predictors is used as a important predictor in more than random forest model.
 
 
-Why is important? Because we have too many predictors but not all of them give us the same "quality" of information to our predictions. Predictors with high correlation "enter in a competition" with other.
+
+
+
+
+Why is important all this review? Because we have too many predictors but not all of them give us the same "quality" of information to our predictions. Predictors with high correlation "enter in a competition" with other.
 
 
 
@@ -220,7 +218,7 @@ results <- bind_rows(results,
 
 Like a summary, we have considering the whole dataset for Ocurrences and percentage:
 
-```{r Overview Class code table, echo=FALSE, message=FALSE}
+```{r Results by class codes in our validation dataset, echo=FALSE, message=FALSE}
 tmp <- left_join(arrhythmia, Class, by = "Class code") %>% 
   group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1))
 results <- results %>% mutate(`Class code` = as.factor(`Class code`))

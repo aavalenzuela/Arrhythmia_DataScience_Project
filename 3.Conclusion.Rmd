@@ -52,6 +52,7 @@ Check if the "Others" can be divided in some way and then look for a rule to det
 
 Other approach that we did not take is trying to create another category in base of group of arrhythmia, for example, all the arrhythmia related with Myocardial, or Synus, because I need medical knowledge that I do not have.
 
+We use some classical algorithm as KNN, decision tree and random forest and SVM not as popular as the first ones but more models are available and can be implemented and some others training method can be used in these models. I selected I considered better for classification task but I know more options are available in this everyday growing up area.
 
 The original problem was that some software can not detect the arrhythmia properly. With this works we can see we can create some level of confidence in the case of “Normal” & “Arrhythmia” and for all the classes but for a more robust solution more data will be necessary to train our model.
 
