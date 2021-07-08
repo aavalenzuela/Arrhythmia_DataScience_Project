@@ -14,8 +14,8 @@ The initial task of cleaning the data, using this real data, shows its importanc
 
 In this classifier problem, when we look between “Normal” & “Arrhythmia”, with random forest we get a good result in accuracy and sensitivity:
 
-```{r Conclusion Prediction Normal/Arrhytmia Summary, echo=FALSE}
-Pred1_results[4,] %>% data.frame(row.names = NULL) %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+```{r Conclusion Prediction Normal/Arrhytmia Summary, echo=FALSE, warning=FALSE}
+Pred1_results[4,] %>% data.frame(row.names = NULL) %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -27,9 +27,9 @@ This characteristics of the dataset can not be resolved properly with the model 
 In the second classifier problem, when we look among all the classification, random forest we get a good result:
 
 
-```{r Conclusion Prediction All Arrhytmia Classification Summary, echo=FALSE}
+```{r Conclusion Prediction All Arrhytmia Classification Summary, echo=FALSE, warning=FALSE}
 Pred2_results[4,] %>% data.frame(row.names = NULL) %>% t() %>%
-  knitr::kable(caption = "Prediction All Arrhytmia Classification Summary", "html") %>%
+  knitr::kable(caption = "Prediction All Arrhytmia Classification Summary") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
