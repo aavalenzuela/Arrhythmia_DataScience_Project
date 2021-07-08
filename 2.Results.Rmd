@@ -29,9 +29,9 @@ b. **Classification of cardiac arrhythmia**
 ## Detection of cardiac arrhythmia
 As a summary of **Detection of cardiac arrhythmia** we have (it was shown above):
 
-```{r Results First Prediction Result, echo=FALSE}
+```{r Results First Prediction Result, echo=FALSE, warning=FALSE}
 
-Pred1_results[-1,] %>% data.frame(row.names = NULL) %>% knitr::kable("html", caption = "Prediction Normal/Arrhytmia Summary") %>%
+Pred1_results[-1,] %>% data.frame(row.names = NULL) %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -90,11 +90,11 @@ varimp_svm_p1 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "
 ```
 It has importance in knn. Let's check its correlation:
 
-```{r Correlation of Channel V1 QRSA, echo=FALSE}
+```{r Correlation of Channel V1 QRSA, echo=FALSE, warning=FALSE}
 predictor <- "Channel V1 QRSA"
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% predictor | correlated.2 %in% predictor) %>% slice_max(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for Channel V1 QRSA") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% predictor | correlated.2 %in% predictor) %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for Channel V1 QRSA") %>%
   kable_styling(full_width = F, position = "left")
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% predictor | correlated.2 %in% predictor) %>% slice_min(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for Channel V1 QRSA") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% predictor | correlated.2 %in% predictor) %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for Channel V1 QRSA") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -117,8 +117,8 @@ Why is important all this review? Because we have too many predictors but not al
 
 As a summary of **Classification of cardiac arrhythmia** we have (it was shown above too):
 
-```{r Results Second Prediction Result, echo=FALSE}
-Pred2_results[-1,] %>% data.frame(row.names = NULL) %>% t() %>% knitr::kable("html", caption = "Prediction All Arrhytmia Classification Summary")
+```{r Results Second Prediction Result, echo=FALSE, warning=FALSE}
+Pred2_results[-1,] %>% data.frame(row.names = NULL) %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
 ```
 
 
@@ -141,7 +141,7 @@ and in the case of Class 5, the situation it is the same, except for decision tr
 left_join(arrhythmia, Class, by = "Class code") %>% 
   group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
    filter(`Class code` %in% c(5, 7, 8, 14, 15, 16)) %>%
-  knitr::kable("html", caption = "Presence of codes in our dataset") %>%
+  knitr::kable(caption = "Presence of codes in our dataset") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -183,7 +183,7 @@ results <- bind_rows(results,
 
 Looking the rest of the classes, we see:
 
-```{r Results Analyzed 5 coded in our dataset about these arrhythmias, echo=FALSE}
+```{r Results Analyzed 5 coded in our dataset about these arrhythmias, echo=FALSE, warning=FALSE}
 Pred2_results %>% select(Accuracy, Code.1, Sensitivity.1, Specificity.1,
                          Code.2, Sensitivity.2, Specificity.2,
                          #Code.3, Sensitivity.3, Specificity.3,
@@ -191,7 +191,7 @@ Pred2_results %>% select(Accuracy, Code.1, Sensitivity.1, Specificity.1,
                          #Code.5, Sensitivity.5, Specificity.5,
                          Code.6, Sensitivity.6, Specificity.6,
                          Code.10, Sensitivity.10, Specificity.10)  %>% 
-  t() %>% knitr::kable("html", caption = "Prediction in remaining Arrhytmia Classification") %>%
+  t() %>% knitr::kable(caption = "Prediction in remaining Arrhytmia Classification") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -218,12 +218,12 @@ results <- bind_rows(results,
 
 Like a summary, we have considering the whole dataset for Ocurrences and percentage:
 
-```{r Results by class codes in our validation dataset, echo=FALSE, message=FALSE}
+```{r Results by class codes in our validation dataset, echo=FALSE, message=FALSE, warning=FALSE}
 tmp <- left_join(arrhythmia, Class, by = "Class code") %>% 
   group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1))
 results <- results %>% mutate(`Class code` = as.factor(`Class code`))
 left_join(tmp,results, by = "Class code") %>% 
-  knitr::kable("html", caption = "Result by class codes in our validation dataset") %>%
+  knitr::kable(caption = "Result by class codes in our validation dataset") %>%
   kable_styling(full_width = F, position = "left")
 ```
 

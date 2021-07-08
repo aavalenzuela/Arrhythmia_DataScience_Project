@@ -36,19 +36,19 @@ Let's show the standard definition in an binary variable:
 
 
 
-```{r Evaluation metrics Binary Table, echo=FALSE}
+```{r Evaluation metrics Binary Table, echo=FALSE, warning=FALSE}
 M <- matrix(c("True Positives (TP)","False Positives (FP)","False Negatives (FN)","True Negatives (TN)"),2,byrow = TRUE) #%>%
 rownames(M) <- c("Predicted Positive","Predicted Negative")
 colnames(M) <- c("Actually Positive", "Actually Negative")
 
-M %>% knitr::kable("html") %>%
+M %>% knitr::kable() %>%
   kable_styling(full_width = F)
 ```
 An these are the definitions:
 
 $$
-Accuracy = (TP+TN)/(TP+TN+FP+FN)\\
-Sensitivity = TP/(TP+FN)\\
+Accuracy = (TP+TN)/(TP+TN+FP+FN)\newline
+Sensitivity = TP/(TP+FN)\newline
 Specificity = TN/(TN+FP)
 $$
 
@@ -56,23 +56,23 @@ $$
 Whats happened when we have more class? Then we have the same arithmetic for the Accuracy, but we have a value for Sensitivity and Specificity for each class.
 
 
-```{r Evaluation metrics Multiple Table, echo=FALSE}
+```{r Evaluation metrics Multiple Table, echo=FALSE, warning=FALSE}
 M3 <- matrix(c("True A (TA)","False A (FA.B)","False A (FA.C)","False B (FB.A)","True B (TB)","False B (FB.C)","False C (FC.A)","False C (FC.B)","True C (TC)"),3,byrow = TRUE) #%>%
 rownames(M3) <- c("Predicted A", "Predicted B", "Predicted C")
 colnames(M3) <- c("Actually A", "Actually B", "Actually C")
-M3 %>% knitr::kable("html") %>%
+M3 %>% knitr::kable() %>%
   kable_styling(full_width = F)
 ```
 
 An these are the definitions:
 
 $$
-Accuracy = (TA+TB+TC)/(TA+TB+TC+FA.B+FA.C+FB.A+FB.C+FC.A+FC.B)\\
-Sensitivity_{A} = TA/(TA+FB.A+FC.A)\\
-Specificity_{A} = TA/(TA+FA.B+FA.C)\\
-Sensitivity_{B} = TB/(TB+FA.B+FC.B)\\
-Specificity_{B} = TB/(TB+FB.A+FB.C)\\
-Sensitivity_{C} = TC/(TC+FB.C+FA.C)\\
+Accuracy = (TA+TB+TC)/(TA+TB+TC+FA.B+FA.C+FB.A+FB.C+FC.A+FC.B)\newline
+Sensitivity_{A} = TA/(TA+FB.A+FC.A)\newline
+Specificity_{A} = TA/(TA+FA.B+FA.C)\newline
+Sensitivity_{B} = TB/(TB+FA.B+FC.B)\newline
+Specificity_{B} = TB/(TB+FB.A+FB.C)\newline
+Sensitivity_{C} = TC/(TC+FB.C+FA.C)\newline
 Specificity_{C} = TC/(TC+FA.C+FB.C)
 $$
 
@@ -151,12 +151,12 @@ CrossTable(Predicted, Actually)
 ```
 
 For our record, we keep this first model:
-```{r ,echo=FALSE}
+```{r Model just the most common first Prediction Result,echo=FALSE, warning=FALSE}
 Pred1_results <- data.frame(Model = "Just the most common",
                                      Accuracy = cm$overall["Accuracy"],
                                      Sensitivity = cm$byClass["Sensitivity"],
                                      Specificity = cm$byClass["Specificity"] , row.names = NULL)
-Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
   kable_styling(full_width = F)
 ```
 
@@ -188,7 +188,7 @@ We can see that only class 1 has good sensitivity, as we expected.
 
 
 For our record, we keep this second model:
-```{r Model just the most common Second Prediction Result, echo=FALSE}
+```{r Model just the most common Second Prediction Result, echo=FALSE, warning=FALSE}
 Pred2_results <- data.frame(Model = "Just the most common",
                             Accuracy = cm$overall["Accuracy"],
                             Code.1 = row.names(cm$byClass)[1],
@@ -298,13 +298,13 @@ CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
 
 
 For our record, we add this model:
-```{r K-Nearest Neighbors Model first Prediction Result,echo=FALSE}
+```{r K-Nearest Neighbors Model first Prediction Result, echo=FALSE, warning=FALSE}
 Pred1_results <- bind_rows(Pred1_results,
                            data.frame(Model = "K-Nearest Neighbors",
                                      Accuracy = cm$overall["Accuracy"],
                                      Sensitivity = cm$byClass["Sensitivity"],
                                      Specificity = cm$byClass["Specificity"], row.names = NULL ))
-Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
   kable_styling(full_width = F)
 
 ```
@@ -391,7 +391,7 @@ A perfect match in class 3 and 9.
 
 
 For our record, we keep this result:
-```{r K-Nearest Neighbors Model Second Prediction Result, echo=FALSE}
+```{r K-Nearest Neighbors Model Second Prediction Result, echo=FALSE, warning=FALSE}
 Pred2_results <- bind_rows(Pred2_results,
                            data.frame(Model = "K-Nearest Neighbors",
                             Accuracy = cm$overall["Accuracy"],
@@ -446,7 +446,7 @@ Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Class
 
 
 
-### Decision Tree Model
+## Decision Tree Model
 
 Decision Tree is the most intuitive solution that we get from data, and it s very popular en health, that the system give you a quick rule to answer your question.
 
@@ -544,13 +544,13 @@ CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FAL
 
 
 For our record, we keep this result:
-```{r Decision Tree Model First Prediction Result, echo=FALSE}
+```{r Decision Tree Model First Prediction Result, echo=FALSE, warning=FALSE}
 Pred1_results <- bind_rows(Pred1_results,
                            data.frame(Model = "Decision Tree Classifier",
                                      Accuracy = cm$overall["Accuracy"],
                                      Sensitivity = cm$byClass["Sensitivity"],
                                      Specificity = cm$byClass["Specificity"], row.names = NULL ))
-Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
   kable_styling(full_width = F)
 ```
 
@@ -572,7 +572,9 @@ We see improvements in Accuracy and	Sensitivity and a worse value for	Specificit
 
 
 ### Second Predictions
+
 Let's works with the second Prediction
+
 ```{r Decision Tree Model Second Prediction train, echo=FALSE, warning=FALSE}
 # use cross validation to choose cp
 #library(caret)
@@ -658,7 +660,7 @@ CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FAL
 
 
 For our record, we keep this result:
-```{r Decision Tree Model Second Prediction Result, echo=FALSE}
+```{r Decision Tree Model Second Prediction Result, echo=FALSE, warning=FALSE}
 Pred2_results <- bind_rows(Pred2_results,
                            data.frame(Model = "Decision Tree Classifier",
                             Accuracy = cm$overall["Accuracy"],
@@ -772,13 +774,13 @@ CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FAL
 
 
 For our record, we keep this result:
-```{r Random Forests Model First Prediction Result, echo=FALSE}
+```{r Random Forests Model First Prediction Result, echo=FALSE, warning=FALSE}
 Pred1_results <- bind_rows(Pred1_results,
                            data.frame(Model = "Random Forest Classifier",
                                      Accuracy = cm$overall["Accuracy"],
                                      Sensitivity = cm$byClass["Sensitivity"],
                                      Specificity = cm$byClass["Specificity"], row.names = NULL ))
-Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
   kable_styling(full_width = F)
 ```
 
@@ -839,7 +841,7 @@ CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FAL
 
 
 For our record, we keep this result:
-```{r Random Forests Model Second Prediction Result, echo=FALSE}
+```{r Random Forests Model Second Prediction Result, echo=FALSE, warning=FALSE}
 Pred2_results <- bind_rows(Pred2_results,
                            data.frame(Model = "Random Forest Classifier",
                             Accuracy = cm$overall["Accuracy"],
@@ -956,14 +958,14 @@ CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
 ```
 
 For our record, we keep this result:
-```{r Support Vector Machines Model First Prediction Result, echo=FALSE}
+```{r Support Vector Machines Model First Prediction Result, echo=FALSE, warning=FALSE}
 
 Pred1_results <- bind_rows(Pred1_results,
                            data.frame(Model = "SVM Classifier",
                                      Accuracy = cm$overall["Accuracy"],
                                      Sensitivity = cm$byClass["Sensitivity"],
                                      Specificity = cm$byClass["Specificity"], row.names = NULL ))
-Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary", "html") %>%
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
   kable_styling(full_width = F)
 ```
 
@@ -1028,7 +1030,7 @@ CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
 
 
 For our record, we keep this result:
-```{r Support Vector Machines Model Second Prediction Result, echo=FALSE}
+```{r Support Vector Machines Model Second Prediction Result, echo=FALSE, warning=FALSE}
 Pred2_results <- bind_rows(Pred2_results,
                            data.frame(Model = "SVM Classifier",
                             Accuracy = cm$overall["Accuracy"],

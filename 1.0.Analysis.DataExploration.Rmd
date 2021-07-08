@@ -422,11 +422,11 @@ arrhythmia <- arrhythmia[,-ix]
 
 As we mention before, some values are not defined. Initially they are "?" and we change for NA. This table show us which predictor are involve and how many they are:
 
-```{r Analysis Cleaning working with NA, echo = FALSE}
+```{r Analysis Cleaning working with NA, echo = FALSE, warning=FALSE}
 # counts the number of NAs per column, resulting in:
 colna <- colSums(is.na(arrhythmia))
 colna <- colna[colna > 0]
-colna %>% knitr::kable("html", caption = 'Table of Ocurrence of NA', col.names = c( 'Ocurrences')) %>%
+colna %>% knitr::kable(caption = 'Table of Ocurrence of NA', col.names = c( 'Ocurrences')) %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -565,11 +565,11 @@ cor_data_numeric[lower.tri(cor_data_numeric, diag = TRUE)] <- NA # Should the di
 
 
 For this table the more positive correlated are:
-```{r Correlation creating the tidy table, echo=FALSE}
+```{r Correlation creating the tidy table, echo=FALSE,warning=FALSE}
 data2 <- data.frame(cor_data_numeric, check.names = FALSE)   
 data2 <- tibble::rownames_to_column(data2, "correlated.1") # Apply rownames_to_column
 cor_arrhythmia_numeric <- data2 %>%  gather(correlated.2,value,2:ncol(data2))
-cor_arrhythmia_numeric %>% slice_max(order_by = value, n = 10) %>% knitr::kable("html", caption = "Top 10 Correlation between predictors")
+cor_arrhythmia_numeric %>% slice_max(order_by = value, n = 10) %>% knitr::kable(caption = "Top 10 Correlation between predictors")
 ```
 
 
@@ -577,9 +577,9 @@ cor_arrhythmia_numeric %>% slice_max(order_by = value, n = 10) %>% knitr::kable(
 
 
 How many are correlated more than .9?
-```{r Correlation with limit, echo=FALSE}
+```{r Correlation with limit, echo=FALSE, warning=FALSE}
 limit <- 0.9
-cor_arrhythmia_numeric %>% filter(value < -limit | value > limit) %>% count() %>% knitr::kable("html", caption = "Correlation over 0.9 & under -0.9") %>%
+cor_arrhythmia_numeric %>% filter(value < -limit | value > limit) %>% count() %>% knitr::kable( caption = "Correlation over 0.9 & under -0.9") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -603,11 +603,11 @@ In the previous predictor that we have missing values, are some others predictor
 #### Correlation of P Vector angles
 
 Let's start with P Vector angles, where we have 22 missing values.
-```{r Correlation of previous missing values P Vector angles, echo=FALSE}
+```{r Correlation of previous missing values P Vector angles, echo=FALSE, warning=FALSE}
 
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for P Vector angles") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for P Vector angles") %>%
   kable_styling(full_width = F, position = "left")
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for P Vector angles") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for P Vector angles") %>%
   kable_styling(full_width = F, position = "left")
 ```
 here we have a value of `r cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_max(order_by = value) `. If this predictor appear in the final algorithm, let take this in consideration.
@@ -616,11 +616,11 @@ here we have a value of `r cor_arrhythmia_numeric %>%  filter( correlated.1 %in%
 #### Correlation of T Vector angles
 
 With T Vector angles, where we have 8 missing values.
-```{r Correlation of T Vector angles, echo=FALSE}
+```{r Correlation of T Vector angles, echo=FALSE, warning=FALSE}
 
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "T Vector angles" | correlated.2 %in% "T Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for T Vector angles") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "T Vector angles" | correlated.2 %in% "T Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for T Vector angles") %>%
   kable_styling(full_width = F, position = "left")
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "T Vector angles" | correlated.2 %in% "T Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for T Vector angles") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "T Vector angles" | correlated.2 %in% "T Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for T Vector angles") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -631,11 +631,11 @@ The correlation here is lower. Then the assumtion of independant behaivor look v
 
 In the case of QRST Vector angles, with only one value missing, we have
 
-```{r Correlation of QRST Vector angles,echo=FALSE}
+```{r Correlation of QRST Vector angles, echo=FALSE, warning=FALSE}
 
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "QRST Vector angles" | correlated.2 %in% "QRST Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for QRST Vector angles") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "QRST Vector angles" | correlated.2 %in% "QRST Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for QRST Vector angles") %>%
   kable_styling(full_width = F, position = "left")
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "QRST Vector angles" | correlated.2 %in% "QRST Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for QRST Vector angles") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "QRST Vector angles" | correlated.2 %in% "QRST Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for QRST Vector angles") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -643,11 +643,11 @@ cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "QRST Vector angles" | cor
 #### Correlation of Heart rate
 And the "Heart rate", with only one missing value
 
-```{r Correlation Heart rate, echo=FALSE }
+```{r Correlation Heart rate, echo=FALSE, warning=FALSE}
 
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "Heart rate" | correlated.2 %in% "Heart rate") %>% slice_max(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for Heart rate") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "Heart rate" | correlated.2 %in% "Heart rate") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for Heart rate") %>%
   kable_styling(full_width = F, position = "left")
-cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "Heart rate" | correlated.2 %in% "Heart rate") %>% slice_min(order_by = value, n = 5) %>% knitr::kable("html", caption = "Correlation for Heart rate") %>%
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "Heart rate" | correlated.2 %in% "Heart rate") %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for Heart rate") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -656,9 +656,9 @@ and this predictor has very low correlation with all the rest of the predictor
 
 #### Less Correlation
 Less correlated predictors are also presented and as we saw in the histogram, they are the most common. For example for the correlation between -0.001 and 0.001 we have:
-```{r Correlation Less Correlated, echo=FALSE}
+```{r Correlation Less Correlated, echo=FALSE, warning=FALSE}
 limit <- 0.0001
-cor_arrhythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::kable("html", caption = "Less Correlated Preditors") %>%
+cor_arrhythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::kable(caption = "Less Correlated Preditors") %>%
   kable_styling(full_width = F, position = "left")
 ```
 
@@ -673,7 +673,7 @@ Let's take a look to some predictors to see if we can find some outliers. Outlie
 Let's start with some familiar predictors like Age.
 
 ```{r Outliers Age Boxplot, echo=FALSE}
-arrhythmia %>% ggplot(aes(Age)) + geom_boxplot() + ggtitle("Age Outliers")
+arrhythmia %>% ggplot(aes(Age)) + geom_boxplot(fill="steelblue") + ggtitle("Age Outliers")
 ```
 
 It does not show any value we can detect as outlier.
@@ -795,19 +795,19 @@ We can see in detail the Class code distribution in both dataset.
 ## check train_set dataset
 
 
-```{r  Create train set check train_set, echo=FALSE, message=FALSE}
+```{r  Create train set check train_set, echo=FALSE, message=FALSE, warning=FALSE}
 left_join(train_set, Class, by = "Class code") %>% 
   group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(train_set),digits = 1)) %>%
-  knitr::kable("html", caption = "Presence of codes in train_set dataset")
+  knitr::kable(caption = "Presence of codes in train_set dataset")
   
 ```
 
 ## check validation_set dataset
 
-```{r  Create train set check validation_set, echo=FALSE, message=FALSE}
+```{r  Create train set check validation_set, echo=FALSE, message=FALSE, warning=FALSE}
 left_join(validation_set, Class, by = "Class code") %>% 
   group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(validation_set),digits = 1)) %>%
-  knitr::kable("html", caption = "Presence of codes in validation_set dataset")
+  knitr::kable(caption = "Presence of codes in validation_set dataset")
   
 ```
 
