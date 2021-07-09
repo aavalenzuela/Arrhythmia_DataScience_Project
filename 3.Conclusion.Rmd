@@ -19,7 +19,7 @@ Pred1_results[4,] %>% data.frame(row.names = NULL) %>% knitr::kable(caption = "P
   kable_styling(full_width = F, position = "left")
 ```
 
-then we can feel we have a good result with a dataset with only `r ncol(arrhythmia)` patients. 
+then we can feel we have a good result with a dataset with only `r nrow(arrhythmia)` patients. 
 
 When we work with all the different classification in the arrhythmia, its 15 class, we notices that the distribution of this class are not equal, some of them are not even present in the dataset and the classification of "Others" was no predictable, maybe because under this name several different diseases.
 This characteristics of the dataset can not be resolved properly with the model used, and not model can do it.
@@ -33,13 +33,14 @@ Pred2_results[4,] %>% data.frame(row.names = NULL) %>% t() %>%
   kable_styling(full_width = F, position = "left")
 ```
 
-5 point in accuracy compared with the first prediction.
+5 points less in accuracy compared with the first prediction.
 
-As a summary of the 16 classes (class 1 is normal) we have: 
-No data in dataset: 3 
-No prediction can be construct with the models used: 6 
-Classes can be predicted with our models: 7 
+As a summary of the 16 classes (class 1 is normal) we have:  
+No data in dataset: 3  
+No prediction can be construct with the models used: 6  
+Classes can be predicted with our models: 7  
 
+In a pie graph:
 
 ```{r Conclusion Prediction by Classes,echo=FALSE}
 cols <- c("red", "yellow", "green")
@@ -52,8 +53,8 @@ Check if the "Others" can be divided in some way and then look for a rule to det
 
 Other approach that we did not take is trying to create another category in base of group of arrhythmia, for example, all the arrhythmia related with Myocardial, or Synus, because I need medical knowledge that I do not have.
 
-We use some classical algorithm as KNN, decision tree and random forest and SVM not as popular as the first ones but more models are available and can be implemented and some others training method can be used in these models. I selected I considered better for classification task but I know more options are available in this everyday growing up area.
+We use some classical algorithm as KNN, decision tree and random forest and SVM not as popular as the first ones but more models are available and can be implemented and some others training method can be used in these models. I selected them considered better for classification task but I know more options are available in this everyday growing up area.
 
-The original problem was that some software can not detect the arrhythmia properly. With this works we can see we can create some level of confidence in the case of “Normal” & “Arrhythmia” and for all the classes but for a more robust solution more data will be necessary to train our model.
+The original problem was that some software can not detect the arrhythmia properly. With this work we can see we can create some level of confidence in the case of “Normal” & “Arrhythmia” and for all the classes but for a more robust solution more data will be necessary to train our model.
 
 

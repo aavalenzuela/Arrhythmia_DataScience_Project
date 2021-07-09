@@ -48,7 +48,9 @@ An these are the definitions:
 
 $$
 Accuracy = (TP+TN)/(TP+TN+FP+FN)\newline
+
 Sensitivity = TP/(TP+FN)\newline
+
 Specificity = TN/(TN+FP)
 $$
 
@@ -68,11 +70,17 @@ An these are the definitions:
 
 $$
 Accuracy = (TA+TB+TC)/(TA+TB+TC+FA.B+FA.C+FB.A+FB.C+FC.A+FC.B)\newline
+
 Sensitivity_{A} = TA/(TA+FB.A+FC.A)\newline
+
 Specificity_{A} = TA/(TA+FA.B+FA.C)\newline
+
 Sensitivity_{B} = TB/(TB+FA.B+FC.B)\newline
+
 Specificity_{B} = TB/(TB+FB.A+FB.C)\newline
+
 Sensitivity_{C} = TC/(TC+FB.C+FA.C)\newline
+
 Specificity_{C} = TC/(TC+FA.C+FB.C)
 $$
 
@@ -250,7 +258,8 @@ Because we have to few data to train, we use cross-validation in our training pr
 
 ### First Prediction
 
-Let's works with the first Prediction  
+Let's works with the first Prediction. In the first graph we are looking for the better k (number of Neighbors) that increase our accuracy.  This parameter will be used later, for our prediction.
+
 ```{r K-Nearest Neighbors Model first Prediction train, echo=FALSE, warning=FALSE}
 
 knn.control <- trainControl(method = "repeatedcv", number = 20, repeats = 3)   
@@ -278,7 +287,7 @@ ggplot(varImp(fit_knn), top = 20) + ggtitle("K-Nearest Neighbors Model Top 20 fe
 
 
 
-With this model we now take the validation dataset to see how well this apply:
+With this model created in base of the train dataset we now take the validation dataset to see how well this apply:
 
 ```{r K-Nearest Neighbors Model first Prediction Prediction, echo=FALSE, warning=FALSE}
 y_hat_knn <- predict(fit_knn, validation_set_p1, type = "raw")
@@ -286,7 +295,7 @@ cm <- confusionMatrix(data = y_hat_knn, reference = validation_set_p1$`Class cod
 cm
 ```
 
-We see a good improvement in accuracy and sensitivity over the previous mode approach.
+We see a good improvement in accuracy and sensitivity over the previous approach. Then we see that KNN is able to create a better prediction than just the mode of the patients. We just started with this process, let's see if we can make it better,
 
 ```{r K-Nearest Neighbors Model first Prediction Table, echo=FALSE}
 # Table names
@@ -320,11 +329,13 @@ With this first model we have a good improvement. KNN in overall, has a poor sen
 
 
 ### Second Predictions
-Let's works with the second Prediction, that include all the classes:  
+
+Let's works with the second Prediction, that include all the classes and the challenge is to know which of all the arrhythmia classification (or normal) the patient has. Again in the first graph we are looking for the better k (number of Neighbors):
+
 ```{r K-Nearest Neighbors Model Second Prediction train, echo=FALSE, warning=FALSE}
 # Predict region using KNN
 
-library(caret)
+#library(caret)
 
 #knn.control <- trainControl(method = "cv", number = 5, #number = 10
 #                            classProbs = TRUE,
@@ -454,7 +465,7 @@ For this model we are going to user the rpart package and the cp (complexity par
 
 
 ### First Prediction
-Let's works with the first Prediction
+Let's works with the first Prediction and look for the cp (complexity parameter) that increase our accuracy:
 
 ```{r Decision Tree Model First Prediction train, echo=FALSE, warning=FALSE}
 # use cross validation to choose cp
@@ -472,7 +483,7 @@ ggplot(fit_rpart) + ggtitle("Decision Tree")
 fit_rpart
 ```
 
-The cp is `r fit_rpart$bestTune` and we get the following decision tree with this:
+The cp is `r round(fit_rpart$bestTune,3)` and we get the following decision tree with this:
 
 
 ```{r Decision Tree Model First Prediction plot, echo=FALSE, warning=FALSE}
@@ -494,7 +505,9 @@ varimp_rpart_p1 <- varImp(fit_rpart)$importance
 options(digits =7) # default
 ```
 
-These are predictors are present in the tree too, not all of them because the tree shows less than 20 predictors, and the overall does not show all of them, only 30 are rated, and it is not directly related with the order in the decision tree. Now see how well it is the prediction in the validation set:
+These are predictors are present in the tree too, not all of them because the tree shows less than 20 predictors, and the overall does not show all of them, only 30 are rated, and it is not directly related with the order in the decision tree.
+
+Now let's see how well it is the prediction in the validation set:
 
 ```{r Decision Tree Model First Prediction Predict, echo=FALSE, warning=FALSE}
 # compute accuracy
@@ -506,7 +519,7 @@ cm
 options(digits =7) # default
 ```
 
-Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy and see how it performs:
+Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy and see how it performs. The new decision tree is:
 
 ```{r Decision Tree Model First Prediction Prune, echo=FALSE, warning=FALSE}
 # prune the tree 
@@ -532,7 +545,7 @@ cm
 options(digits =7) # default
 ```
 
-We can not see any improvement, but the decision tree is similar but not equal under the change made by prune.
+We can not see any improvement, but the decision tree is similar but not equal under the change made by prune. The decision tree graph is different because the library can not manage the output from prune.
 
 ```{r Decision Tree Model First Prediction Table, echo=FALSE}
 # Table names
@@ -573,7 +586,7 @@ We see improvements in Accuracy and	Sensitivity and a worse value for	Specificit
 
 ### Second Predictions
 
-Let's works with the second Prediction
+Let's works with the second Prediction with Decision Tree. Again, look for the cp:
 
 ```{r Decision Tree Model Second Prediction train, echo=FALSE, warning=FALSE}
 # use cross validation to choose cp
@@ -591,7 +604,7 @@ ggplot(fit_rpart) + ggtitle("Decision Tree")
 fit_rpart
 ```
 
-The cp is `r fit_rpart$bestTune` and we get the following decision tree with this:
+We get a cp = `r round(fit_rpart$bestTune,4)` and the following decision tree was created with this train dataset:
 
 
 ```{r Decision Tree Model Second Prediction plot, echo=FALSE, warning=FALSE}
@@ -604,6 +617,7 @@ rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
     "GyGy", "GyGn")) # specify 13 colors)
 ```
 
+Again, let's see the predictors which this model consider that help more:
 
 ```{r Decision Tree Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
 options(digits =2)
@@ -611,6 +625,8 @@ varImp(fit_rpart)
 varimp_rpart_p2 <- varImp(fit_rpart)$importance
 options(digits =7) # default
 ```
+
+This trained model, now is applied to the validation set. How well does it perform?
 
 ```{r Decision Tree Model Second Prediction Predict, echo=FALSE, warning=FALSE}
 # compute accuracy
@@ -622,7 +638,7 @@ cm
 options(digits =7) # default
 ```
 
-Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy:
+Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy and see if the prediction improve or not:
 
 ```{r Decision Tree Model Second Prediction Prune, echo=FALSE, warning=FALSE}
 # prune the tree 
@@ -719,12 +735,15 @@ In 5 classes we can not predict any case (Sensitivity =0 & Specificity=1) and Cl
 
 We see one decison tree in the previous section. Applying prune we have a different one but with similar accuracy. The idea behind random forest is that we created multiple trees and the class who get more "votes" among all the tress is the predicted value.
 
-In other words, among the tress, witch prediction is the most popular.
+In other words, among the tress, witch prediction is the most popular, wins.
 
 Here we have like parameters the value of mtry that we are trying to use to get the better accuracy.
 
 
 ### First Predictions
+
+We start look for mtry to get the better accuracy in this model fro Normal/Arrhythmia prediction:
+
 ```{r Random Forests Model First Predictions train, echo=FALSE, warning=FALSE}
 #Random Forests
 
@@ -786,11 +805,14 @@ Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") 
 
 
 
-Random Forests get better result over decision tree and previous ones.
+Random Forests get better result over decision tree and previous ones in Accuracy	and Sensitivity. Until now if our best predictor.
 
 
 
 ### Second Predictions
+
+Let's start with mtry in random forest, now with all the classes:
+
 ```{r Random Forests Model Second Predictions train, echo=FALSE, warning=FALSE}
 #Random Forests
 
@@ -819,7 +841,7 @@ varimp_rf_p2 <- varImp(fit_rf)$importance
 options(digits =7) # default
 ```
 
-Now see how well it is the prediction in the validation set:
+Now see with the model created using the trining set how well it is the prediction in the validation set:
 
 
 ```{r Random Forests Model Second Prediction Prediction, echo=FALSE, warning=FALSE}
@@ -905,13 +927,13 @@ A support vector machine allows you to classify data that’s linearly separable
 
 ### First Predictions
 
-For this part we are going to use the caret train method that perform better than svm from e1071 library.
+For this part we are going to use the caret train method that perform better than svm from e1071 library. The last library was useful to determine that the radial kernel is the best solution. In this model, we are not going to use other parameter than the kernel.
 
 ```{r Support Vector Machines Model First Prediction train, echo=FALSE, warning=FALSE}
 #Support Vector Classifier:
 #library(e1071)
 set.seed(1)
-#train_svm <- svm(`Class code` ~ ., data = train_set_p1)
+#train_svm <- svm(`Class code` ~ ., data = train_set_p1) # initial approach
 #train_svm
 
 fit_svm <- train(`Class code` ~ ., data = train_set_p1, method="svmRadial")  # caret train method 
@@ -933,7 +955,7 @@ options(digits =7) # default
 #y_hat_svm_tune <- predict(train_svm_after_tune,validation_set_p1)
 ```
 
-The values that get the better result are sigma = `r fit_svm$bestTune[1]` and C = `r fit_svm$bestTune[2]`.
+The values that get the better result are sigma = `r round(fit_svm$bestTune[1],4)` and C = `r fit_svm$bestTune[2]`.
 The SVM-Kernel is radial.
 
 The important variables are:
@@ -983,6 +1005,7 @@ This method did not perform as expected and it is close to KNN and decison tree 
 
 ### Second Predictions
 
+Again, taking in consideration all the classes, we are going to use radial kernel.
 
 ```{r Support Vector Machines Model Second Prediction train, echo=FALSE, warning=FALSE}
 #Support Vector Classifier

@@ -391,7 +391,7 @@ arrhythmia <- arrhythmia.uci %>% mutate(Sex = as.factor( ifelse(Sex == 0, 'M', '
 
 As a result of this transformation, we have a "well defined" new dataset (only first 25 variables of 280 are showed):
 
-```{r Analysis new structure, echo=FALSE}
+```{r Analysis new structure, echo=FALSE, size=9}
 # Display predictors (columns) of the new dataset
 str(arrhythmia, list.len = 25)
 ```
@@ -400,7 +400,9 @@ str(arrhythmia, list.len = 25)
 
 The first analysis is to review if all the predictor give information. For that we are going to check if all the values of the dataset are equal, e. gr., it has standard deviation equal to zero. We are going to detect them.
 
-```{r Analysis Cleaning,warning=FALSE}
+The predictors are:
+
+```{r Analysis Cleaning,warning=FALSE, size=11}
 sd.arrhythmia <- apply(arrhythmia,2,sd, na.rm=TRUE)
 sd0.list.arrhythmia <- names(sd.arrhythmia[sd.arrhythmia == 0 & !is.na(sd.arrhythmia)]) # check is.na......
 
@@ -409,7 +411,7 @@ ix <- which(colnames(arrhythmia) %in% sd0.list.arrhythmia)
 variable.names(arrhythmia[ix])
 
 ```
- and delete them:
+ and we delete them from our dataset:
 ```{r Analysis Cleaning delete columns}
 
 arrhythmia <- arrhythmia[,-ix]
@@ -457,7 +459,7 @@ arrhythmia %>% ggplot(aes(`P Vector angles`)) + geom_histogram() +
   geom_vline( xintercept = median(arrhythmia$`P Vector angles`,na.rm = TRUE), colour = "green")
 ```
 
-This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low values that look like an outsiders.
+This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low and high values that look like an outsiders than the mean. Anyway, both values are pretty close but median will be the preference in this and next cases.
 
 
 ```{r Missing P Vector angles replacement}
@@ -511,7 +513,7 @@ arrhythmia %>% ggplot(aes(`QRST Vector angles`)) + geom_histogram() +
   ggtitle("Histogram of QRST Vector angles")
 ```
 
-This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low values as before.
+This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low and hkgh values as before.
 
 ```{r Missing QRST Vector angles replacement}
 arrhythmia$`QRST Vector angles`[is.na(arrhythmia$`QRST Vector angles`)] <- median(arrhythmia$`QRST Vector angles`,na.rm = TRUE)
@@ -525,7 +527,7 @@ This is only one missing value and represent the `r round(100*colna[5]/nrow(arrh
 
 
 ```{r Missing Heart rate Analysis, echo=FALSE}
-arrhythmia %>% filter(is.na(`Heart rate`)) %>% select(Age, Sex, Height, Weight, `QRS duration`,`P-R interval`, `Q-T interval`, `T interval`, `P interval` ,`QRS Vector angles`)
+arrhythmia %>% filter(is.na(`Heart rate`)) %>% select(Age, Sex, Height, Weight, `QRS duration`,`P-R interval`, `Q-T interval`, `T interval`, `P interval`)
 ```
 Let's do the same analysis about the distribution:
 
@@ -540,7 +542,7 @@ arrhythmia %>% ggplot(aes(`Heart rate`)) + geom_histogram() +
   ggtitle("Histogram of Heart rate")
 ```
 
-This show in blue the mean and in green the median for this predictors. In this case both values are pretty close. We are going to use the median anyway.
+This show in blue the mean and in green the median for this predictors. Again, these values are pretty close. We are going to use the median anyway, getting a little independence of the high value of it.
 
 ```{r Missing Heart rate replacement}
 arrhythmia$`Heart rate`[is.na(arrhythmia$`Heart rate`)] <- median(arrhythmia$`Heart rate`,na.rm = TRUE)
@@ -569,14 +571,15 @@ For this table the more positive correlated are:
 data2 <- data.frame(cor_data_numeric, check.names = FALSE)   
 data2 <- tibble::rownames_to_column(data2, "correlated.1") # Apply rownames_to_column
 cor_arrhythmia_numeric <- data2 %>%  gather(correlated.2,value,2:ncol(data2))
-cor_arrhythmia_numeric %>% slice_max(order_by = value, n = 10) %>% knitr::kable(caption = "Top 10 Correlation between predictors")
+cor_arrhythmia_numeric %>% slice_max(order_by = value, n = 10) %>% knitr::kable(caption = "Top 10 Positive Correlation between predictors")
+cor_arrhythmia_numeric %>% slice_min(order_by = value, n = 10) %>% knitr::kable(caption = "Top 10 Negative Correlation between predictors")
 ```
 
 
 
 
 
-How many are correlated more than .9?
+How many predictors are correlated, positive and negative, more than .9 (high correlated)?
 ```{r Correlation with limit, echo=FALSE, warning=FALSE}
 limit <- 0.9
 cor_arrhythmia_numeric %>% filter(value < -limit | value > limit) %>% count() %>% knitr::kable( caption = "Correlation over 0.9 & under -0.9") %>%
@@ -587,7 +590,7 @@ cor_arrhythmia_numeric %>% filter(value < -limit | value > limit) %>% count() %>
 
 
 
-This number indicate that the second predictor (or the first if you prefer) does not give us valuable information. But how are these distributed?
+This number indicate that the second predictor (or the first if you prefer) does not give us valuable information because the other predictor already give us that information. But how are these distributed?
 
 ```{r Correlation histogram, echo=FALSE}
 cor_arrhythmia_numeric %>% ggplot(aes(value)) + geom_histogram(bins = 20,na.rm = TRUE) + ggtitle("Distribution of Correlation between Predictors") + xlab("Correlation")
@@ -603,6 +606,7 @@ In the previous predictor that we have missing values, are some others predictor
 #### Correlation of P Vector angles
 
 Let's start with P Vector angles, where we have 22 missing values.
+
 ```{r Correlation of previous missing values P Vector angles, echo=FALSE, warning=FALSE}
 
 cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for P Vector angles") %>%
@@ -610,12 +614,13 @@ cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correl
 cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for P Vector angles") %>%
   kable_styling(full_width = F, position = "left")
 ```
-here we have a value of `r cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_max(order_by = value) `. If this predictor appear in the final algorithm, let take this in consideration.
+here we have a value of `r cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_max(order_by = value) `. If this predictor appear with importance in the final algorithm, let take this in consideration.
 
 
 #### Correlation of T Vector angles
 
 With T Vector angles, where we have 8 missing values.
+
 ```{r Correlation of T Vector angles, echo=FALSE, warning=FALSE}
 
 cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "T Vector angles" | correlated.2 %in% "T Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for T Vector angles") %>%
@@ -641,6 +646,7 @@ cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "QRST Vector angles" | cor
 
 
 #### Correlation of Heart rate
+
 And the "Heart rate", with only one missing value
 
 ```{r Correlation Heart rate, echo=FALSE, warning=FALSE}
@@ -655,7 +661,9 @@ and this predictor has very low correlation with all the rest of the predictor
 
 
 #### Less Correlation
+
 Less correlated predictors are also presented and as we saw in the histogram, they are the most common. For example for the correlation between -0.001 and 0.001 we have:
+
 ```{r Correlation Less Correlated, echo=FALSE, warning=FALSE}
 limit <- 0.0001
 cor_arrhythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::kable(caption = "Less Correlated Preditors") %>%
@@ -672,7 +680,7 @@ cor_arrhythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::ka
 Let's take a look to some predictors to see if we can find some outliers. Outliers in statistics are considered as the data values which differ considerably from the bulk of a given data set. These data values lie outside the overall trend, which could be lies in the data.
 Let's start with some familiar predictors like Age.
 
-```{r Outliers Age Boxplot, echo=FALSE}
+```{r Outliers Age Boxplot, echo=FALSE, fig.height = 4}
 arrhythmia %>% ggplot(aes(Age)) + geom_boxplot(fill="steelblue") + ggtitle("Age Outliers")
 ```
 
@@ -680,11 +688,12 @@ It does not show any value we can detect as outlier.
 
 Let's continue with Height. Height are in centimeters.
 
-```{r Outliers Height Boxplot, echo=FALSE}
-arrhythmia %>% ggplot(aes(Height)) + geom_boxplot() + ggtitle("Height Outliers")
+```{r Outliers Height Boxplot, echo=FALSE, fig.height = 3}
+arrhythmia %>% ggplot(aes(Height)) + geom_boxplot(fill="steelblue") + ggtitle("Height Outliers")
 ```
 
-We see two vales out of natural range:
+We see two vales out of expected height of a person:
+
 ```{r Outliers Height Max, echo=FALSE}
 slice_max(arrhythmia, order_by = Height, n = 2) %>% select(Height)
 ```
@@ -706,7 +715,7 @@ arrhythmia[arrhythmia$Height == 608,3] <- 61   # Height is column 3
 About the weight in kilograms we have the graph:
 
 ```{r Outliers Weight Boxplot, echo=FALSE}
-arrhythmia %>% ggplot(aes(Weight)) + geom_boxplot() + ggtitle("Weight Outliers")
+arrhythmia %>% ggplot(aes(Weight)) + geom_boxplot(fill="steelblue") + ggtitle("Weight Outliers")
 ```
 
 Looking in more detail this patience:
@@ -720,7 +729,7 @@ looks plausible and no change will be made.
 About the Heart rate in frequency in minutes (Number of heart beats per minute) we have the graph:
 
 ```{r Outliers Heart rate Boxplot, echo=FALSE}
-arrhythmia %>% ggplot(aes(`Heart rate`)) + geom_boxplot() + ggtitle("Heart rate Outliers")
+arrhythmia %>% ggplot(aes(`Heart rate`)) + geom_boxplot(fill="steelblue") + ggtitle("Heart rate Outliers")
 ```
 
 In the upper numbers:
@@ -813,23 +822,24 @@ left_join(validation_set, Class, by = "Class code") %>%
 
 We can see that the percentage of the different classes are not equally distributes in both dataset. Why? Because it is not possible to have the same percentage when there is a few sample in some of them in the initial dataset. For example, Class 8	"Supraventricular Premature Contraction" has only 2 samples, them the function distribute in the 2 dataset and because the total number of samples are different, its percentage is different. This change if we move the partition from 80%-20% to 50%-50% but less samples are left for training propose. This is part of the consideration when we chose this proportion at the beginning.
 
-But this is not the only check we need to perform: we need to see if all the data (predictors) are not equal in this new dataset.
+But this is not the only check we need to perform: we need to see if all the data (predictors) are not equal in this new training dataset.
 Remember that we check initially in the arrhythmia dataset that this situation does not occurs, but this can be present in this new (and small) dataset. Particularly with factors, if we have one value only we can get the error: "contrasts can be applied only to factors with 2 or more levels" with the train() function.
 
+The predictors that we find with a unique value in the training dataset are:
 
 ```{r Create train set Unique value in train_set, echo=FALSE}
 values_count <- sapply(lapply(train_set, unique), length)  # Identify variables with 1 value
 variable.names(train_set[values_count == 1])
 ```
 
-We see we have `r sum(values_count  == 1)` predictors in this new dataset with equal value, for that we need to delete from train_set and validation_set dataset:
+We  have `r sum(values_count  == 1)` predictors in this new dataset with equal value, for that we need to delete from train_set and validation_set dataset:
 
 ```{r Create train set delete predictors with not varianza in the train_set}
 train_set <- train_set[,values_count > 1]
 validation_set <- validation_set[,values_count > 1]
 ```
 
-After all this process, we finish with `r length(train_set) -1` prodictors from the initial `r length(arrhythmia.uci) -1`.
+After all this process, we finish with `r length(train_set) -1` predictors from the initial `r length(arrhythmia.uci) -1`.
 
 
 In summary, related with the prediction we are going to perform:  
@@ -852,46 +862,5 @@ rm(data_numeric, data2, cor_data_numeric, colna, ix, sd0.list.arrhythmia, sd.arr
 ```
 
 
-.........
-Error in `contrasts<-`(`*tmp*`, value = contr.funs[1 + isOF[nn]]) : contrasts can be applied only to factors with 2 or more levels
- $ Channel V5 Existence of ragged R wave                  : Factor w/ 1 level "0": 1 1 1 1 1 1 1 1 1 1 ...
-
-
-Looking at the error message and your dataset's variables, the variable BorrowerMetropolitanArea has only one level (Actually it has no predictive value at all if all samples have the same value). I guess this is causing the problem in the contrasts function when you use PCA to pre-process the dataset.
-
-Try calling the train funcion on the dataset without the the variable BorrowerMetropolitanArea.
-
-
-The reason for this is that one of our predictor variables has only one factor level.
-
-
-We can do that by using the sapply and lapply functions in combination with the unique and length functions:
-
-values_count <- sapply(lapply(data, unique), length)  # Identify variables with 1 value
-values_count                                          # Print counts of different values
-# x1 x2 x3  y 
-#  4  3  1  5
-
-The previous R code returned a named vector showing the number of different values in each of our columns. As you can see, the variable x3 contains the same value in each data cell.
-
-We can now use this vector to subset our data frame within the lm function so that only variables with more than one value are used as predictors:
-
-lm(y ~ ., data[ , values_count > 1])                  # Apply lm() to subset of data
-# Call:
-# lm(formula = y ~ ., data = data[, values_count > 1])
-# 
-# Coefficients:
-# (Intercept)           x1           x2  
-#      5.8534      -0.4788      -0.2409
-
-The lm functions returns a valid output – looks good!
-
-
-they are not present in the validation set, but we are going to keep them because two kind of prediction we are going to perform.
-
-
-
-
-We just saw these data that came in the edx. Now the question is: How is it the rating affected by this predictors?
 
 \newpage

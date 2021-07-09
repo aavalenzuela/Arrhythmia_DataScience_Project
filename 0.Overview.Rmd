@@ -76,7 +76,7 @@ arrhythmia.uci[arrhythmia.uci == "?"] <- NA
 The Arrhythmia dataset is a table witch each row it is collection of health measurement for one patience and the last column says if this persons it is a normal health or has some of the 15 arrhythmia.
 
 
-```{r Overview Characteristics of dataset}
+```{r Overview Characteristics of dataset,size=10}
 # dimension
 dim(arrhythmia.uci)
 # Display predictors (columns)
