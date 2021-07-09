@@ -267,7 +267,7 @@ varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "
 ### Channel V1 R' wave Amplitude Predictor
 The second Predictor from random forest (Channel V1 R' wave Amplitude) does not appear in the Top20 of others models. Does si ti appear with some importance?
 
-```{r Results Channel V1 R' wave Amplitude, echo=FALSE}
+```{r Results Channel V1 R prima wave Amplitude, echo=FALSE}
 varimp_knn_p2_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 R' wave Amplitude")
 varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 R' wave Amplitude")
 ```
