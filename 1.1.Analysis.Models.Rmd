@@ -49,11 +49,9 @@ An these are the definitions:
 $$
 Accuracy = (TP+TN)/(TP+TN+FP+FN)
 $$
-
 $$
 Sensitivity = TP/(TP+FN)
 $$
-
 $$
 Specificity = TN/(TN+FP)
 $$
@@ -75,18 +73,15 @@ An these are the definitions:
 $$
 Accuracy = (TA+TB+TC)/(TA+TB+TC+FA.B+FA.C+FB.A+FB.C+FC.A+FC.B)
 $$
-
 $$
 Sensitivity_{A} = TA/(TA+FB.A+FC.A)
 $$
-
 $$
 Specificity_{A} = TA/(TA+FA.B+FA.C)
 $$
 $$
 Sensitivity_{B} = TB/(TB+FA.B+FC.B)
 $$
-
 $$
 Specificity_{B} = TB/(TB+FB.A+FB.C)
 $$
@@ -270,7 +265,7 @@ Because we have to few data to train, we use cross-validation in our training pr
 
 Let's works with the first Prediction. In the first graph we are looking for the better k (number of Neighbors) that increase our accuracy.  This parameter will be used later, for our prediction.
 
-```{r K-Nearest Neighbors Model first Prediction train, echo=FALSE, warning=FALSE, fig.height = 3}
+```{r K-Nearest Neighbors Model first Prediction train, echo=FALSE, warning=FALSE, fig.height = 4}
 knn.control <- trainControl(method = "repeatedcv", number = 20, repeats = 3)   
 
 
@@ -344,7 +339,7 @@ With this first model we have a good improvement. KNN in overall, has a poor sen
 
 Let's works with the second Prediction, that include all the classes and the challenge is to know which of all the arrhythmia classification (or normal) the patient has. Again in the first graph we are looking for the better k (number of Neighbors):
 
-```{r K-Nearest Neighbors Model Second Prediction train, echo=FALSE, warning=FALSE, fig.height = 3}
+```{r K-Nearest Neighbors Model Second Prediction train, echo=FALSE, warning=FALSE, fig.height = 4}
 # Predict region using KNN
 
 
@@ -472,7 +467,7 @@ For this model we are going to user the rpart package and the cp (complexity par
 ### First Prediction
 Let's works with the first Prediction and look for the cp (complexity parameter) that increase our accuracy:
 
-```{r Decision Tree Model First Prediction train, echo=FALSE, warning=FALSE, fig.height = 3}
+```{r Decision Tree Model First Prediction train, echo=FALSE, warning=FALSE, fig.height = 4}
 # use cross validation to choose cp
 
 # rpart need Valid Column Names 
@@ -592,7 +587,7 @@ We see improvements in Accuracy and	Sensitivity and a worse value for	Specificit
 
 Let's works with the second Prediction with Decision Tree. Again, look for the cp:
 
-```{r Decision Tree Model Second Prediction train, echo=FALSE, warning=FALSE, fig.height = 3}
+```{r Decision Tree Model Second Prediction train, echo=FALSE, warning=FALSE, fig.height = 4}
 # use cross validation to choose cp
 
 # rpart need Valid Column Names 
@@ -748,7 +743,7 @@ Here we have like parameters the value of mtry that we are trying to use to get 
 
 We start look for mtry to get the better accuracy in this model fro Normal/Arrhythmia prediction:
 
-```{r Random Forests Model First Predictions train, echo=FALSE, warning=FALSE, fig.height = 3}
+```{r Random Forests Model First Predictions train, echo=FALSE, warning=FALSE, fig.height = 4}
 #Random Forests
 
 set.seed(1, sample.kind="Rounding")
@@ -781,7 +776,7 @@ Now see how well it is the prediction in the validation set:
 ```{r Random Forests Model First Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 y_hat_rf <- predict(fit_rf, validation_set_p1, type = "raw")
-cm <- confusionMatrix(data = y_hat_rf, reference = validation_set_p1$`Class code`) #$overall["Accuracy"]
+cm <- confusionMatrix(data = y_hat_rf, reference = validation_set_p1$`Class code`)
 cm
 options(digits =7) # default
 ```
@@ -791,7 +786,7 @@ options(digits =7) # default
 Predicted <- y_hat_rf
 Actually <- validation_set_p1$`Class code`
 #Computes the crosstable calculations
-CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+CrossTable(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
 ```
 
 
@@ -817,7 +812,7 @@ Random Forests get better result over decision tree and previous ones in Accurac
 
 Let's start with mtry in random forest, now with all the classes:
 
-```{r Random Forests Model Second Predictions train, echo=FALSE, warning=FALSE, fig.height = 3}
+```{r Random Forests Model Second Predictions train, echo=FALSE, warning=FALSE, fig.height = 4}
 #Random Forests
 
 set.seed(1, sample.kind="Rounding")
@@ -852,7 +847,7 @@ Now see with the model created using the trining set how well it is the predicti
 ```{r Random Forests Model Second Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 y_hat_rf <- predict(fit_rf, validation_set, type = "raw")
-cm <- confusionMatrix(data = y_hat_rf, reference = validation_set$`Class code`) #$overall["Accuracy"]
+cm <- confusionMatrix(data = y_hat_rf, reference = validation_set$`Class code`) 
 cm
 options(digits =7) # default
 ```
