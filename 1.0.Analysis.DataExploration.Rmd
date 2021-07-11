@@ -783,10 +783,6 @@ validation_set <- arrhythmia[test_index,]
 dim(train_set)
 dim(validation_set)
 
-
-
-
-rm(dl, ratings, movies, test_index, temp, removed)
 ```
 
 We are going to use "Class code" as an outcome to predict. Because some outcome are too few as we saw before, we need that they are present in the train_set and validation_set. This task should be manager with the createDataPartition() function, but we are going to check anyway.
@@ -857,7 +853,7 @@ In summary, related with the prediction we are going to perform:
 
 
 
-```{r Analysis delete unwanted onjects, echo=FALSE}
+```{r Analysis delete unwanted objects, echo=FALSE}
 rm(data_numeric, data2, cor_data_numeric, colna, ix, sd0.list.arrhythmia, sd.arrhythmia, values_count, limit)
 ```
 

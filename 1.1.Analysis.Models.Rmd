@@ -134,9 +134,6 @@ train_set_p1$`Class code` <- ifelse(train_set_p1$`Class code` == 1,"Normal","Arr
 validation_set_p1 <- validation_set
 validation_set_p1$`Class code` <- ifelse(validation_set_p1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
 
-# Expected value for validation for prediction1
-#expected_value_val_p1 <- ifelse(validation_set$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
-
 ```
 
 
@@ -643,7 +640,7 @@ Let's prune this, using the previous result but applying a new cp value (cp = 0.
 
 ```{r Decision Tree Model Second Prediction Prune, echo=FALSE, warning=FALSE}
 # prune the tree 
-#library(rpart)
+
 fit_rpart <- rpart(Class.code ~ ., data = train_set2, control = rpart.control(cp = 0.033, minsplit = 2))
 pruned_fit <- prune(fit_rpart, cp = 0.01)
 
@@ -658,7 +655,7 @@ options(digits =2)
 
 y_hat_rpart <- predict(pruned_fit, data.frame(validation_set), type = "class")
 
-cm <- confusionMatrix(y_hat_rpart, reference = validation_set$`Class code`)#$overall["Accuracy"]
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set$`Class code`)
 cm
 options(digits =7) # default
 ```
@@ -944,7 +941,7 @@ fit_svm
 y_hat_svm <- predict(fit_svm,validation_set_p1)
 
 options(digits =2)
-cm <- confusionMatrix(data = y_hat_svm, reference = validation_set_p1$`Class code`) #$overall["Accuracy"]
+cm <- confusionMatrix(data = y_hat_svm, reference = validation_set_p1$`Class code`)
 cm
 options(digits =7) # default
 
@@ -1013,7 +1010,7 @@ fit_svm
 y_hat_svm <- predict(fit_svm,validation_set)
 
 options(digits =2)
-cm <- confusionMatrix(data = y_hat_svm, reference = validation_set$`Class code`) #$overall["Accuracy"]
+cm <- confusionMatrix(data = y_hat_svm, reference = validation_set$`Class code`)
 
 cm
 options(digits =7) # default
