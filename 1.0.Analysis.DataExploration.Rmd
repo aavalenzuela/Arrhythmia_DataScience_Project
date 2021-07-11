@@ -391,7 +391,7 @@ arrhythmia <- arrhythmia.uci %>% mutate(Sex = as.factor( ifelse(Sex == 0, 'M', '
 
 As a result of this transformation, we have a "well defined" new dataset (only first 25 variables of 280 are showed):
 
-```{r Analysis new structure, echo=FALSE, size=9}
+```{r Analysis new structure, echo=FALSE, size='scriptsize'}
 # Display predictors (columns) of the new dataset
 str(arrhythmia, list.len = 25)
 ```
@@ -402,7 +402,7 @@ The first analysis is to review if all the predictor give information. For that 
 
 The predictors are:
 
-```{r Analysis Cleaning,warning=FALSE, size=11}
+```{r Analysis Cleaning,warning=FALSE,  size='small'}
 sd.arrhythmia <- apply(arrhythmia,2,sd, na.rm=TRUE)
 sd0.list.arrhythmia <- names(sd.arrhythmia[sd.arrhythmia == 0 & !is.na(sd.arrhythmia)]) # check is.na......
 
@@ -497,7 +497,7 @@ arrhythmia$`T Vector angles`[is.na(arrhythmia$`T Vector angles`)] <- median(arrh
 This is only one missing value and represent the `r round(100*colna[3]/nrow(arrhythmia),digits = 1)`%, let's see some data for this missing:
 
 
-```{r Missing QRST Vector angles analysis, echo=FALSE}
+```{r Missing QRST Vector angles analysis, echo=FALSE, size='small'}
 arrhythmia %>% filter(is.na(`QRST Vector angles`)) %>% select(Age, Sex, Height, Weight, `QRS duration`,`P-R interval`, `Q-T interval`, `T interval`, `P interval` ,`QRS Vector angles`)
 ```
 Let's do the same analysis about the distribution:
@@ -526,7 +526,7 @@ arrhythmia$`QRST Vector angles`[is.na(arrhythmia$`QRST Vector angles`)] <- media
 This is only one missing value and represent the `r round(100*colna[5]/nrow(arrhythmia),digits = 1)`%, let's see some data fo this missing:
 
 
-```{r Missing Heart rate Analysis, echo=FALSE}
+```{r Missing Heart rate Analysis, echo=FALSE, size='small'}
 arrhythmia %>% filter(is.na(`Heart rate`)) %>% select(Age, Sex, Height, Weight, `QRS duration`,`P-R interval`, `Q-T interval`, `T interval`, `P interval`)
 ```
 Let's do the same analysis about the distribution:
@@ -544,7 +544,7 @@ arrhythmia %>% ggplot(aes(`Heart rate`)) + geom_histogram() +
 
 This show in blue the mean and in green the median for this predictors. Again, these values are pretty close. We are going to use the median anyway, getting a little independence of the high value of it.
 
-```{r Missing Heart rate replacement}
+```{r Missing Heart rate replacement, size='small'}
 arrhythmia$`Heart rate`[is.na(arrhythmia$`Heart rate`)] <- median(arrhythmia$`Heart rate`,na.rm = TRUE)
 ```
 
@@ -680,7 +680,7 @@ cor_arrhythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::ka
 Let's take a look to some predictors to see if we can find some outliers. Outliers in statistics are considered as the data values which differ considerably from the bulk of a given data set. These data values lie outside the overall trend, which could be lies in the data.
 Let's start with some familiar predictors like Age.
 
-```{r Outliers Age Boxplot, echo=FALSE, fig.height = 4}
+```{r Outliers Age Boxplot, echo=FALSE, fig.height = 3}
 arrhythmia %>% ggplot(aes(Age)) + geom_boxplot(fill="steelblue") + ggtitle("Age Outliers")
 ```
 
@@ -714,7 +714,7 @@ arrhythmia[arrhythmia$Height == 608,3] <- 61   # Height is column 3
 
 About the weight in kilograms we have the graph:
 
-```{r Outliers Weight Boxplot, echo=FALSE}
+```{r Outliers Weight Boxplot, echo=FALSE, fig.height = 3}
 arrhythmia %>% ggplot(aes(Weight)) + geom_boxplot(fill="steelblue") + ggtitle("Weight Outliers")
 ```
 
@@ -728,7 +728,7 @@ looks plausible and no change will be made.
 
 About the Heart rate in frequency in minutes (Number of heart beats per minute) we have the graph:
 
-```{r Outliers Heart rate Boxplot, echo=FALSE}
+```{r Outliers Heart rate Boxplot, echo=FALSE, fig.height = 3}
 arrhythmia %>% ggplot(aes(`Heart rate`)) + geom_boxplot(fill="steelblue") + ggtitle("Heart rate Outliers")
 ```
 

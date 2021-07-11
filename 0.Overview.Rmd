@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 # Overview/Executive Summary
 
 *In this section we describe the dataset and summarizes the goal of the project and key steps that were performed.*
@@ -24,7 +29,7 @@ For this project, the [Cardiac Arrhythmia](https://archive.ics.uci.edu/ml/datase
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
-#if(!require(kableExtra)) install.packages("kableExtra")  # does not works in Linux
+
 if(!require(gmodels)) install.packages('gmodels')
 if(!require(rpart)) install.packages('rpart')
 if(!require(randomForest)) install.packages('randomForest')
@@ -34,7 +39,7 @@ if(!require(rpart.plot)) install.packages("rpart.plot")
 library(tidyverse)
 library(caret)
 library(data.table)
-#library(kableExtra) # does not works in Linux
+
 library(gmodels)
 library(rpart)
 library(randomForest)
@@ -42,16 +47,30 @@ library(e1071) # SVM
 library(xml2) #Kable
 library(rpart.plot)
 
-
+# I create a CrossTableNarrow.R in base of CrossTable.
 source(file="CrossTableNarrow.R") # Minor change in Column and Row Total Headings of gmodels::CrossTable
-# To use KableExtra works in linux
-#source(file="../kableExtra/R/add_header_above.R") 
-#source(file="../kableExtra/R/util.R")
-#source(file="../kableExtra/R/from_knitr.R")
+if(!file.exists("CrossTableNarrow.R")) {
+  CrossTableNarrow <- function(arg1, arg2, arg3, arg4, arg5 ) {
+        CrossTable(arg1, arg2, arg3, arg4, arg5 )  # use the standard  CrossTable()
+}}
+# in other words, just used CrossTable() instead of CrossTableNarrow()
+
+
+# For Mac and windows uncomment the following 2 lines and comment the Linux lines below:
+#library(kableExtra) # does not works in Linux
+#if(!require(kableExtra)) install.packages("kableExtra")  # does not works in Linux
+
+# To use KableExtra works in linux first download the code from
+# https://github.com/haozhu233/kableExtra
+#and leaved at the same level than the project
 source(file="../kableExtra/R/kable_styling.R") # to center table
 source(file="../kableExtra/R/scroll_box.R")
 source(file="../kableExtra/R/util.R")
 source(file="../kableExtra/R/magic_mirror.R") # kable latex
+# end of KableExtra works in linux
+
+
+
 
 
 # Cardiac Arrhythmia dataset:
@@ -72,13 +91,28 @@ colnames(arrhythmia.uci)[280] <- "Class code"
 arrhythmia.uci[arrhythmia.uci == "?"] <- NA
 ```
 
+```{r Overview Code chunk font size in Rmarkdown with knitr and latex, echo=FALSE}
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\n \\", options$size,"\n\n", x, "\n\n \\normalsize"), x)
+})
+
+#Huge > huge > LARGE > Large > large > normalsize > small > footnotesize > scriptsize > tiny
+```
+
+
 ## Characteristics of dataset
 The Arrhythmia dataset is a table witch each row it is collection of health measurement for one patience and the last column says if this persons it is a normal health or has some of the 15 arrhythmia.
 
 
-```{r Overview Characteristics of dataset,size=10}
+```{r Overview Characteristics of dataset dim}
 # dimension
 dim(arrhythmia.uci)
+```
+
+
+```{r Overview Characteristics of dataset str, size='scriptsize'}
 # Display predictors (columns)
 str(arrhythmia.uci, list.len = 25)
 ```

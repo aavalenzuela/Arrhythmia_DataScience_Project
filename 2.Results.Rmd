@@ -45,14 +45,14 @@ Analyzing first the random forest which has the better results, we have:
 
 
 
-```{r Results random forest varimp in first prediction, echo=FALSE}
+```{r Results random forest varimp in first prediction, echo=FALSE, size='scriptsize'}
 slice_max(varimp_rf_p1, order_by = Overall, n=20)
 ```
 
 Reviewing all the models we used, except the decision tree that does not rank all the predictors, only that it use to create the tree, we have the top among them:
 
 
-```{r Results means of varimp in first prediction, echo=FALSE}
+```{r Results means of varimp in first prediction, echo=FALSE, size='scriptsize'}
 varimp_knn_p1_mean <- rowMeans(varimp_knn_p1)
 varimp_p1_mean <- rowMeans(cbind(varimp_knn_p1_mean, varimp_svm_p1[,1], varimp_rf_p1))
 varimp_p1_mean <- data.frame(varimp_p1_mean)
@@ -235,7 +235,7 @@ Analyzing first the random forest which has the better results, we have:
 
 
 
-```{r Results random forest varimp in second prediction, echo=FALSE}
+```{r Results random forest varimp in second prediction, echo=FALSE, size='scriptsize'}
 slice_max(varimp_rf_p2, order_by = Overall, n=20)
 ```
 
@@ -244,7 +244,7 @@ Comparing the Variable Importance for the random forest in the first predition w
 Reviewing all the models we used, except the decision tree that does not rank all the predictors, only that it use to create the tree, we have the top among them:
 
 
-```{r Results means of varimp in second prediction, echo=FALSE}
+```{r Results means of varimp in second prediction, echo=FALSE, size='scriptsize'}
 varimp_knn_p2_mean <- rowMeans(varimp_knn_p2)
 varimp_p2_mean <- rowMeans(cbind(varimp_knn_p2_mean, varimp_svm_p2[,1], varimp_rf_p2))
 varimp_p2_mean <- data.frame(varimp_p2_mean)

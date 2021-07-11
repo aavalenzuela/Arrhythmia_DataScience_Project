@@ -47,10 +47,14 @@ M %>% knitr::kable() %>%
 An these are the definitions:
 
 $$
-Accuracy = (TP+TN)/(TP+TN+FP+FN)\newline
+Accuracy = (TP+TN)/(TP+TN+FP+FN)
+$$
 
-Sensitivity = TP/(TP+FN)\newline
+$$
+Sensitivity = TP/(TP+FN)
+$$
 
+$$
 Specificity = TN/(TN+FP)
 $$
 
@@ -69,18 +73,27 @@ M3 %>% knitr::kable() %>%
 An these are the definitions:
 
 $$
-Accuracy = (TA+TB+TC)/(TA+TB+TC+FA.B+FA.C+FB.A+FB.C+FC.A+FC.B)\newline
+Accuracy = (TA+TB+TC)/(TA+TB+TC+FA.B+FA.C+FB.A+FB.C+FC.A+FC.B)
+$$
 
-Sensitivity_{A} = TA/(TA+FB.A+FC.A)\newline
+$$
+Sensitivity_{A} = TA/(TA+FB.A+FC.A)
+$$
 
-Specificity_{A} = TA/(TA+FA.B+FA.C)\newline
+$$
+Specificity_{A} = TA/(TA+FA.B+FA.C)
+$$
+$$
+Sensitivity_{B} = TB/(TB+FA.B+FC.B)
+$$
 
-Sensitivity_{B} = TB/(TB+FA.B+FC.B)\newline
-
-Specificity_{B} = TB/(TB+FB.A+FB.C)\newline
-
-Sensitivity_{C} = TC/(TC+FB.C+FA.C)\newline
-
+$$
+Specificity_{B} = TB/(TB+FB.A+FB.C)
+$$
+$$
+Sensitivity_{C} = TC/(TC+FB.C+FA.C)
+$$
+$$
 Specificity_{C} = TC/(TC+FA.C+FB.C)
 $$
 
@@ -135,9 +148,7 @@ validation_set_p1$`Class code` <- ifelse(validation_set_p1$`Class code` == 1,"No
 ```{r Model just the most common first Prediction, echo=FALSE, warning=FALSE}
 predicted_value <- rep("Normal", times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
 cm <- confusionMatrix(predicted_value, validation_set_p1$`Class code`)  # or positive = "Arrhythmia"
-#confusionMatrix(predicted_value, expected_value_val_p1)$overall["Accuracy"]
-#confusionMatrix(predicted_value, expected_value_val_p1)$byClass["Sensitivity"]
-#confusionMatrix(predicted_value, expected_value_val_p1)$byClass["Specificity"]
+
 cm$overall["Accuracy"]
 cm$byClass["Sensitivity"]
 cm$byClass["Specificity"]
@@ -149,7 +160,7 @@ The Accuracy obtained will be our base one.
 
 
 
-```{r Model just the most common first Prediction Table, echo=FALSE}
+```{r Model just the most common first Prediction Table, echo=FALSE, size='scriptsize'}
 
 # Table names
 Predicted <- predicted_value
@@ -176,14 +187,13 @@ Second Predictions, that considered all the classes, the accuracy is the same, b
 y_hat <- rep(1, times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
 cm <- confusionMatrix(y_hat, validation_set$`Class code`)
 
-#confusionMatrix(y_hat, validation_set$`Class code`)$overall["Accuracy"]
-#confusionMatrix(y_hat, validation_set$`Class code`)$byClass[,1:2]
+
 cm$overall["Accuracy"]
 cm$byClass[,1:2]
 ```
 
 
-```{r Model just the most common Second Prediction Table, echo=FALSE}
+```{r Model just the most common Second Prediction Table, echo=FALSE, size='scriptsize'}
 # Table names
 Predicted <- y_hat
 Actually <- validation_set$`Class code`
@@ -260,8 +270,7 @@ Because we have to few data to train, we use cross-validation in our training pr
 
 Let's works with the first Prediction. In the first graph we are looking for the better k (number of Neighbors) that increase our accuracy.  This parameter will be used later, for our prediction.
 
-```{r K-Nearest Neighbors Model first Prediction train, echo=FALSE, warning=FALSE}
-
+```{r K-Nearest Neighbors Model first Prediction train, echo=FALSE, warning=FALSE, fig.height = 3}
 knn.control <- trainControl(method = "repeatedcv", number = 20, repeats = 3)   
 
 
@@ -271,13 +280,16 @@ fit_knn <- train(`Class code` ~ .,  method = "knn",
              data = train_set_p1, na.action=na.pass)
 
 ggplot(fit_knn) + ggtitle("K-Nearest Neighbors")
+```
 
+
+```{r K-Nearest Neighbors Model first Prediction train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
 fit_knn
 ```
 
 We get k = `r fit_knn$bestTune$k`. Now the variables that this model considers more important are:
 
-```{r K-Nearest Neighbors Model first Prediction Variable Importance, echo=FALSE, warning=FALSE}
+```{r K-Nearest Neighbors Model first Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
 varImp(fit_knn)
 varimp_knn_p1 <- varImp(fit_knn)$importance
 ggplot(varImp(fit_knn), top = 20) + ggtitle("K-Nearest Neighbors Model Top 20 feature")
@@ -289,7 +301,7 @@ ggplot(varImp(fit_knn), top = 20) + ggtitle("K-Nearest Neighbors Model Top 20 fe
 
 With this model created in base of the train dataset we now take the validation dataset to see how well this apply:
 
-```{r K-Nearest Neighbors Model first Prediction Prediction, echo=FALSE, warning=FALSE}
+```{r K-Nearest Neighbors Model first Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
 y_hat_knn <- predict(fit_knn, validation_set_p1, type = "raw")
 cm <- confusionMatrix(data = y_hat_knn, reference = validation_set_p1$`Class code`) #$overall["Accuracy"]
 cm
@@ -297,7 +309,7 @@ cm
 
 We see a good improvement in accuracy and sensitivity over the previous approach. Then we see that KNN is able to create a better prediction than just the mode of the patients. We just started with this process, let's see if we can make it better,
 
-```{r K-Nearest Neighbors Model first Prediction Table, echo=FALSE}
+```{r K-Nearest Neighbors Model first Prediction Table, echo=FALSE, size='scriptsize'}
 # Table names
 Predicted <- y_hat_knn
 Actually <- validation_set_p1$`Class code`
@@ -332,14 +344,9 @@ With this first model we have a good improvement. KNN in overall, has a poor sen
 
 Let's works with the second Prediction, that include all the classes and the challenge is to know which of all the arrhythmia classification (or normal) the patient has. Again in the first graph we are looking for the better k (number of Neighbors):
 
-```{r K-Nearest Neighbors Model Second Prediction train, echo=FALSE, warning=FALSE}
+```{r K-Nearest Neighbors Model Second Prediction train, echo=FALSE, warning=FALSE, fig.height = 3}
 # Predict region using KNN
 
-#library(caret)
-
-#knn.control <- trainControl(method = "cv", number = 5, #number = 10
-#                            classProbs = TRUE,
-#                            summaryFunction = twoClassSummary)
 
 knn.control <- trainControl(method = "repeatedcv", number = 20, repeats = 3)
 
@@ -350,14 +357,17 @@ fit_knn <- train(`Class code` ~ .,  method = "knn",
              data = train_set, na.action=na.pass)
 
 ggplot(fit_knn) + ggtitle("K-Nearest Neighbors")
+```
 
+
+```{r K-Nearest Neighbors Model Second Prediction train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
 fit_knn
 ```
 
 Now the value of k = `r fit_knn$bestTune$k` is  smaller than in the first prediction.
 Now the variables that this model considers more important are:
 
-```{r K-Nearest Neighbors Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
+```{r K-Nearest Neighbors Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 varImp(fit_knn)
 varimp_knn_p2 <- varImp(fit_knn)$importance
@@ -370,12 +380,7 @@ This important variables is for each output, that give us more detail that the o
 
 
 Now see how well it is the prediction in the validation set:  
-```{r K-Nearest Neighbors Model Second Prediction Prediction, echo=FALSE, warning=FALSE}
-#fit knn model
-
-#validation_set_c <- validation_set %>% drop_na("T Vector angles") %>%  select(-P)  %>% drop_na("QRST")  %>% select(-J) %>% drop_na("Heart rate")
-
-#knn_fit <- knn3(`Class code` ~ Sex+Age, data = train_set, k=11)
+```{r K-Nearest Neighbors Model Second Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
 
 options(digits =2)
 
@@ -386,7 +391,7 @@ options(digits =7) # default
 ```
 
 
-```{r K-Nearest Neighbors Model Second Prediction Table, echo=FALSE}
+```{r K-Nearest Neighbors Model Second Prediction Table, echo=FALSE, size='scriptsize'}
 # Table names
 Predicted <- y_hat_knn
 Actually <- validation_set$`Class code`
@@ -467,9 +472,8 @@ For this model we are going to user the rpart package and the cp (complexity par
 ### First Prediction
 Let's works with the first Prediction and look for the cp (complexity parameter) that increase our accuracy:
 
-```{r Decision Tree Model First Prediction train, echo=FALSE, warning=FALSE}
+```{r Decision Tree Model First Prediction train, echo=FALSE, warning=FALSE, fig.height = 3}
 # use cross validation to choose cp
-#library(caret)
 
 # rpart need Valid Column Names 
 train_set2_p1 <- data.frame(train_set_p1)
@@ -480,6 +484,10 @@ fit_rpart <- train(Class.code ~ ., method = "rpart",
 
 
 ggplot(fit_rpart) + ggtitle("Decision Tree")
+```
+
+
+```{r Decision Tree Model First Prediction train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
 fit_rpart
 ```
 
@@ -488,8 +496,7 @@ The cp is `r round(fit_rpart$bestTune,3)` and we get the following decision tree
 
 ```{r Decision Tree Model First Prediction plot, echo=FALSE, warning=FALSE}
 # access the final model and plot it
-#plot(fit_rpart$finalModel, margin = 0.1)
-#text(fit_rpart$finalModel, cex = 0.75)
+
 
 rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
   box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
@@ -498,7 +505,7 @@ rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
 
 The variable importance for this method is:
 
-```{r Decision Tree Model First Prediction Variable Importance, echo=FALSE, warning=FALSE}
+```{r Decision Tree Model First Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 varImp(fit_rpart)
 varimp_rpart_p1 <- varImp(fit_rpart)$importance
@@ -509,7 +516,7 @@ These are predictors are present in the tree too, not all of them because the tr
 
 Now let's see how well it is the prediction in the validation set:
 
-```{r Decision Tree Model First Prediction Predict, echo=FALSE, warning=FALSE}
+```{r Decision Tree Model First Prediction Predict, echo=FALSE, warning=FALSE, size='scriptsize'}
 # compute accuracy
 options(digits =2)
 
@@ -523,19 +530,16 @@ Let's prune this, using the previous result but applying a new cp value (cp = 0.
 
 ```{r Decision Tree Model First Prediction Prune, echo=FALSE, warning=FALSE}
 # prune the tree 
-#library(rpart)
 fit_rpart <- rpart(Class.code ~ ., data = train_set2_p1, control = rpart.control(cp = 0.027, minsplit = 2))
 pruned_fit <- prune(fit_rpart, cp = 0.01)
 
 plot(pruned_fit, margin = 0.1)
 text(pruned_fit, cex = 0.75)
+```
 
-#rpart.plot(pruned_fit$finalModel, extra = 2, roundint=FALSE,
-#  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
-#    "GyGy", "GyGn")) # specify 13 colors)
 
+```{r Decision Tree Model First Prediction Prune confusionMatrix, echo=FALSE, warning=FALSE, size='scriptsize'}
 # compute accuracy
-#y_hat_rpart <- predict(fit, data.frame(validation_set), type = "raw")
 options(digits =2)
 
 y_hat_rpart <- predict(pruned_fit, data.frame(validation_set_p1), type = "class")
@@ -547,7 +551,7 @@ options(digits =7) # default
 
 We can not see any improvement, but the decision tree is similar but not equal under the change made by prune. The decision tree graph is different because the library can not manage the output from prune.
 
-```{r Decision Tree Model First Prediction Table, echo=FALSE}
+```{r Decision Tree Model First Prediction Table, echo=FALSE, size='scriptsize'}
 # Table names
 Predicted <- y_hat_rpart
 Actually <- validation_set$`Class code`
@@ -588,9 +592,8 @@ We see improvements in Accuracy and	Sensitivity and a worse value for	Specificit
 
 Let's works with the second Prediction with Decision Tree. Again, look for the cp:
 
-```{r Decision Tree Model Second Prediction train, echo=FALSE, warning=FALSE}
+```{r Decision Tree Model Second Prediction train, echo=FALSE, warning=FALSE, fig.height = 3}
 # use cross validation to choose cp
-#library(caret)
 
 # rpart need Valid Column Names 
 train_set2 <- data.frame(train_set)
@@ -601,6 +604,10 @@ fit_rpart <- train(Class.code ~ ., method = "rpart",
 
 
 ggplot(fit_rpart) + ggtitle("Decision Tree")
+```
+
+
+```{r Decision Tree Model Second Prediction train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
 fit_rpart
 ```
 
@@ -609,8 +616,7 @@ We get a cp = `r round(fit_rpart$bestTune,4)` and the following decision tree wa
 
 ```{r Decision Tree Model Second Prediction plot, echo=FALSE, warning=FALSE}
 # access the final model and plot it
-#plot(fit_rpart$finalModel, margin = 0.1)
-#text(fit_rpart$finalModel, cex = 0.75)
+
 
 rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
   box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
@@ -619,7 +625,7 @@ rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
 
 Again, let's see the predictors which this model consider that help more:
 
-```{r Decision Tree Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
+```{r Decision Tree Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 varImp(fit_rpart)
 varimp_rpart_p2 <- varImp(fit_rpart)$importance
@@ -628,7 +634,7 @@ options(digits =7) # default
 
 This trained model, now is applied to the validation set. How well does it perform?
 
-```{r Decision Tree Model Second Prediction Predict, echo=FALSE, warning=FALSE}
+```{r Decision Tree Model Second Prediction Predict, echo=FALSE, warning=FALSE, size='scriptsize'}
 # compute accuracy
 options(digits =2)
 
@@ -648,13 +654,11 @@ pruned_fit <- prune(fit_rpart, cp = 0.01)
 
 plot(pruned_fit, margin = 0.1)
 text(pruned_fit, cex = 0.75)
+```
 
-#rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
-#  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
-#    "GyGy", "GyGn")) # specify 13 colors)
 
+```{r Decision Tree Model Second Prediction Prune ConfusionMatrix, echo=FALSE, warning=FALSE, size='scriptsize'}
 # compute accuracy
-#y_hat_rpart <- predict(fit, data.frame(validation_set), type = "raw")
 options(digits =2)
 
 y_hat_rpart <- predict(pruned_fit, data.frame(validation_set), type = "class")
@@ -666,7 +670,7 @@ options(digits =7) # default
 We can not see any improvement neither, but the decision tree is similar but not equal under the change made by prune.
 
 
-```{r Decision Tree Model Second Prediction Table, echo=FALSE}
+```{r Decision Tree Model Second Prediction Table, echo=FALSE, size='scriptsize'}
 # Table names
 Predicted <- y_hat_rpart
 Actually <- validation_set$`Class code`
@@ -744,10 +748,8 @@ Here we have like parameters the value of mtry that we are trying to use to get 
 
 We start look for mtry to get the better accuracy in this model fro Normal/Arrhythmia prediction:
 
-```{r Random Forests Model First Predictions train, echo=FALSE, warning=FALSE}
+```{r Random Forests Model First Predictions train, echo=FALSE, warning=FALSE, fig.height = 3}
 #Random Forests
-
-#library(randomForest)
 
 set.seed(1, sample.kind="Rounding")
 fit_rf <- train(`Class code` ~ ., method = "rf",
@@ -755,26 +757,28 @@ fit_rf <- train(`Class code` ~ ., method = "rf",
                      data = train_set_p1)
 
 
-#fit <- randomForest(`Class code` ~ ., data = trr) 
-#plot(fit_rf)
+
 ggplot(fit_rf) + ggtitle("Random Forests")
+```
+
+
+```{r Random Forests Model First Predictions train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
 fit_rf
 ```
 
 the mtry we get is `r fit_rf$bestTune`. The variable importance for this method are:
 
 
-```{r Random Forests Model First Prediction Variable Importance, echo=FALSE, warning=FALSE}
+```{r Random Forests Model First Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 varImp(fit_rf)
 varimp_rf_p1 <- varImp(fit_rf)$importance
-#ggplot(varImp(fit_knn))
 options(digits =7) # default
 ```
 
 Now see how well it is the prediction in the validation set:
 
-```{r Random Forests Model First Prediction Prediction, echo=FALSE, warning=FALSE}
+```{r Random Forests Model First Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 y_hat_rf <- predict(fit_rf, validation_set_p1, type = "raw")
 cm <- confusionMatrix(data = y_hat_rf, reference = validation_set_p1$`Class code`) #$overall["Accuracy"]
@@ -782,7 +786,7 @@ cm
 options(digits =7) # default
 ```
 
-```{r Random Forests Model First Prediction Table, echo=FALSE}
+```{r Random Forests Model First Prediction Table, echo=FALSE, size='scriptsize'}
 # Table names
 Predicted <- y_hat_rf
 Actually <- validation_set_p1$`Class code`
@@ -813,10 +817,8 @@ Random Forests get better result over decision tree and previous ones in Accurac
 
 Let's start with mtry in random forest, now with all the classes:
 
-```{r Random Forests Model Second Predictions train, echo=FALSE, warning=FALSE}
+```{r Random Forests Model Second Predictions train, echo=FALSE, warning=FALSE, fig.height = 3}
 #Random Forests
-
-#library(randomForest)
 
 set.seed(1, sample.kind="Rounding")
 fit_rf <- train(`Class code` ~ ., method = "rf",
@@ -824,16 +826,19 @@ fit_rf <- train(`Class code` ~ ., method = "rf",
                      data = train_set)
 
 
-#fit <- randomForest(`Class code` ~ ., data = trr) 
-#plot(fit_rf)
+
 ggplot(fit_rf) + ggtitle("Random Forests")
+```
+
+
+```{r Random Forests Model Second Predictions train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
 fit_rf
 ```
 
 the mtry we get is `r fit_rf$bestTune`. The variable importance for this method are:
 
 
-```{r Random Forests Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
+```{r Random Forests Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 varImp(fit_rf)
 varimp_rf_p2 <- varImp(fit_rf)$importance
@@ -844,7 +849,7 @@ options(digits =7) # default
 Now see with the model created using the trining set how well it is the prediction in the validation set:
 
 
-```{r Random Forests Model Second Prediction Prediction, echo=FALSE, warning=FALSE}
+```{r Random Forests Model Second Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 y_hat_rf <- predict(fit_rf, validation_set, type = "raw")
 cm <- confusionMatrix(data = y_hat_rf, reference = validation_set$`Class code`) #$overall["Accuracy"]
@@ -852,7 +857,7 @@ cm
 options(digits =7) # default
 ```
 
-```{r Random Forests Model Second Prediction Table, echo=FALSE}
+```{r Random Forests Model Second Prediction Table, echo=FALSE, size='scriptsize'}
 # Table names
 Predicted <- y_hat_rf
 Actually <- validation_set$`Class code`
@@ -929,17 +934,18 @@ A support vector machine allows you to classify data that’s linearly separable
 
 For this part we are going to use the caret train method that perform better than svm from e1071 library. The last library was useful to determine that the radial kernel is the best solution. In this model, we are not going to use other parameter than the kernel.
 
-```{r Support Vector Machines Model First Prediction train, echo=FALSE, warning=FALSE}
-#Support Vector Classifier:
-#library(e1071)
-set.seed(1)
-#train_svm <- svm(`Class code` ~ ., data = train_set_p1) # initial approach
-#train_svm
+```{r Support Vector Machines Model First Prediction pre-train, include=FALSE}
+train_svm <- svm(`Class code` ~ ., data = train_set_p1) # initial approach
+train_svm
+```
 
+
+```{r Support Vector Machines Model First Prediction train, echo=FALSE, warning=FALSE, size='scriptsize'}
+#Support Vector Classifier:
+set.seed(1)
 fit_svm <- train(`Class code` ~ ., data = train_set_p1, method="svmRadial")  # caret train method 
 fit_svm
 
-#y_hat_svm <- predict(train_svm,validation_set_p1)
 y_hat_svm <- predict(fit_svm,validation_set_p1)
 
 options(digits =2)
@@ -947,12 +953,6 @@ cm <- confusionMatrix(data = y_hat_svm, reference = validation_set_p1$`Class cod
 cm
 options(digits =7) # default
 
-#Tuning SVM to find the best cost and gamma ..
-#train_svm_tune <- tune(svm, `Class code` ~ .,data = train_set_p1, 
-#              kernel="radial", ranges=list(cost=10^(-1:2), gamma=c(.5,1,2)))
-#train_svm_tune
-#train_svm_after_tune <- svm(`Class code` ~ ., data = train_set_p1, kernel="radial", cost=0.1, gamma=0.5)
-#y_hat_svm_tune <- predict(train_svm_after_tune,validation_set_p1)
 ```
 
 The values that get the better result are sigma = `r round(fit_svm$bestTune[1],4)` and C = `r fit_svm$bestTune[2]`.
@@ -960,18 +960,17 @@ The SVM-Kernel is radial.
 
 The important variables are:
 
-```{r Support Vector Machines Model First Prediction Variable Importance, echo=FALSE, warning=FALSE}
+```{r Support Vector Machines Model First Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 varImp(fit_svm)
 varimp_svm_p1 <- varImp(fit_svm)$importance
-#ggplot(varImp(fit_knn))
 options(digits =7) # default
 ```
 
 
 The try to get a tune over the SVM but it fail, for that we keep the original value.
 
-```{r Support Vector Machines Model first Prediction Table, echo=FALSE}
+```{r Support Vector Machines Model first Prediction Table, echo=FALSE, size='scriptsize'}
 # Table names
 Predicted <- y_hat_svm
 Actually <- validation_set_p1$`Class code`
@@ -1007,7 +1006,7 @@ This method did not perform as expected and it is close to KNN and decison tree 
 
 Again, taking in consideration all the classes, we are going to use radial kernel.
 
-```{r Support Vector Machines Model Second Prediction train, echo=FALSE, warning=FALSE}
+```{r Support Vector Machines Model Second Prediction train, echo=FALSE, warning=FALSE, size='scriptsize'}
 #Support Vector Classifier
 
 ctrl_svm <- trainControl(method = "cv", savePred=T)
@@ -1032,17 +1031,16 @@ The SVM-Kernel is radial.
 
 The important variables are:
 
-```{r Support Vector Machines Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE}
+```{r Support Vector Machines Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
 options(digits =2)
 varImp(fit_svm)
 varimp_svm_p2 <- varImp(fit_svm)$importance
-#ggplot(varImp(fit_knn))
 options(digits =7) # default
 ```
 
 
 
-```{r Support Vector Machines Model Second Prediction Table, echo=FALSE}
+```{r Support Vector Machines Model Second Prediction Table, echo=FALSE, size='scriptsize'}
 # Table names
 Predicted <- y_hat_svm
 Actually <- validation_set_p1$`Class code`
