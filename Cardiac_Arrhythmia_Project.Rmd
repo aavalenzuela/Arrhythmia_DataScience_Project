@@ -1,0 +1,2559 @@
+---
+title: "Cardiac Arrhythmia DataScience Project"
+subtitle: "Data Analysis and Prediction Algorithms with R"
+author: "Alejandro A Valenzuela"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output:
+  html_document:
+    
+    df_print: paged
+  pdf_document: default
+always_allow_html: yes  
+urlcolor: blue
+description: This book introduces concepts and skills that can help you tackle real-world
+  data analysis challenges. It covers concepts from probability, statistical inference,
+  linear regression and machine learning and helps you develop skills such as R programming,
+  data wrangling with dplyr, data visualization and reproducible document preparation
+  with R markdown.
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<!--chapter:end:index.Rmd-->
+
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Overview/Executive Summary
+
+*In this section we describe the dataset and summarizes the goal of the project and key steps that were performed.*
+      
+This project is part of the Capstone of the Professional Certificate Program of Data Science and it has as scope applying machine learning techniques that go beyond standard linear regression, giving the opportunity to use a publicly available dataset to solve the problem of your choice. The [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/index.php) and [Kaggle](https://www.kaggle.com/datasets) are good places to seek out a dataset.
+
+For this project, the [Cardiac Arrhythmia](https://archive.ics.uci.edu/ml/datasets/Arrhythmia) dataset from UCI Machine Learning Repository was selected. As we can guess this is a life/health dataset and as the web page mention, this dataset has the following main information:
+
+* This database contains 279 attributes, 206 of which are linear valued and the rest are nominal.
+
+* Concerning the study of H. Altay Guvenir: "The aim is to distinguish between the presence and absence of cardiac arrhythmia and to classify it in one of the 16 groups. Class 01 refers to 'normal' ECG classes 02 to 15 refers to different classes of arrhythmia and class 16 refers to the rest of unclassified ones. For the time being, there exists a computer program that makes such a classification. However there are differences between the cardiolog's and the programs classification. Taking the cardiolog's as a gold standard we aim to minimise this difference by means of machine learning tools." 
+
+
+
+
+
+```{r Overview Download & Initial Setup, include = FALSE}
+##########################################################
+# Download & Setup
+##########################################################
+
+# Note: this process could take a couple of minutes
+
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
+if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
+
+if(!require(gmodels)) install.packages('gmodels')
+if(!require(rpart)) install.packages('rpart')
+if(!require(randomForest)) install.packages('randomForest')
+if(!require(e1071)) install.packages('e1071')
+if(!require(rpart.plot)) install.packages("rpart.plot")
+
+library(tidyverse)
+library(caret)
+library(data.table)
+
+library(gmodels)
+library(rpart)
+library(randomForest)
+library(e1071) # SVM
+library(xml2) #Kable
+library(rpart.plot)
+
+# I create a CrossTableNarrow.R in base of CrossTable.
+source(file="CrossTableNarrow.R") # Minor change in Column and Row Total Headings of gmodels::CrossTable
+if(!file.exists("CrossTableNarrow.R")) {
+  CrossTableNarrow <- function(arg1, arg2, arg3, arg4, arg5 ) {
+        CrossTable(arg1, arg2, arg3, arg4, arg5 )  # use the standard  CrossTable()
+}}
+# in other words, just used CrossTable() instead of CrossTableNarrow()
+
+
+# For Mac and windows uncomment the following 2 lines and comment the Linux lines below:
+#library(kableExtra) # does not works in Linux
+#if(!require(kableExtra)) install.packages("kableExtra")  # does not works in Linux
+
+# To use KableExtra works in linux first download the code from
+# https://github.com/haozhu233/kableExtra
+#and leaved at the same level than the project
+source(file="../kableExtra/R/kable_styling.R") # to center table
+source(file="../kableExtra/R/scroll_box.R")
+source(file="../kableExtra/R/util.R")
+source(file="../kableExtra/R/magic_mirror.R") # kable latex
+# end of KableExtra works in linux
+
+
+
+
+
+# Cardiac Arrhythmia dataset:
+# https://archive.ics.uci.edu/ml/datasets/Arrhythmia
+# https://archive.ics.uci.edu/ml/machine-learning-databases/arrhythmia/arrhythmia.data
+
+
+
+arrhythmia.uci <- read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/arrhythmia/arrhythmia.data"),
+                     header=FALSE,
+                     stringsAsFactors = FALSE)
+
+
+colnames(arrhythmia.uci)[280] <- "Class code"
+
+
+# Set NA to the ? value (missing value)
+arrhythmia.uci[arrhythmia.uci == "?"] <- NA
+```
+
+```{r Overview Code chunk font size in Rmarkdown with knitr and latex, echo=FALSE}
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\n \\", options$size,"\n\n", x, "\n\n \\normalsize"), x)
+})
+
+# The size in order are:
+#Huge > huge > LARGE > Large > large > normalsize > small > footnotesize > scriptsize > tiny
+```
+
+
+## Characteristics of dataset
+The Arrhythmia dataset is a table witch each row it is collection of health measurement for one patience and the last column says if this persons it is a normal health or has some of the 15 arrhythmia.
+
+
+```{r Overview Characteristics of dataset dim}
+# dimension
+dim(arrhythmia.uci)
+```
+
+
+```{r Overview Characteristics of dataset str, size='scriptsize'}
+# Display predictors (columns)
+str(arrhythmia.uci, list.len = 25)
+```
+
+You can see there are few patients but a lot of elements to consider. This elements are displayed as the first view we can see that required some work in setting its proper name (provided in the description of the dataset) but we are not to cover each one because we are talking of 279 predictors.
+
+
+
+```{r Overview Class definition, include = FALSE}
+
+Class <- data.frame(`Class code`= 01, `Class name` = "Normal", check.names = FALSE)
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 02, `Class name` = "Ischemic changes (Coronary Artery Disease)", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 03, `Class name` = "Old Anterior Myocardial Infarction", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 04, `Class name` = "Old Inferior Myocardial Infarction", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 05, `Class name` = "Sinus tachycardy", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 06, `Class name` = "Sinus bradycardy", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 07, `Class name` = "Ventricular Premature Contraction (PVC)", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 08, `Class name` = "Supraventricular Premature Contraction", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 09, `Class name` = "Left bundle branch block", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 10, `Class name` = "Right bundle branch block", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 11, `Class name` = "1. degree AtrioVentricular block", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 12, `Class name` = "2. degree AV block", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 13, `Class name` = "3. degree AV block", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 14, `Class name` = "Left ventricule hypertrophy", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 15, `Class name` = "Atrial Fibrillation or Flutter", check.names = FALSE))
+Class <- bind_rows( Class,
+                    data.frame(`Class code`= 16, `Class name` = "Others", check.names = FALSE))
+Class$`Class code` <- as.factor(Class$`Class code`)
+```
+
+
+About the output, the last column give us the Class code. 1 is for "Normal" and all the rest are arrhythmia. First we are going to display de distribution in a table, where you can see that "Normal" take a preponderance percentage and later a graph where we can see how the different arrhythmia are distributed in our dataset
+
+
+```{r Overview class as factor, include = FALSE}
+# Initial Redefine some type of the predictor from initial read from files. if using R 3.6 or earlier:
+arrhythmia <- arrhythmia.uci %>% mutate(`Class code` = as.factor(`Class code`)
+                                        )
+```
+
+
+```{r Overview Class code table, echo=FALSE, message=FALSE}
+left_join(arrhythmia, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
+  knitr::kable(caption = "Presence of codes in our dataset")
+  
+```
+
+You can see than some arrhythmias type are not present in our dataset (11, 12 and 13).
+
+```{r Overview Distribution of Cardiac Arrhythmia Class, echo=FALSE, warning=FALSE}
+left_join(arrhythmia, Class, by = "Class code") %>% ggplot(aes(`Class name`)) + geom_histogram(stat="count") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))  + # Rotate axis labels
+  xlab("Cardiac Arrhythmia Classification") +
+  ylab("Number of Patiences with the Disease") +
+  ggtitle("Class Distribution of Cardiac Arrhythmia Dataset")
+```
+
+
+## Approach
+The develop of this predicting Cardiac Arrhythmia classification can be explained in the follows steps:
+
+1.- Start analyzing the dataset, cleaning, working on missing values that we found, look for outsider than can be invalid data, review predictors that does not add value and define the outcomes that we are going to predict.
+
+2.- Create the training and validation, or test, dataset.
+
+3.- Works with several classification supervised machines to get a better accuracy in our predictions. Evaluate sensitivity and specificity.
+
+4.- Review the results.
+
+5.- Conclusion.
+
+
+
+\newpage
+
+<!--chapter:end:0.Overview.Rmd-->
+
+# Methods and Analysis
+
+*In this section we explain the process and techniques used, including data cleaning, data exploration and visualization, insights gained, and the modeling approach.*
+
+## Preparing the data
+
+As we mention,in the description of the dataset is the description of the 279 measurement present in the dataset. The first task it is to set this definition in the name of the column and later set its values according to the one in the description: lineal or nominal, in our case numeric or factor. For that we review the output of the structure created when we read the dataset from UCI.
+
+```{r Analysis setting colnames, include = FALSE}
+
+
+# Because we have too many columns prefer make one by one to decrease error setting instead to set all of then in one sentence like 
+# colnames(arrhythmia.uci) <- c("Age", "Sex", "Height", "Weight", .....)
+
+colnames(arrhythmia.uci)[001] <- "Age"
+colnames(arrhythmia.uci)[002] <- "Sex"
+colnames(arrhythmia.uci)[003] <- "Height"
+colnames(arrhythmia.uci)[004] <- "Weight"
+colnames(arrhythmia.uci)[005] <- "QRS duration"
+colnames(arrhythmia.uci)[006] <- "P-R interval"
+colnames(arrhythmia.uci)[007] <- "Q-T interval"
+colnames(arrhythmia.uci)[008] <- "T interval"
+colnames(arrhythmia.uci)[009] <- "P interval"
+colnames(arrhythmia.uci)[010] <- "QRS Vector angles"
+colnames(arrhythmia.uci)[011] <- "T Vector angles"
+colnames(arrhythmia.uci)[012] <- "P Vector angles"
+colnames(arrhythmia.uci)[013] <- "QRST Vector angles"
+colnames(arrhythmia.uci)[014] <- "J Vector angles"
+colnames(arrhythmia.uci)[015] <- "Heart rate"
+colnames(arrhythmia.uci)[016] <- "Channel DI Q wave Average"
+colnames(arrhythmia.uci)[017] <- "Channel DI R wave Average"
+colnames(arrhythmia.uci)[018] <- "Channel DI S wave Average"
+colnames(arrhythmia.uci)[019] <- "Channel DI R' wave Average"
+colnames(arrhythmia.uci)[020] <- "Channel DI S' Average"
+colnames(arrhythmia.uci)[021] <- "Channel DI Number of intrinsic deflections"
+colnames(arrhythmia.uci)[022] <- "Channel DI Existence of ragged R wave"
+colnames(arrhythmia.uci)[023] <- "Channel DI Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[024] <- "Channel DI Existence of ragged P wave"
+colnames(arrhythmia.uci)[025] <- "Channel DI Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[026] <- "Channel DI Existence of ragged T wave"
+colnames(arrhythmia.uci)[027] <- "Channel DI Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[028] <- "Channel DII Q wave Average"
+colnames(arrhythmia.uci)[029] <- "Channel DII R wave Average"
+colnames(arrhythmia.uci)[030] <- "Channel DII S wave Average"
+colnames(arrhythmia.uci)[031] <- "Channel DII R' wave Average"
+colnames(arrhythmia.uci)[032] <- "Channel DII S' wave Average"
+colnames(arrhythmia.uci)[033] <- "Channel DII Number of intrinsic deflections"
+colnames(arrhythmia.uci)[034] <- "Channel DII Existence of ragged R wave"
+colnames(arrhythmia.uci)[035] <- "Channel DII Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[036] <- "Channel DII Existence of ragged P wave"
+colnames(arrhythmia.uci)[037] <- "Channel DII Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[038] <- "Channel DII Existence of ragged T wave"
+colnames(arrhythmia.uci)[039] <- "Channel DII Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[040] <- "Channel DIII Q wave Average"
+colnames(arrhythmia.uci)[041] <- "Channel DIII R wave Average"
+colnames(arrhythmia.uci)[042] <- "Channel DIII S wave Average"
+colnames(arrhythmia.uci)[043] <- "Channel DIII R' wave Average"
+colnames(arrhythmia.uci)[044] <- "Channel DIII S' wave Average"
+colnames(arrhythmia.uci)[045] <- "Channel DIII Number of intrinsic deflections"
+colnames(arrhythmia.uci)[046] <- "Channel DIII Existence of ragged R wave"
+colnames(arrhythmia.uci)[047] <- "Channel DIII Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[048] <- "Channel DIII Existence of ragged P wave"
+colnames(arrhythmia.uci)[049] <- "Channel DIII Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[050] <- "Channel DIII Existence of ragged T wave"
+colnames(arrhythmia.uci)[051] <- "Channel DIII Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[052] <- "Channel AVR Q wave Average"
+colnames(arrhythmia.uci)[053] <- "Channel AVR R wave Average"
+colnames(arrhythmia.uci)[054] <- "Channel AVR S wave Average"
+colnames(arrhythmia.uci)[055] <- "Channel AVR R' wave Average"
+colnames(arrhythmia.uci)[056] <- "Channel AVR S' wave Average"
+colnames(arrhythmia.uci)[057] <- "Channel AVR Number of intrinsic deflections"
+colnames(arrhythmia.uci)[058] <- "Channel AVR Existence of ragged R wave"
+colnames(arrhythmia.uci)[059] <- "Channel AVR Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[060] <- "Channel AVR Existence of ragged P wave"
+colnames(arrhythmia.uci)[061] <- "Channel AVR Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[062] <- "Channel AVR Existence of ragged T wave"
+colnames(arrhythmia.uci)[063] <- "Channel AVR Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[064] <- "Channel AVL Q wave Average"
+colnames(arrhythmia.uci)[065] <- "Channel AVL R wave Average"
+colnames(arrhythmia.uci)[066] <- "Channel AVL S wave Average"
+colnames(arrhythmia.uci)[067] <- "Channel AVL R' wave Average"
+colnames(arrhythmia.uci)[068] <- "Channel AVL S' wave Average"
+colnames(arrhythmia.uci)[069] <- "Channel AVL Number of intrinsic deflections"
+colnames(arrhythmia.uci)[070] <- "Channel AVL Existence of ragged R wave"
+colnames(arrhythmia.uci)[071] <- "Channel AVL Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[072] <- "Channel AVL Existence of ragged P wave"
+colnames(arrhythmia.uci)[073] <- "Channel AVL Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[074] <- "Channel AVL Existence of ragged T wave"
+colnames(arrhythmia.uci)[075] <- "Channel AVL Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[076] <- "Channel AVF Q wave Average"
+colnames(arrhythmia.uci)[077] <- "Channel AVF R wave Average"
+colnames(arrhythmia.uci)[078] <- "Channel AVF S wave Average"
+colnames(arrhythmia.uci)[079] <- "Channel AVF R' wave Average"
+colnames(arrhythmia.uci)[080] <- "Channel AVF S' wave Average"
+colnames(arrhythmia.uci)[081] <- "Channel AVF Number of intrinsic deflections"
+colnames(arrhythmia.uci)[082] <- "Channel AVF Existence of ragged R wave"
+colnames(arrhythmia.uci)[083] <- "Channel AVF Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[084] <- "Channel AVF Existence of ragged P wave"
+colnames(arrhythmia.uci)[085] <- "Channel AVF Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[086] <- "Channel AVF Existence of ragged T wave"
+colnames(arrhythmia.uci)[087] <- "Channel AVF Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[088] <- "Channel V1 Q wave Average"
+colnames(arrhythmia.uci)[089] <- "Channel V1 R wave Average"
+colnames(arrhythmia.uci)[090] <- "Channel V1 S wave Average"
+colnames(arrhythmia.uci)[091] <- "Channel V1 R' wave Average"
+colnames(arrhythmia.uci)[092] <- "Channel V1 S' wave Average"
+colnames(arrhythmia.uci)[093] <- "Channel V1 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[094] <- "Channel V1 Existence of ragged R wave"
+colnames(arrhythmia.uci)[095] <- "Channel V1 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[096] <- "Channel V1 Existence of ragged P wave"
+colnames(arrhythmia.uci)[097] <- "Channel V1 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[098] <- "Channel V1 Existence of ragged T wave"
+colnames(arrhythmia.uci)[099] <- "Channel V1 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[100] <- "Channel V2 Q wave Average"
+colnames(arrhythmia.uci)[101] <- "Channel V2 R wave Average"
+colnames(arrhythmia.uci)[102] <- "Channel V2 S wave Average"
+colnames(arrhythmia.uci)[103] <- "Channel V2 R' wave Average"
+colnames(arrhythmia.uci)[104] <- "Channel V2 S' wave Average"
+colnames(arrhythmia.uci)[105] <- "Channel V2 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[106] <- "Channel V2 Existence of ragged R wave"
+colnames(arrhythmia.uci)[107] <- "Channel V2 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[108] <- "Channel V2 Existence of ragged P wave"
+colnames(arrhythmia.uci)[109] <- "Channel V2 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[110] <- "Channel V2 Existence of ragged T wave"
+colnames(arrhythmia.uci)[111] <- "Channel V2 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[112] <- "Channel V3 Q wave Average"
+colnames(arrhythmia.uci)[113] <- "Channel V3 R wave Average"
+colnames(arrhythmia.uci)[114] <- "Channel V3 S wave Average"
+colnames(arrhythmia.uci)[115] <- "Channel V3 R' wave Average"
+colnames(arrhythmia.uci)[116] <- "Channel V3 S' wave Average"
+colnames(arrhythmia.uci)[117] <- "Channel V3 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[118] <- "Channel V3 Existence of ragged R wave"
+colnames(arrhythmia.uci)[119] <- "Channel V3 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[120] <- "Channel V3 Existence of ragged P wave"
+colnames(arrhythmia.uci)[121] <- "Channel V3 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[122] <- "Channel V3 Existence of ragged T wave"
+colnames(arrhythmia.uci)[123] <- "Channel V3 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[124] <- "Channel V4 Q wave Average"
+colnames(arrhythmia.uci)[125] <- "Channel V4 R wave Average"
+colnames(arrhythmia.uci)[126] <- "Channel V4 S wave Average"
+colnames(arrhythmia.uci)[127] <- "Channel V4 R' wave Average"
+colnames(arrhythmia.uci)[128] <- "Channel V4 S' wave Average"
+colnames(arrhythmia.uci)[129] <- "Channel V4 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[130] <- "Channel V4 Existence of ragged R wave"
+colnames(arrhythmia.uci)[131] <- "Channel V4 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[132] <- "Channel V4 Existence of ragged P wave"
+colnames(arrhythmia.uci)[133] <- "Channel V4 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[134] <- "Channel V4 Existence of ragged T wave"
+colnames(arrhythmia.uci)[135] <- "Channel V4 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[136] <- "Channel V5 Q wave Average"
+colnames(arrhythmia.uci)[137] <- "Channel V5 R wave Average"
+colnames(arrhythmia.uci)[138] <- "Channel V5 S wave Average"
+colnames(arrhythmia.uci)[139] <- "Channel V5 R' wave Average"
+colnames(arrhythmia.uci)[140] <- "Channel V5 S' wave Average"
+colnames(arrhythmia.uci)[141] <- "Channel V5 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[142] <- "Channel V5 Existence of ragged R wave"
+colnames(arrhythmia.uci)[143] <- "Channel V5 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[144] <- "Channel V5 Existence of ragged P wave"
+colnames(arrhythmia.uci)[145] <- "Channel V5 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[146] <- "Channel V5 Existence of ragged T wave"
+colnames(arrhythmia.uci)[147] <- "Channel V5 Existence of diphasic derivation of T wave"
+colnames(arrhythmia.uci)[148] <- "Channel V6 Q wave Average"
+colnames(arrhythmia.uci)[149] <- "Channel V6 R wave Average"
+colnames(arrhythmia.uci)[150] <- "Channel V6 S wave Average"
+colnames(arrhythmia.uci)[151] <- "Channel V6 R' wave Average"
+colnames(arrhythmia.uci)[152] <- "Channel V6 S' wave Average"
+colnames(arrhythmia.uci)[153] <- "Channel V6 Number of intrinsic deflections"
+colnames(arrhythmia.uci)[154] <- "Channel V6 Existence of ragged R wave"
+colnames(arrhythmia.uci)[155] <- "Channel V6 Existence of diphasic derivation of R wave"
+colnames(arrhythmia.uci)[156] <- "Channel V6 Existence of ragged P wave"
+colnames(arrhythmia.uci)[157] <- "Channel V6 Existence of diphasic derivation of P wave"
+colnames(arrhythmia.uci)[158] <- "Channel V6 Existence of ragged T wave"
+colnames(arrhythmia.uci)[159] <- "Channel V6 Existence of diphasic derivation of T wave"
+
+colnames(arrhythmia.uci)[160] <- "Channel DI JJ wave Amplitude"
+colnames(arrhythmia.uci)[161] <- "Channel DI Q wave Amplitude"
+colnames(arrhythmia.uci)[162] <- "Channel DI R wave Amplitude"
+colnames(arrhythmia.uci)[163] <- "Channel DI S wave Amplitude"
+colnames(arrhythmia.uci)[164] <- "Channel DI R' wave Amplitude"
+colnames(arrhythmia.uci)[165] <- "Channel DI S' wave Amplitude"
+colnames(arrhythmia.uci)[166] <- "Channel DI P wave Amplitude"
+colnames(arrhythmia.uci)[167] <- "Channel DI T wave Amplitude"
+colnames(arrhythmia.uci)[168] <- "Channel DI QRSA"
+colnames(arrhythmia.uci)[169] <- "Channel DI QRSTA"
+colnames(arrhythmia.uci)[170] <- "Channel DII JJ wave Amplitude"
+colnames(arrhythmia.uci)[171] <- "Channel DII Q wave Amplitude"
+colnames(arrhythmia.uci)[172] <- "Channel DII R wave Amplitude"
+colnames(arrhythmia.uci)[173] <- "Channel DII S wave Amplitude"
+colnames(arrhythmia.uci)[174] <- "Channel DII R' wave Amplitude"
+colnames(arrhythmia.uci)[175] <- "Channel DII S' wave Amplitude"
+colnames(arrhythmia.uci)[176] <- "Channel DII P wave Amplitude"
+colnames(arrhythmia.uci)[177] <- "Channel DII T wave Amplitude"
+colnames(arrhythmia.uci)[178] <- "Channel DII QRSA"
+colnames(arrhythmia.uci)[179] <- "Channel DII QRSTA"
+colnames(arrhythmia.uci)[180] <- "Channel DIII JJ wave Amplitude"
+colnames(arrhythmia.uci)[181] <- "Channel DIII Q wave Amplitude"
+colnames(arrhythmia.uci)[182] <- "Channel DIII R wave Amplitude"
+colnames(arrhythmia.uci)[183] <- "Channel DIII S wave Amplitude"
+colnames(arrhythmia.uci)[184] <- "Channel DIII R' wave Amplitude"
+colnames(arrhythmia.uci)[185] <- "Channel DIII S' wave Amplitude"
+colnames(arrhythmia.uci)[186] <- "Channel DIII P wave Amplitude"
+colnames(arrhythmia.uci)[187] <- "Channel DIII T wave Amplitude"
+colnames(arrhythmia.uci)[188] <- "Channel DIII QRSA"
+colnames(arrhythmia.uci)[189] <- "Channel DIII QRSTA"
+colnames(arrhythmia.uci)[190] <- "Channel AVR JJ wave Amplitude"
+colnames(arrhythmia.uci)[191] <- "Channel AVR Q wave Amplitude"
+colnames(arrhythmia.uci)[192] <- "Channel AVR R wave Amplitude"
+colnames(arrhythmia.uci)[193] <- "Channel AVR S wave Amplitude"
+colnames(arrhythmia.uci)[194] <- "Channel AVR R' wave Amplitude"
+colnames(arrhythmia.uci)[195] <- "Channel AVR S' wave Amplitude"
+colnames(arrhythmia.uci)[196] <- "Channel AVR P wave Amplitude"
+colnames(arrhythmia.uci)[197] <- "Channel AVR T wave Amplitude"
+colnames(arrhythmia.uci)[198] <- "Channel AVR QRSA"
+colnames(arrhythmia.uci)[199] <- "Channel AVR QRSTA"
+colnames(arrhythmia.uci)[200] <- "Channel AVL JJ wave Amplitude"
+colnames(arrhythmia.uci)[201] <- "Channel AVL Q wave Amplitude"
+colnames(arrhythmia.uci)[202] <- "Channel AVL R wave Amplitude"
+colnames(arrhythmia.uci)[203] <- "Channel AVL S wave Amplitude"
+colnames(arrhythmia.uci)[204] <- "Channel AVL R' wave Amplitude"
+colnames(arrhythmia.uci)[205] <- "Channel AVL S' wave Amplitude"
+colnames(arrhythmia.uci)[206] <- "Channel AVL P wave Amplitude"
+colnames(arrhythmia.uci)[207] <- "Channel AVL T wave Amplitude"
+colnames(arrhythmia.uci)[208] <- "Channel AVL QRSA"
+colnames(arrhythmia.uci)[209] <- "Channel AVL QRSTA"
+colnames(arrhythmia.uci)[210] <- "Channel AVF JJ wave Amplitude"
+colnames(arrhythmia.uci)[211] <- "Channel AVF Q wave Amplitude"
+colnames(arrhythmia.uci)[212] <- "Channel AVF R wave Amplitude"
+colnames(arrhythmia.uci)[213] <- "Channel AVF S wave Amplitude"
+colnames(arrhythmia.uci)[214] <- "Channel AVF R' wave Amplitude"
+colnames(arrhythmia.uci)[215] <- "Channel AVF S' wave Amplitude"
+colnames(arrhythmia.uci)[216] <- "Channel AVF P wave Amplitude"
+colnames(arrhythmia.uci)[217] <- "Channel AVF T wave Amplitude"
+colnames(arrhythmia.uci)[218] <- "Channel AVF QRSA"
+colnames(arrhythmia.uci)[219] <- "Channel AVF QRSTA"
+colnames(arrhythmia.uci)[220] <- "Channel V1 JJ wave Amplitude"
+colnames(arrhythmia.uci)[221] <- "Channel V1 Q wave Amplitude"
+colnames(arrhythmia.uci)[222] <- "Channel V1 R wave Amplitude"
+colnames(arrhythmia.uci)[223] <- "Channel V1 S wave Amplitude"
+colnames(arrhythmia.uci)[224] <- "Channel V1 R' wave Amplitude"
+colnames(arrhythmia.uci)[225] <- "Channel V1 S' wave Amplitude"
+colnames(arrhythmia.uci)[226] <- "Channel V1 P wave Amplitude"
+colnames(arrhythmia.uci)[227] <- "Channel V1 T wave Amplitude"
+colnames(arrhythmia.uci)[228] <- "Channel V1 QRSA"
+colnames(arrhythmia.uci)[229] <- "Channel V1 QRSTA"
+colnames(arrhythmia.uci)[230] <- "Channel V2 JJ wave Amplitude"
+colnames(arrhythmia.uci)[231] <- "Channel V2 Q wave Amplitude"
+colnames(arrhythmia.uci)[232] <- "Channel V2 R wave Amplitude"
+colnames(arrhythmia.uci)[233] <- "Channel V2 S wave Amplitude"
+colnames(arrhythmia.uci)[234] <- "Channel V2 R' wave Amplitude"
+colnames(arrhythmia.uci)[235] <- "Channel V2 S' wave Amplitude"
+colnames(arrhythmia.uci)[236] <- "Channel V2 P wave Amplitude"
+colnames(arrhythmia.uci)[237] <- "Channel V2 T wave Amplitude"
+colnames(arrhythmia.uci)[238] <- "Channel V2 QRSA"
+colnames(arrhythmia.uci)[239] <- "Channel V2 QRSTA"
+colnames(arrhythmia.uci)[240] <- "Channel V3 JJ wave Amplitude"
+colnames(arrhythmia.uci)[241] <- "Channel V3 Q wave Amplitude"
+colnames(arrhythmia.uci)[242] <- "Channel V3 R wave Amplitude"
+colnames(arrhythmia.uci)[243] <- "Channel V3 S wave Amplitude"
+colnames(arrhythmia.uci)[244] <- "Channel V3 R' wave Amplitude"
+colnames(arrhythmia.uci)[245] <- "Channel V3 S' wave Amplitude"
+colnames(arrhythmia.uci)[246] <- "Channel V3 P wave Amplitude"
+colnames(arrhythmia.uci)[247] <- "Channel V3 T wave Amplitude"
+colnames(arrhythmia.uci)[248] <- "Channel V3 QRSA"
+colnames(arrhythmia.uci)[249] <- "Channel V3 QRSTA"
+colnames(arrhythmia.uci)[250] <- "Channel V4 JJ wave Amplitude"
+colnames(arrhythmia.uci)[251] <- "Channel V4 Q wave Amplitude"
+colnames(arrhythmia.uci)[252] <- "Channel V4 R wave Amplitude"
+colnames(arrhythmia.uci)[253] <- "Channel V4 S wave Amplitude"
+colnames(arrhythmia.uci)[254] <- "Channel V4 R' wave Amplitude"
+colnames(arrhythmia.uci)[255] <- "Channel V4 S' wave Amplitude"
+colnames(arrhythmia.uci)[256] <- "Channel V4 P wave Amplitude"
+colnames(arrhythmia.uci)[257] <- "Channel V4 T wave Amplitude"
+colnames(arrhythmia.uci)[258] <- "Channel V4 QRSA"
+colnames(arrhythmia.uci)[259] <- "Channel V4 QRSTA"
+colnames(arrhythmia.uci)[260] <- "Channel V5 JJ wave Amplitude"
+colnames(arrhythmia.uci)[261] <- "Channel V5 Q wave Amplitude"
+colnames(arrhythmia.uci)[262] <- "Channel V5 R wave Amplitude"
+colnames(arrhythmia.uci)[263] <- "Channel V5 S wave Amplitude"
+colnames(arrhythmia.uci)[264] <- "Channel V5 R' wave Amplitude"
+colnames(arrhythmia.uci)[265] <- "Channel V5 S' wave Amplitude"
+colnames(arrhythmia.uci)[266] <- "Channel V5 P wave Amplitude"
+colnames(arrhythmia.uci)[267] <- "Channel V5 T wave Amplitude"
+colnames(arrhythmia.uci)[268] <- "Channel V5 QRSA"
+colnames(arrhythmia.uci)[269] <- "Channel V5 QRSTA"
+colnames(arrhythmia.uci)[270] <- "Channel V6 JJ wave Amplitude"
+colnames(arrhythmia.uci)[271] <- "Channel V6 Q wave Amplitude"
+colnames(arrhythmia.uci)[272] <- "Channel V6 R wave Amplitude"
+colnames(arrhythmia.uci)[273] <- "Channel V6 S wave Amplitude"
+colnames(arrhythmia.uci)[274] <- "Channel V6 R' wave Amplitude"
+colnames(arrhythmia.uci)[275] <- "Channel V6 S' wave Amplitude"
+colnames(arrhythmia.uci)[276] <- "Channel V6 P wave Amplitude"
+colnames(arrhythmia.uci)[277] <- "Channel V6 T wave Amplitude"
+colnames(arrhythmia.uci)[278] <- "Channel V6 QRSA"
+colnames(arrhythmia.uci)[279] <- "Channel V6 QRSTA"
+
+colnames(arrhythmia.uci)[280] <- "Class code"
+
+```
+
+
+
+
+```{r Analysis Redefine types, include = FALSE}
+# Redefine some type of the predictor from initial read from files. if using R 3.6 or earlier:
+arrhythmia <- arrhythmia.uci %>% mutate(Sex = as.factor( ifelse(Sex == 0, 'M', 'F')),
+                                        `T interval`= as.integer(`T interval`),
+                                        `P interval` = as.integer(`P interval`),
+                                        `QRST Vector angles` = as.integer(`QRST Vector angles`),
+                                        `T Vector angles` = as.integer(`T Vector angles`),
+                                        `P Vector angles` = as.integer(`P Vector angles`),
+                                        `J Vector angles` = as.integer(`J Vector angles`),
+                                        `Heart rate` = as.integer(`Heart rate`),
+                                        `Channel DI Existence of ragged R wave` = as.factor(`Channel DI Existence of ragged R wave`),
+                                        `Channel DI Existence of diphasic derivation of R wave` = as.factor(`Channel DI Existence of diphasic derivation of R wave`),
+                                        `Channel DI Existence of ragged P wave` = as.factor(`Channel DI Existence of ragged P wave`),
+                                        `Channel DI Existence of diphasic derivation of P wave` = as.factor(`Channel DI Existence of diphasic derivation of P wave`),
+                                        `Channel DI Existence of ragged T wave` = as.factor(`Channel DI Existence of ragged T wave`),
+                                        `Channel DI Existence of diphasic derivation of T wave` = as.factor(`Channel DI Existence of diphasic derivation of T wave`),
+                                        `Channel DII Existence of ragged R wave` = as.factor(`Channel DII Existence of ragged R wave`),
+                                        `Channel DII Existence of diphasic derivation of R wave` = as.factor(`Channel DII Existence of diphasic derivation of R wave`),
+                                        `Channel DII Existence of ragged P wave` = as.factor(`Channel DII Existence of ragged P wave`),
+                                        `Channel DII Existence of diphasic derivation of P wave` = as.factor(`Channel DII Existence of diphasic derivation of P wave`),
+                                        `Channel DII Existence of ragged T wave` = as.factor(`Channel DII Existence of ragged T wave`),
+                                        `Channel DII Existence of diphasic derivation of T wave` = as.factor(`Channel DII Existence of diphasic derivation of T wave`),
+                                        `Channel DIII Existence of ragged R wave` = as.factor(`Channel DIII Existence of ragged R wave`),
+                                        `Channel DIII Existence of diphasic derivation of R wave` = as.factor(`Channel DIII Existence of diphasic derivation of R wave`),
+                                        `Channel DIII Existence of ragged P wave` = as.factor(`Channel DIII Existence of ragged P wave`),
+                                        `Channel DIII Existence of diphasic derivation of P wave` = as.factor(`Channel DIII Existence of diphasic derivation of P wave`),
+                                        `Channel DIII Existence of ragged T wave` = as.factor(`Channel DIII Existence of ragged T wave`),
+                                        `Channel DIII Existence of diphasic derivation of T wave` = as.factor(`Channel DIII Existence of diphasic derivation of T wave`),
+                                        `Channel AVR Existence of ragged R wave` = as.factor(`Channel AVR Existence of ragged R wave`),
+                                        `Channel AVR Existence of diphasic derivation of R wave` = as.factor(`Channel AVR Existence of diphasic derivation of R wave`),
+                                        `Channel AVR Existence of ragged P wave` = as.factor(`Channel AVR Existence of ragged P wave`),
+                                        `Channel AVR Existence of diphasic derivation of P wave` = as.factor(`Channel AVR Existence of diphasic derivation of P wave`),
+                                        `Channel AVR Existence of ragged T wave` = as.factor(`Channel AVR Existence of ragged T wave`),
+                                        `Channel AVR Existence of diphasic derivation of T wave` = as.factor(`Channel AVR Existence of diphasic derivation of T wave`),
+                                        `Channel AVL Existence of ragged R wave` = as.factor(`Channel AVL Existence of ragged R wave`),
+                                        `Channel AVL Existence of diphasic derivation of R wave` = as.factor(`Channel AVL Existence of diphasic derivation of R wave`),
+                                        `Channel AVL Existence of ragged P wave` = as.factor(`Channel AVL Existence of ragged P wave`),
+                                        `Channel AVL Existence of diphasic derivation of P wave` = as.factor(`Channel AVL Existence of diphasic derivation of P wave`),
+                                        `Channel AVL Existence of ragged T wave` = as.factor(`Channel AVL Existence of ragged T wave`),
+                                        `Channel AVL Existence of diphasic derivation of T wave` = as.factor(`Channel AVL Existence of diphasic derivation of T wave`),
+                                        `Channel AVF Existence of ragged R wave` = as.factor(`Channel AVF Existence of ragged R wave`),
+                                        `Channel AVF Existence of diphasic derivation of R wave` = as.factor(`Channel AVF Existence of diphasic derivation of R wave`),
+                                        `Channel AVF Existence of ragged P wave` = as.factor(`Channel AVF Existence of ragged P wave`),
+                                        `Channel AVF Existence of diphasic derivation of P wave` = as.factor(`Channel AVF Existence of diphasic derivation of P wave`),
+                                        `Channel AVF Existence of ragged T wave` = as.factor(`Channel AVF Existence of ragged T wave`),
+                                        `Channel AVF Existence of diphasic derivation of T wave` = as.factor(`Channel AVF Existence of diphasic derivation of T wave`),
+                                        `Channel V1 Existence of ragged R wave` = as.factor(`Channel V1 Existence of ragged R wave`),
+                                        `Channel V1 Existence of diphasic derivation of R wave` = as.factor(`Channel V1 Existence of diphasic derivation of R wave`),
+                                        `Channel V1 Existence of ragged P wave` = as.factor(`Channel V1 Existence of ragged P wave`),
+                                        `Channel V1 Existence of diphasic derivation of P wave` = as.factor(`Channel V1 Existence of diphasic derivation of P wave`),
+                                        `Channel V1 Existence of ragged T wave` = as.factor(`Channel V1 Existence of ragged T wave`),
+                                        `Channel V1 Existence of diphasic derivation of T wave` = as.factor(`Channel V1 Existence of diphasic derivation of T wave`),
+                                        `Channel V2 Existence of ragged R wave` = as.factor(`Channel V2 Existence of ragged R wave`),
+                                        `Channel V2 Existence of diphasic derivation of R wave` = as.factor(`Channel V2 Existence of diphasic derivation of R wave`),
+                                        `Channel V2 Existence of ragged P wave` = as.factor(`Channel V2 Existence of ragged P wave`),
+                                        `Channel V2 Existence of diphasic derivation of P wave` = as.factor(`Channel V2 Existence of diphasic derivation of P wave`),
+                                        `Channel V2 Existence of ragged T wave` = as.factor(`Channel V2 Existence of ragged T wave`),
+                                        `Channel V2 Existence of diphasic derivation of T wave` = as.factor(`Channel V2 Existence of diphasic derivation of T wave`),
+                                        `Channel V3 Existence of ragged R wave` = as.factor(`Channel V3 Existence of ragged R wave`),
+                                        `Channel V3 Existence of diphasic derivation of R wave` = as.factor(`Channel V3 Existence of diphasic derivation of R wave`),
+                                        `Channel V3 Existence of ragged P wave` = as.factor(`Channel V3 Existence of ragged P wave`),
+                                        `Channel V3 Existence of diphasic derivation of P wave` = as.factor(`Channel V3 Existence of diphasic derivation of P wave`),
+                                        `Channel V3 Existence of ragged T wave` = as.factor(`Channel V3 Existence of ragged T wave`),
+                                        `Channel V3 Existence of diphasic derivation of T wave` = as.factor(`Channel V3 Existence of diphasic derivation of T wave`),
+                                        `Channel V4 Existence of ragged R wave` = as.factor(`Channel V4 Existence of ragged R wave`),
+                                        `Channel V4 Existence of diphasic derivation of R wave` = as.factor(`Channel V4 Existence of diphasic derivation of R wave`),
+                                        `Channel V4 Existence of ragged P wave` = as.factor(`Channel V4 Existence of ragged P wave`),
+                                        `Channel V4 Existence of diphasic derivation of P wave` = as.factor(`Channel V4 Existence of diphasic derivation of P wave`),
+                                        `Channel V4 Existence of ragged T wave` = as.factor(`Channel V4 Existence of ragged T wave`),
+                                        `Channel V4 Existence of diphasic derivation of T wave` = as.factor(`Channel V4 Existence of diphasic derivation of T wave`),
+                                        `Channel V5 Existence of ragged R wave` = as.factor(`Channel V5 Existence of ragged R wave`),
+                                        `Channel V5 Existence of diphasic derivation of R wave` = as.factor(`Channel V5 Existence of diphasic derivation of R wave`),
+                                        `Channel V5 Existence of ragged P wave` = as.factor(`Channel V5 Existence of ragged P wave`),
+                                        `Channel V5 Existence of diphasic derivation of P wave` = as.factor(`Channel V5 Existence of diphasic derivation of P wave`),
+                                        `Channel V5 Existence of ragged T wave` = as.factor(`Channel V5 Existence of ragged T wave`),
+                                        `Channel V5 Existence of diphasic derivation of T wave` = as.factor(`Channel V5 Existence of diphasic derivation of T wave`),
+                                        `Channel V6 Existence of ragged R wave` = as.factor(`Channel V6 Existence of ragged R wave`),
+                                        `Channel V6 Existence of diphasic derivation of R wave` = as.factor(`Channel V6 Existence of diphasic derivation of R wave`),
+                                        `Channel V6 Existence of ragged P wave` = as.factor(`Channel V6 Existence of ragged P wave`),
+                                        `Channel V6 Existence of diphasic derivation of P wave` = as.factor(`Channel V6 Existence of diphasic derivation of P wave`),
+                                        `Channel V6 Existence of ragged T wave` = as.factor(`Channel V6 Existence of ragged T wave`),
+                                        `Channel V6 Existence of diphasic derivation of T wave` = as.factor(`Channel V6 Existence of diphasic derivation of T wave`),
+                                        `Class code` = as.factor(`Class code`)
+                                        )
+
+```
+
+
+
+As a result of this transformation, we have a "well defined" new dataset (only first 25 variables of 280 are showed):
+
+```{r Analysis new structure, echo=FALSE, size='scriptsize'}
+# Display predictors (columns) of the new dataset
+str(arrhythmia, list.len = 25)
+```
+
+## Cleaning
+
+The first analysis is to review if all the predictor give information. For that we are going to check if all the values of the dataset are equal, e. gr., it has standard deviation equal to zero. We are going to detect them.
+
+The predictors are:
+
+```{r Analysis Cleaning,warning=FALSE}
+sd.arrhythmia <- apply(arrhythmia,2,sd, na.rm=TRUE)
+sd0.list.arrhythmia <- 
+  names(sd.arrhythmia[sd.arrhythmia == 0 & !is.na(sd.arrhythmia)]) # check is.na
+
+# Identify the column number to be deleted
+ix <- which(colnames(arrhythmia) %in% sd0.list.arrhythmia)
+variable.names(arrhythmia[ix])
+
+```
+ and we delete them from our dataset:
+```{r Analysis Cleaning delete columns}
+
+arrhythmia <- arrhythmia[,-ix]
+```
+
+
+
+
+## Cleaning, working with NA
+
+As we mention before, some values are not defined. Initially they are "?" and we change for NA. This table show us which predictor are involve and how many they are:
+
+```{r Analysis Cleaning working with NA, echo = FALSE, warning=FALSE}
+# counts the number of NAs per column, resulting in:
+colna <- colSums(is.na(arrhythmia))
+colna <- colna[colna > 0]
+colna %>% knitr::kable(caption = 'Table of Ocurrence of NA', col.names = c( 'Ocurrences')) %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+The algorithms required that all the columns has values. How are we going to proceed with this missing values?
+
+### Missing J Vector angles
+
+Because we have a big number of this missing values (`r round(100*colna[4]/nrow(arrhythmia),digits = 1)`%) the better solution it is not consider this predictor.
+
+```{r Delete J Vector angles Predictor}
+
+arrhythmia <- arrhythmia %>% select(-`J Vector angles`)
+
+```
+
+
+### Missing P Vector angles
+
+This is not as big as the previous one, only `r round(100*colna[2]/nrow(arrhythmia),digits = 1)`%, let's see how it is distributed
+
+```{r Missing P Vector angles Summary, echo = FALSE}
+summary(arrhythmia$`P Vector angles`)
+```
+
+```{r Missing P Vector angles Histogram, echo = FALSE, message=FALSE, warning=FALSE}
+arrhythmia %>% ggplot(aes(`P Vector angles`)) + geom_histogram() + 
+  geom_vline( xintercept = mean(arrhythmia$`P Vector angles`,na.rm = TRUE), colour = "blue") +
+  geom_vline( xintercept = median(arrhythmia$`P Vector angles`,na.rm = TRUE), colour = "green")
+```
+
+This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low and high values that look like an outsiders than the mean. Anyway, both values are pretty close but median will be the preference in this and next cases.
+
+
+```{r Missing P Vector angles replacement, size='small'}
+arrhythmia$`P Vector angles`[is.na(arrhythmia$`P Vector angles`)] <- 
+  median(arrhythmia$`P Vector angles`,na.rm = TRUE)
+```
+
+
+### Missing T Vector angles
+
+
+This is smaller number of the previous one, only `r round(100*colna[1]/nrow(arrhythmia),digits = 1)`%, let's see how it is distributed
+
+```{r Missing T Vector angles Summary, echo = FALSE}
+summary(arrhythmia$`T Vector angles`)
+```
+
+```{r Missing T Vector angles Histogram, echo = FALSE, message=FALSE, warning=FALSE}
+arrhythmia %>% ggplot(aes(`T Vector angles`)) + geom_histogram() + 
+  geom_vline( xintercept = mean(arrhythmia$`T Vector angles`,na.rm = TRUE), colour = "blue") +
+  geom_vline( xintercept = median(arrhythmia$`T Vector angles`,na.rm = TRUE), colour = "green") + 
+  ggtitle("Histogram of T Vector angles")
+```
+
+This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low values as before.
+
+
+```{r Missing T Vector angles replacement, size='small'}
+arrhythmia$`T Vector angles`[is.na(arrhythmia$`T Vector angles`)] <- 
+  median(arrhythmia$`T Vector angles`,na.rm = TRUE)
+```
+
+
+
+### Missing QRST Vector angles
+
+This is only one missing value and represent the `r round(100*colna[3]/nrow(arrhythmia),digits = 1)`%, let's see some data for this missing:
+
+
+```{r Missing QRST Vector angles analysis, echo=FALSE, size='small'}
+arrhythmia %>% filter(is.na(`QRST Vector angles`)) %>% select(Age, Sex, Height, Weight, `QRS duration`,`P-R interval`, `Q-T interval`, `T interval`, `P interval` ,`QRS Vector angles`)
+```
+Let's do the same analysis about the distribution:
+
+```{r Missing QRST Vector angles Summary, echo = FALSE}
+summary(arrhythmia$`QRST Vector angles`)
+```
+
+```{r Missing QRST Vector angles Histogram, echo = FALSE, message=FALSE, warning=FALSE}
+arrhythmia %>% ggplot(aes(`QRST Vector angles`)) + geom_histogram() + 
+  geom_vline( xintercept = mean(arrhythmia$`QRST Vector angles`,na.rm = TRUE), colour = "blue") +
+  geom_vline( xintercept = median(arrhythmia$`QRST Vector angles`,na.rm = TRUE), colour = "green") + 
+  ggtitle("Histogram of QRST Vector angles")
+```
+
+This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low and hkgh values as before.
+
+```{r Missing QRST Vector angles replacement, size='small'}
+arrhythmia$`QRST Vector angles`[is.na(arrhythmia$`QRST Vector angles`)] <- 
+  median(arrhythmia$`QRST Vector angles`,na.rm = TRUE)
+```
+
+
+
+### Missing Heart rate
+
+This is only one missing value and represent the `r round(100*colna[5]/nrow(arrhythmia),digits = 1)`%, let's see some data fo this missing:
+
+
+```{r Missing Heart rate Analysis, echo=FALSE, size='small'}
+arrhythmia %>% filter(is.na(`Heart rate`)) %>% select(Age, Sex, Height, Weight, `QRS duration`,`P-R interval`, `Q-T interval`, `T interval`, `P interval`)
+```
+Let's do the same analysis about the distribution:
+
+```{r Missing Heart rate Summary, echo = FALSE}
+summary(arrhythmia$`Heart rate`)
+```
+
+```{r Missing Heart rate Histogram, echo = FALSE, message=FALSE, warning=FALSE}
+arrhythmia %>% ggplot(aes(`Heart rate`)) + geom_histogram() + 
+  geom_vline( xintercept = mean(arrhythmia$`Heart rate`,na.rm = TRUE), colour = "blue") +
+  geom_vline( xintercept = median(arrhythmia$`Heart rate`,na.rm = TRUE), colour = "green") + 
+  ggtitle("Histogram of Heart rate")
+```
+
+This show in blue the mean and in green the median for this predictors. Again, these values are pretty close. We are going to use the median anyway, getting a little independence of the high value of it.
+
+```{r Missing Heart rate replacement, size='small'}
+arrhythmia$`Heart rate`[is.na(arrhythmia$`Heart rate`)] <- median(arrhythmia$`Heart rate`,na.rm = TRUE)
+```
+
+
+## Correlation
+
+When we use the median in the section abode, we assume that the data is not related with other predictor. Is this true? Now that we have data we can check if this is correct for each predictor we keep.
+
+For this answer we are going to use correlation between the predictors.
+
+```{r Correlation, echo=FALSE}
+data_numeric <- select_if(arrhythmia, is.numeric)             # Subset numeric columns only
+cor_data_numeric <- cor(data_numeric)
+
+#given matrix with entries TRUE in the lower  triangle. With this I use half of the matrix, because it is symmetric to de diagonal and only need the data one time (cor(a,b = cor(b,a)))
+# The diagonal it is set to NA because is 1 but I do not needed for computing (cor(a,a) = 1)
+cor_data_numeric[lower.tri(cor_data_numeric, diag = TRUE)] <- NA # Should the diagonal be included?
+```
+
+
+
+For this table the more positive correlated are:
+```{r Correlation creating the tidy table, echo=FALSE,warning=FALSE}
+data2 <- data.frame(cor_data_numeric, check.names = FALSE)   
+data2 <- tibble::rownames_to_column(data2, "correlated.1") # Apply rownames_to_column
+cor_arrhythmia_numeric <- data2 %>%  gather(correlated.2,value,2:ncol(data2))
+cor_arrhythmia_numeric %>% slice_max(order_by = value, n = 10) %>% knitr::kable(caption = "Top 10 Positive Correlation between predictors")
+cor_arrhythmia_numeric %>% slice_min(order_by = value, n = 10) %>% knitr::kable(caption = "Top 10 Negative Correlation between predictors")
+```
+
+
+
+
+
+How many predictors are correlated, positive and negative, more than .9 (high correlated)?
+```{r Correlation with limit, echo=FALSE, warning=FALSE}
+limit <- 0.9
+cor_arrhythmia_numeric %>% filter(value < -limit | value > limit) %>% count() %>% knitr::kable( caption = "Correlation over 0.9 & under -0.9") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+
+
+
+
+This number indicate that the second predictor (or the first if you prefer) does not give us valuable information because the other predictor already give us that information. But how are these distributed?
+
+```{r Correlation histogram, echo=FALSE}
+cor_arrhythmia_numeric %>% ggplot(aes(value)) + geom_histogram(bins = 20,na.rm = TRUE) + ggtitle("Distribution of Correlation between Predictors") + xlab("Correlation")
+```
+
+Only few are high correlated. This is good for our analysis.
+
+### Correlation of previous missing values
+
+In the previous predictor that we have missing values, are some others predictor which has complete information are high correlated?
+
+
+#### Correlation of P Vector angles  
+
+Let's start with P Vector angles, where we have 22 missing values.
+
+```{r Correlation of previous missing values P Vector angles, echo=FALSE, warning=FALSE}
+
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for P Vector angles") %>%
+  kable_styling(full_width = F, position = "left")
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for P Vector angles") %>%
+  kable_styling(full_width = F, position = "left")
+```
+here we have a value of `r cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_max(order_by = value) `. If this predictor appear with importance in the final algorithm, let take this in consideration.
+
+
+#### Correlation of T Vector angles  
+
+With T Vector angles, where we have 8 missing values.
+
+```{r Correlation of T Vector angles, echo=FALSE, warning=FALSE}
+
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "T Vector angles" | correlated.2 %in% "T Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for T Vector angles") %>%
+  kable_styling(full_width = F, position = "left")
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "T Vector angles" | correlated.2 %in% "T Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for T Vector angles") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+The correlation here is lower. Then the assumtion of independant behaivor look valid.
+
+
+#### Correlation of QRST Vector angles  
+
+In the case of QRST Vector angles, with only one value missing, we have
+
+```{r Correlation of QRST Vector angles, echo=FALSE, warning=FALSE}
+
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "QRST Vector angles" | correlated.2 %in% "QRST Vector angles") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for QRST Vector angles") %>%
+  kable_styling(full_width = F, position = "left")
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "QRST Vector angles" | correlated.2 %in% "QRST Vector angles") %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for QRST Vector angles") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+
+#### Correlation of Heart rate  
+
+And the "Heart rate", with only one missing value
+
+```{r Correlation Heart rate, echo=FALSE, warning=FALSE}
+
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "Heart rate" | correlated.2 %in% "Heart rate") %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for Heart rate") %>%
+  kable_styling(full_width = F, position = "left")
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "Heart rate" | correlated.2 %in% "Heart rate") %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for Heart rate") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+and this predictor has very low correlation with all the rest of the predictor
+
+
+#### Less Correlation  
+
+Less correlated predictors are also presented and as we saw in the histogram, they are the most common. For example for the correlation between -0.001 and 0.001 we have:
+
+```{r Correlation Less Correlated, echo=FALSE, warning=FALSE}
+limit <- 0.0001
+cor_arrhythmia_numeric %>% filter(value > -limit & value < limit)  %>% knitr::kable(caption = "Less Correlated Preditors") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+
+
+
+
+
+## Outliers
+
+Let's take a look to some predictors to see if we can find some outliers. Outliers in statistics are considered as the data values which differ considerably from the bulk of a given data set. These data values lie outside the overall trend, which could be lies in the data.
+Let's start with some familiar predictors like Age.
+
+```{r Outliers Age Boxplot, echo=FALSE, fig.height = 3}
+arrhythmia %>% ggplot(aes(Age)) + geom_boxplot(fill="steelblue") + ggtitle("Age Outliers")
+```
+
+It does not show any value we can detect as outlier.
+
+Let's continue with Height. Height are in centimeters.
+
+```{r Outliers Height Boxplot, echo=FALSE, fig.height = 3}
+arrhythmia %>% ggplot(aes(Height)) + geom_boxplot(fill="steelblue") + ggtitle("Height Outliers")
+```
+
+We see two vales out of expected height of a person:
+
+```{r Outliers Height Max, echo=FALSE}
+slice_max(arrhythmia, order_by = Height, n = 2) %>% select(Height)
+```
+Let's take a look. Can we change for the means o median? Yes, but let's see if we can get more information that can lead us to the right data.
+Could be a transcription error from US norm and really means 6 feet 8 inches (203 cm) and 7 feet 8 inches (233 cm)?
+More information we can get from the data:
+```{r Outliers Height in detail, echo=FALSE}
+slice_max(arrhythmia, order_by = Height, n = 2) %>% select(Age,Weight, Height)
+```
+They are infants! Then, we can assume, the error is they put the height in mm instead of cm! No other patience less than a year is in the dataset and with one year old there is other one with more weight. For a more precise data maybe a weight-height chat for age can be used. Then we change these values assuming an error in the unit:
+
+```{r Outliers Height fixing}
+arrhythmia[arrhythmia$Height == 780,3] <- 78   # Height is column 3
+arrhythmia[arrhythmia$Height == 608,3] <- 61   # Height is column 3
+
+```
+
+
+About the weight in kilograms we have the graph:
+
+```{r Outliers Weight Boxplot, echo=FALSE, fig.height = 3}
+arrhythmia %>% ggplot(aes(Weight)) + geom_boxplot(fill="steelblue") + ggtitle("Weight Outliers")
+```
+
+Looking in more detail this patience:
+
+```{r Outliers Weight Table with Age and Height, echo=FALSE}
+slice_max(arrhythmia, order_by = Weight) %>% select(Age,Weight, Height)
+```
+looks plausible and no change will be made.
+
+
+About the Heart rate in frequency in minutes (Number of heart beats per minute) we have the graph:
+
+```{r Outliers Heart rate Boxplot, echo=FALSE, fig.height = 3}
+arrhythmia %>% ggplot(aes(`Heart rate`)) + geom_boxplot(fill="steelblue") + ggtitle("Heart rate Outliers")
+```
+
+In the upper numbers:
+
+```{r Outliers Heart rate in detail, echo=FALSE}
+slice_max(arrhythmia, order_by = `Heart rate`, n = 2) %>% select(Age,Weight, Height,`Heart rate`)
+```
+
+It is look like a possible value (I am not a medical doctor!)
+
+
+
+For the predictor above we use our knowledge about the human. A person can not be 7 meter tall, but for the rest, we can review them but for evaluate if it is an outlier and which value can be used to fixed required medical knowledge.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Train and validation dataset
+
+After this analysis and cleaning we are ready to create our training and validation dataset. Because our universe of observation is only `r nrow(arrhythmia)` we are going to split 80%-20%.
+
+```{r Create train set, validation set, include = FALSE}
+##########################################################
+# Create train set, validation set (final hold-out test set)
+##########################################################
+
+# Validation set will be 20% of data
+set.seed(1, sample.kind="Rounding") # if using R 3.5 or earlier, use `set.seed(1)`
+test_index <- createDataPartition(y = arrhythmia$`Class code`, times = 1, p = 0.2, list = FALSE)
+train_set <- arrhythmia[-test_index,]
+validation_set <- arrhythmia[test_index,]
+
+
+dim(train_set)
+dim(validation_set)
+
+```
+
+We are going to use "Class code" as an outcome to predict. Because some outcome are too few as we saw before, we need that they are present in the train_set and validation_set. This task should be manager with the createDataPartition() function, but we are going to check anyway.
+
+
+```{r Create train set check Class code}
+unique(train_set$`Class code`) %>% sort()
+unique(validation_set$`Class code`) %>% sort()
+```
+
+
+We can see in detail the Class code distribution in both dataset.
+
+
+## check train_set dataset
+
+
+```{r  Create train set check train_set, echo=FALSE, message=FALSE, warning=FALSE}
+left_join(train_set, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(train_set),digits = 1)) %>%
+  knitr::kable(caption = "Presence of codes in train_set dataset")
+  
+```
+
+## check validation_set dataset
+
+```{r  Create train set check validation_set, echo=FALSE, message=FALSE, warning=FALSE}
+left_join(validation_set, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(validation_set),digits = 1)) %>%
+  knitr::kable(caption = "Presence of codes in validation_set dataset")
+  
+```
+
+We can see that the percentage of the different classes are not equally distributes in both dataset. Why? Because it is not possible to have the same percentage when there is a few sample in some of them in the initial dataset. For example, Class 8	"Supraventricular Premature Contraction" has only 2 samples, them the function distribute in the 2 dataset and because the total number of samples are different, its percentage is different. This change if we move the partition from 80%-20% to 50%-50% but less samples are left for training propose. This is part of the consideration when we chose this proportion at the beginning.
+
+But this is not the only check we need to perform: we need to see if all the data (predictors) are not equal in this new training dataset.
+Remember that we check initially in the arrhythmia dataset that this situation does not occurs, but this can be present in this new (and small) dataset. Particularly with factors, if we have one value only we can get the error: "contrasts can be applied only to factors with 2 or more levels" with the train() function.
+
+The predictors that we find with a unique value in the training dataset are:
+
+```{r Create train set Unique value in train_set, echo=FALSE}
+values_count <- sapply(lapply(train_set, unique), length)  # Identify variables with 1 value
+variable.names(train_set[values_count == 1])
+```
+
+We  have `r sum(values_count  == 1)` predictors in this new dataset with equal value, for that we need to delete from train_set and validation_set dataset:
+
+```{r Create train set delete predictors with not varianza in the train_set}
+train_set <- train_set[,values_count > 1]
+validation_set <- validation_set[,values_count > 1]
+```
+
+After all this process, we finish with `r length(train_set) -1` predictors from the initial `r length(arrhythmia.uci) -1`.
+
+
+In summary, related with the prediction we are going to perform:  
+* The first prediction is if we can predict is the patience is normal or has one of the 15 arrhythmia.  
+* The second prediction, as you probably guess, is if we can categorize the right class.
+
+
+
+
+
+
+
+
+
+
+
+
+```{r Analysis delete unwanted objects, echo=FALSE}
+rm(data_numeric, data2, cor_data_numeric, colna, ix, sd0.list.arrhythmia, sd.arrhythmia, values_count, limit)
+```
+
+
+
+\newpage
+
+<!--chapter:end:1.0.Analysis.DataExploration.Rmd-->
+
+## Evaluation metrics
+
+
+As we mention previously, we are going to implement models for two purposes:
+
+a. **Detection of cardiac arrhythmia** 
+b. **Classification of cardiac arrhythmia**
+
+In our **first** prediction for detection of cardiac arrhythmia, the data points are classified into two classes: “Normal” & “Arrhythmia”. This model only identifies if the patient is normal (class 1) or suffers from any form of arrhythmia (class 2 to 16). Then the output is a binary variable (is a variable that has two possible outcomes). This will possible if all the instances belonging to classes 2 to 16 were merged to one class. The arrhythmia class will be treated as the ‘Positive’ class.
+
+We are going to see the following evaluation metrics:
+
+* **accuracy** is defined as the overall proportion that is predicted correctly.
+* **sensitivity** is defined as the ability of an algorithm to predict a positive outcome when the actual outcome is positive.
+* **specificity** is defined as the ability of an algorithm to not predict a positive when the actual outcome is not a positive.
+
+
+We can summarize in the following way:  
+**High accuracy**: $Y=1 \Rightarrow  \hat{Y}=1$ and $Y=0 \Rightarrow \hat{Y}=0$  
+**High sensitivity**: $Y=1 \Rightarrow \hat{Y}=1$  
+**High specificity**: $Y=0 \Rightarrow \hat{Y}=0$  
+
+
+We are looking for accuracy and sensitivity. Why? it is much more important to maximize sensitivity over specificity: failing to predict a arrhythmia  can put the health/life of the patience in risk. It is better than this patience classified as "Arrhythmia" and make all the exams/procedure and when validate that he or she is ok.
+
+
+In our **second** prediction model for classification of cardiac arrhythmia classified the patient into one of 16 classes, with class 1 representing “Normal” and classes 2 to 16 representing a condition of cardiac arrhythmia. Here we continue with the accuracy concept but now sensitivity and specificity is for class.
+
+
+Let's show the standard definition in an binary variable:  
+**True Positive (TN)** – This is correctly classified as the class if interest/target.  
+**True Negative (TN)** – This is correctly classified as not a class of interest/target.  
+**False Positive (FP)** – This is wrongly classified as the class of interest/target.  
+**False Negative (FN)** – This is wrongly classified as not a class of interest/target.  
+
+
+
+
+```{r Evaluation metrics Binary Table, echo=FALSE, warning=FALSE}
+M <- matrix(c("True Positives (TP)","False Positives (FP)","False Negatives (FN)","True Negatives (TN)"),2,byrow = TRUE) #%>%
+rownames(M) <- c("Predicted Positive","Predicted Negative")
+colnames(M) <- c("Actually Positive", "Actually Negative")
+
+M %>% knitr::kable() %>%
+  kable_styling(full_width = F)
+```
+An these are the definitions:
+
+$$
+Accuracy = (TP+TN)/(TP+TN+FP+FN)
+$$
+$$
+Sensitivity = TP/(TP+FN)
+$$
+$$
+Specificity = TN/(TN+FP)
+$$
+
+
+Whats happened when we have more class? Then we have the same arithmetic for the Accuracy, but we have a value for Sensitivity and Specificity for each class.
+
+
+```{r Evaluation metrics Multiple Table, echo=FALSE, warning=FALSE}
+M3 <- matrix(c("True A (TA)","False A (FA.B)","False A (FA.C)","False B (FB.A)","True B (TB)","False B (FB.C)","False C (FC.A)","False C (FC.B)","True C (TC)"),3,byrow = TRUE) #%>%
+rownames(M3) <- c("Predicted A", "Predicted B", "Predicted C")
+colnames(M3) <- c("Actually A", "Actually B", "Actually C")
+M3 %>% knitr::kable() %>%
+  kable_styling(full_width = F)
+```
+
+An these are the definitions:
+
+$$
+Accuracy = (TA+TB+TC)/(TA+TB+TC+FA.B+FA.C+FB.A+FB.C+FC.A+FC.B)
+$$
+$$
+Sensitivity_{A} = TA/(TA+FB.A+FC.A)
+$$
+$$
+Specificity_{A} = TA/(TA+FA.B+FA.C)
+$$
+$$
+Sensitivity_{B} = TB/(TB+FA.B+FC.B)
+$$
+$$
+Specificity_{B} = TB/(TB+FB.A+FB.C)
+$$
+$$
+Sensitivity_{C} = TC/(TC+FB.C+FA.C)
+$$
+$$
+Specificity_{C} = TC/(TC+FA.C+FB.C)
+$$
+
+
+
+
+\newpage
+
+
+
+## First Model...just the most common
+
+We are now to create our models. For that we are not to use the validation, we are going to use only train dataset.
+
+
+The most basic and quick approach it is consider that the most common class (mode), in this case it is the "Normal" class, is the best guess. Then the model is:
+
+
+$$
+ \hat{y} = y_{mode} + \varepsilon_{i,u}
+$$
+$y_{mode}$ the "true" class for all patience and  $\varepsilon_{i,u}$ an independent errors sampled from the same distribution centered at 0.
+
+
+
+
+
+In the code, for the prediction for the two purposes, we are going to use different dataset to make easier to read the code: the first one, that concern about “Normal” & “Arrhythmia” only, the "Code class" can only has these two values.
+In the case of Classification of cardiac arrhythmia, the "Code class" has all the values allowed (13).
+Because it is not a big dataset, this duplicity does not affect the computer resources available fo this project.
+
+
+### First Prediction
+Let's works with the first Prediction
+```{r Define new dataset for first Prediction, include=FALSE}
+
+# The first "Class code" is "Normal" and all the rest are some kind of "Arrhythmia"
+# Train dataset prediction1
+train_set_p1 <- train_set
+train_set_p1$`Class code` <- ifelse(train_set_p1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
+
+# validation for prediction1
+validation_set_p1 <- validation_set
+validation_set_p1$`Class code` <- ifelse(validation_set_p1$`Class code` == 1,"Normal","Arrhythmia") %>% factor()
+
+```
+
+
+```{r Model just the most common first Prediction, echo=FALSE, warning=FALSE}
+predicted_value <- rep("Normal", times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
+cm <- confusionMatrix(predicted_value, validation_set_p1$`Class code`)  # or positive = "Arrhythmia"
+
+cm$overall["Accuracy"]
+cm$byClass["Sensitivity"]
+cm$byClass["Specificity"]
+```
+
+
+Because an algorithm that calls everything positive ($Y = 1$ no matter what) has perfect specificity, but worse sensitivity. These are completely opposite if we set as less common.
+The Accuracy obtained will be our base one.
+
+
+
+```{r Model just the most common first Prediction Table, echo=FALSE, size='scriptsize'}
+
+# Table names
+Predicted <- predicted_value
+Actually <- validation_set_p1$`Class code`
+#Computes the crosstable calculations
+CrossTable(Predicted, Actually)
+```
+
+For our record, we keep this first model:
+```{r Model just the most common first Prediction Result,echo=FALSE, warning=FALSE}
+Pred1_results <- data.frame(Model = "Just the most common",
+                                     Accuracy = cm$overall["Accuracy"],
+                                     Sensitivity = cm$byClass["Sensitivity"],
+                                     Specificity = cm$byClass["Specificity"] , row.names = NULL)
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
+  kable_styling(full_width = F)
+```
+
+
+
+### Second Predictions
+Second Predictions, that considered all the classes, the accuracy is the same, but now we have sensitivity and specificity by class:
+```{r Model just the most common Second Prediction, echo=FALSE, warning=FALSE}
+y_hat <- rep(1, times = nrow(validation_set)) %>% factor() # Using Normal class (1) as the only answer
+cm <- confusionMatrix(y_hat, validation_set$`Class code`)
+
+
+cm$overall["Accuracy"]
+cm$byClass[,1:2]
+```
+
+
+```{r Model just the most common Second Prediction Table, echo=FALSE, size='scriptsize'}
+# Table names
+Predicted <- y_hat
+Actually <- validation_set$`Class code`
+#Computes the crosstable calculations
+CrossTableNarrow(Predicted, Actually, digits = 2)
+```
+
+
+We can see that only class 1 has good sensitivity, as we expected.
+
+
+For our record, we keep this second model:
+```{r Model just the most common Second Prediction Result, echo=FALSE, warning=FALSE}
+Pred2_results <- data.frame(Model = "Just the most common",
+                            Accuracy = cm$overall["Accuracy"],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
+                            row.names = NULL)
+Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
+```
+
+
+Then this first approach give us a base line to the next ones.
+
+
+
+
+## K-Nearest Neighbors Model
+
+Our first algorithm will be the K-Nearest Neighbors. KNN is a non-parametric method and makes no assumptions.
+
+In base of the concept of distance, this method attempts to find K nearest points of the train data point to the test data point and assigns the class to it on basis of majority for K nearest points. Then the basic question is which value of k give a better solution.
+
+Because we have to few data to train, we use cross-validation in our training process.
+
+### First Prediction
+
+Let's works with the first Prediction. In the first graph we are looking for the better k (number of Neighbors) that increase our accuracy.  This parameter will be used later, for our prediction.
+
+```{r K-Nearest Neighbors Model first Prediction train, echo=FALSE, warning=FALSE, fig.height = 4}
+knn.control <- trainControl(method = "repeatedcv", number = 20, repeats = 3)   
+
+
+set.seed(1, sample.kind="Rounding")
+fit_knn <- train(`Class code` ~ .,  method = "knn", 
+             tuneGrid = data.frame(k = seq(2, 20, 2)),
+             data = train_set_p1, na.action=na.pass)
+
+ggplot(fit_knn) + ggtitle("K-Nearest Neighbors")
+```
+
+
+```{r K-Nearest Neighbors Model first Prediction train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
+fit_knn
+```
+
+We get k = `r fit_knn$bestTune$k`. Now the variables that this model considers more important are:
+
+```{r K-Nearest Neighbors Model first Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
+varImp(fit_knn)
+varimp_knn_p1 <- varImp(fit_knn)$importance
+ggplot(varImp(fit_knn), top = 20) + ggtitle("K-Nearest Neighbors Model Top 20 feature")
+```
+
+
+
+
+
+With this model created in base of the train dataset we now take the validation dataset to see how well this apply:
+
+```{r K-Nearest Neighbors Model first Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
+y_hat_knn <- predict(fit_knn, validation_set_p1, type = "raw")
+cm <- confusionMatrix(data = y_hat_knn, reference = validation_set_p1$`Class code`) 
+cm
+```
+
+We see a good improvement in accuracy and sensitivity over the previous approach. Then we see that KNN is able to create a better prediction than just the mode of the patients. We just started with this process, let's see if we can make it better,
+
+```{r K-Nearest Neighbors Model first Prediction Table, echo=FALSE, size='scriptsize'}
+# Table names
+Predicted <- y_hat_knn
+Actually <- validation_set_p1$`Class code`
+#Computes the crosstable calculations
+CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+For our record, we add this model:
+```{r K-Nearest Neighbors Model first Prediction Result, echo=FALSE, warning=FALSE}
+Pred1_results <- bind_rows(Pred1_results,
+                           data.frame(Model = "K-Nearest Neighbors",
+                                     Accuracy = cm$overall["Accuracy"],
+                                     Sensitivity = cm$byClass["Sensitivity"],
+                                     Specificity = cm$byClass["Specificity"], row.names = NULL ))
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
+  kable_styling(full_width = F)
+
+```
+
+
+
+
+
+With this first model we have a good improvement. KNN in overall, has a poor sensitivity and very good specificity. If "Arrhythmia" es predicted we have a good chance to be correct, but if we predict "Normal" we have a good chance to be wrong! We need to improve sensitivity.
+
+
+
+
+
+### Second Predictions
+
+Let's works with the second Prediction, that include all the classes and the challenge is to know which of all the arrhythmia classification (or normal) the patient has. Again in the first graph we are looking for the better k (number of Neighbors):
+
+```{r K-Nearest Neighbors Model Second Prediction train, echo=FALSE, warning=FALSE, fig.height = 4}
+# Predict region using KNN
+
+
+knn.control <- trainControl(method = "repeatedcv", number = 20, repeats = 3)
+
+set.seed(1, sample.kind="Rounding")
+fit_knn <- train(`Class code` ~ .,  method = "knn", 
+             tuneGrid = data.frame(k = seq(1, 17, 1)),
+             trControl = knn.control,
+             data = train_set, na.action=na.pass)
+
+ggplot(fit_knn) + ggtitle("K-Nearest Neighbors")
+```
+
+
+```{r K-Nearest Neighbors Model Second Prediction train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
+fit_knn
+```
+
+Now the value of k = `r fit_knn$bestTune$k` is  smaller than in the first prediction.
+Now the variables that this model considers more important are:
+
+```{r K-Nearest Neighbors Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
+options(digits =2)
+varImp(fit_knn)
+varimp_knn_p2 <- varImp(fit_knn)$importance
+options(digits =7) # default
+ggplot(varImp(fit_knn), top = 8) + ggtitle("K-Nearest Neighbors Model Top 8 feature")
+```
+
+We noted that the variable are not the same compare with the same model but only looking to predict Normal/Arrhythmia, some of them appear in other importance position and other are new.
+This important variables is for each output, that give us more detail that the other measurement that we see in the others mdels used in this analysis.
+
+
+Now see how well it is the prediction in the validation set:  
+```{r K-Nearest Neighbors Model Second Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
+
+options(digits =2)
+
+y_hat_knn <- predict(fit_knn, validation_set, type = "raw")
+cm <- confusionMatrix(data = y_hat_knn, reference = validation_set$`Class code`)
+cm
+options(digits =7) # default
+```
+
+
+```{r K-Nearest Neighbors Model Second Prediction Table, echo=FALSE, size='scriptsize'}
+# Table names
+Predicted <- y_hat_knn
+Actually <- validation_set$`Class code`
+#Computes the crosstable calculations
+CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+As seen above, KNN cannot accurately classify test observations for classes 5 to 8 and between class11 to 16. In total 7 classes with sensitivity = 0 and specificity = 1.
+Almost completely misclassifies in class 2 that are observations have been classified to class 1.
+A perfect match in class 3 and 9.
+
+
+
+For our record, we keep this result:
+```{r K-Nearest Neighbors Model Second Prediction Result, echo=FALSE, warning=FALSE}
+Pred2_results <- bind_rows(Pred2_results,
+                           data.frame(Model = "K-Nearest Neighbors",
+                            Accuracy = cm$overall["Accuracy"],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
+                            row.names = NULL))
+Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
+```
+
+
+
+
+
+
+
+
+
+## Decision Tree Model
+
+Decision Tree is the most intuitive solution that we get from data, and it s very popular en health, that the system give you a quick rule to answer your question.
+
+For this model we are going to user the rpart package and the cp (complexity parameter) is our parameter to start moving to get a better accuracy.
+
+
+### First Prediction
+Let's works with the first Prediction and look for the cp (complexity parameter) that increase our accuracy:
+
+```{r Decision Tree Model First Prediction train, echo=FALSE, warning=FALSE, fig.height = 4}
+# use cross validation to choose cp
+
+# rpart need Valid Column Names 
+train_set2_p1 <- data.frame(train_set_p1)
+set.seed(1, sample.kind="Rounding")
+fit_rpart <- train(Class.code ~ ., method = "rpart",
+                     tuneGrid = data.frame(cp = seq(0, 0.05, len = 25)),
+                     data = train_set2_p1, na.action=na.pass)
+
+
+ggplot(fit_rpart) + ggtitle("Decision Tree")
+```
+
+
+```{r Decision Tree Model First Prediction train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
+fit_rpart
+```
+
+The cp is `r round(fit_rpart$bestTune,3)` and we get the following decision tree with this:
+
+
+```{r Decision Tree Model First Prediction plot, echo=FALSE, warning=FALSE}
+# access the final model and plot it
+
+
+rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
+  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
+    "GyGy", "GyGn")) # specify 13 colors)
+```
+
+The variable importance for this method is:
+
+```{r Decision Tree Model First Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
+options(digits =2)
+varImp(fit_rpart)
+varimp_rpart_p1 <- varImp(fit_rpart)$importance
+options(digits =7) # default
+```
+
+These are predictors are present in the tree too, not all of them because the tree shows less than 20 predictors, and the overall does not show all of them, only 30 are rated, and it is not directly related with the order in the decision tree.
+
+Now let's see how well it is the prediction in the validation set:
+
+```{r Decision Tree Model First Prediction Predict, echo=FALSE, warning=FALSE, size='scriptsize'}
+# compute accuracy
+options(digits =2)
+
+y_hat_rpart <- predict(fit_rpart, data.frame(validation_set_p1), type = "raw")
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set_p1$`Class code`)
+cm
+options(digits =7) # default
+```
+
+Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy and see how it performs. The new decision tree is:
+
+```{r Decision Tree Model First Prediction Prune, echo=FALSE, warning=FALSE}
+# prune the tree 
+fit_rpart <- rpart(Class.code ~ ., data = train_set2_p1, control = rpart.control(cp = 0.027, minsplit = 2))
+pruned_fit <- prune(fit_rpart, cp = 0.01)
+
+plot(pruned_fit, margin = 0.1)
+text(pruned_fit, cex = 0.75)
+```
+
+
+```{r Decision Tree Model First Prediction Prune confusionMatrix, echo=FALSE, warning=FALSE, size='scriptsize'}
+# compute accuracy
+options(digits =2)
+
+y_hat_rpart <- predict(pruned_fit, data.frame(validation_set_p1), type = "class")
+
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set_p1$`Class code`)
+cm
+options(digits =7) # default
+```
+
+We can not see any improvement, but the decision tree is similar but not equal under the change made by prune. The decision tree graph is different because the library can not manage the output from prune.
+
+```{r Decision Tree Model First Prediction Table, echo=FALSE, size='scriptsize'}
+# Table names
+Predicted <- y_hat_rpart
+Actually <- validation_set$`Class code`
+#Computes the crosstable calculations
+CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+For our record, we keep this result:
+```{r Decision Tree Model First Prediction Result, echo=FALSE, warning=FALSE}
+Pred1_results <- bind_rows(Pred1_results,
+                           data.frame(Model = "Decision Tree Classifier",
+                                     Accuracy = cm$overall["Accuracy"],
+                                     Sensitivity = cm$byClass["Sensitivity"],
+                                     Specificity = cm$byClass["Specificity"], row.names = NULL ))
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
+  kable_styling(full_width = F)
+```
+
+
+
+We see improvements in Accuracy and	Sensitivity and a worse value for	Specificity that it is not crucial for this case. The prune applied in this model does not give any improvement in our results.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Second Predictions
+
+Let's works with the second Prediction with Decision Tree. Again, look for the cp:
+
+```{r Decision Tree Model Second Prediction train, echo=FALSE, warning=FALSE, fig.height = 4}
+# use cross validation to choose cp
+
+# rpart need Valid Column Names 
+train_set2 <- data.frame(train_set)
+set.seed(1, sample.kind="Rounding")
+fit_rpart <- train(Class.code ~ ., method = "rpart",
+                     tuneGrid = data.frame(cp = seq(0, 0.05, len = 25)),
+                     data = train_set2, na.action=na.pass)
+
+
+ggplot(fit_rpart) + ggtitle("Decision Tree")
+```
+
+
+```{r Decision Tree Model Second Prediction train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
+fit_rpart
+```
+
+We get a cp = `r round(fit_rpart$bestTune,4)` and the following decision tree was created with this train dataset:
+
+
+```{r Decision Tree Model Second Prediction plot, echo=FALSE, warning=FALSE}
+# access the final model and plot it
+
+
+rpart.plot(fit_rpart$finalModel, extra = 2, roundint=FALSE,
+  box.palette = list("Gy", "Gn", "Bu", "Bn", "Or", "Rd", "Pu", "RdYlGn", "GnYlRd", "BlGnYl","YlGnBl",
+    "GyGy", "GyGn")) # specify 13 colors)
+```
+
+Again, let's see the predictors which this model consider that help more:
+
+```{r Decision Tree Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
+options(digits =2)
+varImp(fit_rpart)
+varimp_rpart_p2 <- varImp(fit_rpart)$importance
+options(digits =7) # default
+```
+
+This trained model, now is applied to the validation set. How well does it perform?
+
+```{r Decision Tree Model Second Prediction Predict, echo=FALSE, warning=FALSE, size='scriptsize'}
+# compute accuracy
+options(digits =2)
+
+y_hat_rpart <- predict(fit_rpart, data.frame(validation_set), type = "raw")
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set$`Class code`)
+cm
+options(digits =7) # default
+```
+
+Let's prune this, using the previous result but applying a new cp value (cp = 0.01) to get a better accuracy and see if the prediction improve or not:
+
+```{r Decision Tree Model Second Prediction Prune, echo=FALSE, warning=FALSE}
+# prune the tree 
+
+fit_rpart <- rpart(Class.code ~ ., data = train_set2, control = rpart.control(cp = 0.033, minsplit = 2))
+pruned_fit <- prune(fit_rpart, cp = 0.01)
+
+plot(pruned_fit, margin = 0.1)
+text(pruned_fit, cex = 0.75)
+```
+
+
+```{r Decision Tree Model Second Prediction Prune ConfusionMatrix, echo=FALSE, warning=FALSE, size='scriptsize'}
+# compute accuracy
+options(digits =2)
+
+y_hat_rpart <- predict(pruned_fit, data.frame(validation_set), type = "class")
+
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set$`Class code`)
+cm
+options(digits =7) # default
+```
+We can not see any improvement neither, but the decision tree is similar but not equal under the change made by prune.
+
+
+```{r Decision Tree Model Second Prediction Table, echo=FALSE, size='scriptsize'}
+# Table names
+Predicted <- y_hat_rpart
+Actually <- validation_set$`Class code`
+#Computes the crosstable calculations
+CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+For our record, we keep this result:
+```{r Decision Tree Model Second Prediction Result, echo=FALSE, warning=FALSE}
+Pred2_results <- bind_rows(Pred2_results,
+                           data.frame(Model = "Decision Tree Classifier",
+                            Accuracy = cm$overall["Accuracy"],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
+                            row.names = NULL))
+Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
+```
+
+
+We see a good improvements in Accuracy. The prune applied in this model does not give any improvement in our results.
+In 5 classes we can not predict any case (Sensitivity =0 & Specificity=1) and Class 9 we have all the cases right!
+
+
+
+
+
+## Random Forests Model
+
+We see one decison tree in the previous section. Applying prune we have a different one but with similar accuracy. The idea behind random forest is that we created multiple trees and the class who get more "votes" among all the tress is the predicted value.
+
+In other words, among the tress, witch prediction is the most popular, wins.
+
+Here we have like parameters the value of mtry that we are trying to use to get the better accuracy.
+
+
+### First Predictions
+
+We start look for mtry to get the better accuracy in this model fro Normal/Arrhythmia prediction:
+
+```{r Random Forests Model First Predictions train, echo=FALSE, warning=FALSE, fig.height = 4}
+#Random Forests
+
+set.seed(1, sample.kind="Rounding")
+fit_rf <- train(`Class code` ~ ., method = "rf",
+                     tuneGrid = data.frame(mtry = seq(10, 100, len = 25)),
+                     data = train_set_p1)
+
+
+
+ggplot(fit_rf) + ggtitle("Random Forests")
+```
+
+
+```{r Random Forests Model First Predictions train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
+fit_rf
+```
+
+the mtry we get is `r fit_rf$bestTune`. The variable importance for this method are:
+
+
+```{r Random Forests Model First Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
+options(digits =2)
+varImp(fit_rf)
+varimp_rf_p1 <- varImp(fit_rf)$importance
+options(digits =7) # default
+```
+
+Now see how well it is the prediction in the validation set:
+
+```{r Random Forests Model First Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
+options(digits =2)
+y_hat_rf <- predict(fit_rf, validation_set_p1, type = "raw")
+cm <- confusionMatrix(data = y_hat_rf, reference = validation_set_p1$`Class code`)
+cm
+options(digits =7) # default
+```
+
+```{r Random Forests Model First Prediction Table, echo=FALSE, size='scriptsize'}
+# Table names
+Predicted <- y_hat_rf
+Actually <- validation_set_p1$`Class code`
+#Computes the crosstable calculations
+CrossTable(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+
+For our record, we keep this result:
+```{r Random Forests Model First Prediction Result, echo=FALSE, warning=FALSE}
+Pred1_results <- bind_rows(Pred1_results,
+                           data.frame(Model = "Random Forest Classifier",
+                                     Accuracy = cm$overall["Accuracy"],
+                                     Sensitivity = cm$byClass["Sensitivity"],
+                                     Specificity = cm$byClass["Specificity"], row.names = NULL ))
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
+  kable_styling(full_width = F)
+```
+
+
+
+Random Forests get better result over decision tree and previous ones in Accuracy	and Sensitivity. Until now if our best predictor.
+
+
+
+### Second Predictions
+
+Let's start with mtry in random forest, now with all the classes:
+
+```{r Random Forests Model Second Predictions train, echo=FALSE, warning=FALSE, fig.height = 4}
+#Random Forests
+
+set.seed(1, sample.kind="Rounding")
+fit_rf <- train(`Class code` ~ ., method = "rf",
+                     tuneGrid = data.frame(mtry = seq(10, 100, len = 25)),
+                     data = train_set)
+
+
+
+ggplot(fit_rf) + ggtitle("Random Forests")
+```
+
+
+```{r Random Forests Model Second Predictions train fit, echo=FALSE, warning=FALSE, size='scriptsize'}
+fit_rf
+```
+
+the mtry we get is `r fit_rf$bestTune`. The variable importance for this method are:
+
+
+```{r Random Forests Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
+options(digits =2)
+varImp(fit_rf)
+varimp_rf_p2 <- varImp(fit_rf)$importance
+#ggplot(varImp(fit_knn))
+options(digits =7) # default
+```
+
+Now see with the model created using the trining set how well it is the prediction in the validation set:
+
+
+```{r Random Forests Model Second Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
+options(digits =2)
+y_hat_rf <- predict(fit_rf, validation_set, type = "raw")
+cm <- confusionMatrix(data = y_hat_rf, reference = validation_set$`Class code`) 
+cm
+options(digits =7) # default
+```
+
+```{r Random Forests Model Second Prediction Table, echo=FALSE, size='scriptsize'}
+# Table names
+Predicted <- y_hat_rf
+Actually <- validation_set$`Class code`
+#Computes the crosstable calculations
+CrossTableNarrow(Predicted, Actually, digits = 2, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+
+For our record, we keep this result:
+```{r Random Forests Model Second Prediction Result, echo=FALSE, warning=FALSE}
+Pred2_results <- bind_rows(Pred2_results,
+                           data.frame(Model = "Random Forest Classifier",
+                            Accuracy = cm$overall["Accuracy"],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
+                            row.names = NULL))
+Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
+```
+
+
+We see improvements in Accuracy.
+In 6 classes we can not predict any case (Sensitivity =0 & Specificity=1) and Class 3 and 9 we have all the cases right!
+One aspect to consider is that this method spend more CPU time over the rest.
+
+
+## Support Vector Machines Model 
+
+
+The Support Vector Machines (SVM), was created as an objective  a fast and dependable classification algorithm that performs very well with a limited amount of data to analyze. This create a n-dimensional space, one for each predictor, an try to get the space of the output.
+
+A support vector machine allows you to classify data that’s linearly separable, but if it is not linearly separable, you can use the kernel trick to make it work. In this case we let the algorithm to select the kernel and later the parameters cost and gamma.
+
+
+
+### First Predictions
+
+For this part we are going to use the caret train method that perform better than svm from e1071 library. The last library was useful to determine that the radial kernel is the best solution. In this model, we are not going to use other parameter than the kernel.
+
+```{r Support Vector Machines Model First Prediction pre-train, include=FALSE}
+train_svm <- svm(`Class code` ~ ., data = train_set_p1) # initial approach
+train_svm
+```
+
+
+```{r Support Vector Machines Model First Prediction train, echo=FALSE, warning=FALSE, size='scriptsize'}
+#Support Vector Classifier:
+set.seed(1)
+fit_svm <- train(`Class code` ~ ., data = train_set_p1, method="svmRadial")  # caret train method 
+fit_svm
+
+y_hat_svm <- predict(fit_svm,validation_set_p1)
+
+options(digits =2)
+cm <- confusionMatrix(data = y_hat_svm, reference = validation_set_p1$`Class code`)
+cm
+options(digits =7) # default
+
+```
+
+The values that get the better result are sigma = `r round(fit_svm$bestTune[1],4)` and C = `r fit_svm$bestTune[2]`.
+The SVM-Kernel is radial.
+
+The important variables are:
+
+```{r Support Vector Machines Model First Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
+options(digits =2)
+varImp(fit_svm)
+varimp_svm_p1 <- varImp(fit_svm)$importance
+options(digits =7) # default
+```
+
+
+The try to get a tune over the SVM but it fail, for that we keep the original value.
+
+```{r Support Vector Machines Model first Prediction Table, echo=FALSE, size='scriptsize'}
+# Table names
+Predicted <- y_hat_svm
+Actually <- validation_set_p1$`Class code`
+#Computes the crosstable calculations
+CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+For our record, we keep this result:
+```{r Support Vector Machines Model First Prediction Result, echo=FALSE, warning=FALSE}
+
+Pred1_results <- bind_rows(Pred1_results,
+                           data.frame(Model = "SVM Classifier",
+                                     Accuracy = cm$overall["Accuracy"],
+                                     Sensitivity = cm$byClass["Sensitivity"],
+                                     Specificity = cm$byClass["Specificity"], row.names = NULL ))
+Pred1_results %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
+  kable_styling(full_width = F)
+```
+
+
+This method did not perform as expected and it is close to KNN and decison tree in result.
+
+
+
+
+
+
+
+
+
+
+### Second Predictions
+
+Again, taking in consideration all the classes, we are going to use radial kernel.
+
+```{r Support Vector Machines Model Second Prediction train, echo=FALSE, warning=FALSE, size='scriptsize'}
+#Support Vector Classifier
+
+ctrl_svm <- trainControl(method = "cv", savePred=T)
+set.seed(1)
+#fit_svm <- svm(`Class code` ~ ., data = train_set) # See note below in .Rmd file
+fit_svm <- train(`Class code` ~ ., data = train_set, method="svmRadial", trControl = ctrl_svm)  # caret train method 
+fit_svm
+
+y_hat_svm <- predict(fit_svm,validation_set)
+
+options(digits =2)
+cm <- confusionMatrix(data = y_hat_svm, reference = validation_set$`Class code`)
+
+cm
+options(digits =7) # default
+
+```
+
+Note about the code: at the beginning we see that svm from e1071 library works better for multiple output than the caret train method, but a little more investigation shows that with trainControl() we can improve the training with the caret library and then continue using this library as we did with other models.
+
+The SVM-Kernel is radial.
+
+The important variables are:
+
+```{r Support Vector Machines Model Second Prediction Variable Importance, echo=FALSE, warning=FALSE, size='scriptsize'}
+options(digits =2)
+varImp(fit_svm)
+varimp_svm_p2 <- varImp(fit_svm)$importance
+options(digits =7) # default
+```
+
+
+
+```{r Support Vector Machines Model Second Prediction Table, echo=FALSE, size='scriptsize'}
+# Table names
+Predicted <- y_hat_svm
+Actually <- validation_set_p1$`Class code`
+#Computes the crosstable calculations
+CrossTable(Predicted, Actually, digits = 3, prop.chisq = FALSE, prop.t=FALSE)
+```
+
+
+
+For our record, we keep this result:
+```{r Support Vector Machines Model Second Prediction Result, echo=FALSE, warning=FALSE}
+Pred2_results <- bind_rows(Pred2_results,
+                           data.frame(Model = "SVM Classifier",
+                            Accuracy = cm$overall["Accuracy"],
+                            Code.1 = row.names(cm$byClass)[1],
+                            Sensitivity.1 = cm$byClass[1,1],
+                            Specificity.1 = cm$byClass[1,2],
+                            Code.2 = row.names(cm$byClass)[2],
+                            Sensitivity.2 = cm$byClass[2,1],
+                            Specificity.2 = cm$byClass[2,2],
+                            Code.3 = row.names(cm$byClass)[3],
+                            Sensitivity.3 = cm$byClass[3,1],
+                            Specificity.3 = cm$byClass[3,2],
+                            Code.4 = row.names(cm$byClass)[4],
+                            Sensitivity.4 = cm$byClass[4,1],
+                            Specificity.4 = cm$byClass[4,2],
+                            Code.5 = row.names(cm$byClass)[5],
+                            Sensitivity.5 = cm$byClass[5,1],
+                            Specificity.5 = cm$byClass[5,2],
+                            Code.6 = row.names(cm$byClass)[6],
+                            Sensitivity.6 = cm$byClass[6,1],
+                            Specificity.6 = cm$byClass[6,2],
+                            Code.7 = row.names(cm$byClass)[7],
+                            Sensitivity.7 = cm$byClass[7,1],
+                            Specificity.7 = cm$byClass[7,2],
+                            Code.8 = row.names(cm$byClass)[8],
+                            Sensitivity.8 = cm$byClass[8,1],
+                            Specificity.8 = cm$byClass[8,2],
+                            Code.9 = row.names(cm$byClass)[9],
+                            Sensitivity.9 = cm$byClass[9,1],
+                            Specificity.9 = cm$byClass[9,2],
+                            Code.10 = row.names(cm$byClass)[10],
+                            Sensitivity.10 = cm$byClass[10,1],
+                            Specificity.10 = cm$byClass[10,2],
+                            Code.11 = row.names(cm$byClass)[11],
+                            Sensitivity.11 = cm$byClass[11,1],
+                            Specificity.11 = cm$byClass[11,2],
+                            Code.12 = row.names(cm$byClass)[12],
+                            Sensitivity.12 = cm$byClass[12,1],
+                            Specificity.12 = cm$byClass[12,2],
+                            Code.13 = row.names(cm$byClass)[13],
+                            Sensitivity.13 = cm$byClass[13,1],
+                            Specificity.13 = cm$byClass[13,2],
+                            row.names = NULL))
+Pred2_results %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
+```
+
+
+This method did not perform as expected with multi-variable too and it is close to KNN and decision tree in result as before.
+
+
+
+
+\newpage
+
+<!--chapter:end:1.1.Analysis.Models.Rmd-->
+
+# Results
+*This section presents the modeling results and discusses the model performance.*
+
+We start checking the data and see if it has some elements that are leading us to a wrong conclusion. Cleaning the data, taking out some predictors that does not have enough information, taking out or fixing some outsiders was the initial work and see that some arrhythmia type are not present in our dataset (class 11, 12 and 13).
+
+```{r Results No data in our dataset about these arrhythmias, echo=FALSE}
+results <- data.frame(`Class code` = 11,
+                            Prediction = "No data", check.names = FALSE)
+results <- bind_rows(results,
+                     data.frame(`Class code` = 12,
+                            Prediction = "No data", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 13,
+                            Prediction = "No data", check.names = FALSE))
+```
+
+
+
+Later we see, despite to have to many predictors, we have several with high correlation.
+
+And the data, some output in the class are not present or they are not equally distributed, except in our first division between “Normal” & “Arrhythmia”, then the prediction of certain class are very difficult to established. This lack of flat distribution affect the partition of training and test dataset as well as the algorithm that trying to create the better prediction.
+
+In the Analysis, we divided the question of the prediction in two:
+
+a. **Detection of cardiac arrhythmia** 
+b. **Classification of cardiac arrhythmia**
+
+
+## Detection of cardiac arrhythmia
+As a summary of **Detection of cardiac arrhythmia** we have (it was shown above):
+
+```{r Results First Prediction Result, echo=FALSE, warning=FALSE}
+
+Pred1_results[-1,] %>% data.frame(row.names = NULL) %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+
+Then with this, we get a accuracy of `r round(Pred1_results[4,2],3) * 100`% with random forest, e. gr., our prediction of “Normal” & “Arrhythmia” is correct `r round(Pred1_results[4,2],3) * 100`% of the time and if the patience actually has Arrhythmia with the sensitivity of `r round(Pred1_results[4,3],3) * 100`%, this is the percentage of patience detected correctly ( 1 - sensitivity are patients with arrhythmia detected as normal). Remember, the arrhythmia class was treated as the ‘Positive’ class.
+
+
+## Variable Importance of Predictors
+Which predictors help to get this percentage? 
+Analyzing first the random forest which has the better results, we have:
+
+
+
+```{r Results random forest varimp in first prediction, echo=FALSE, size='scriptsize'}
+slice_max(varimp_rf_p1, order_by = Overall, n=20)
+```
+
+Reviewing all the models we used, except the decision tree that does not rank all the predictors, only that it use to create the tree, we have the top among them:
+
+
+```{r Results means of varimp in first prediction, echo=FALSE, size='scriptsize'}
+varimp_knn_p1_mean <- rowMeans(varimp_knn_p1)
+varimp_p1_mean <- rowMeans(cbind(varimp_knn_p1_mean, varimp_svm_p1[,1], varimp_rf_p1))
+varimp_p1_mean <- data.frame(varimp_p1_mean)
+slice_max(varimp_p1_mean, order_by =  varimp_p1_mean, n=20)
+```
+
+Let's take a look to the principal predictors
+
+### Heart rate Predictor
+Appear like the most relevant for random forest. Appear in the decision tree too but not in the top 20 in rest of the models.
+
+
+```{r Results of varimp of Heart rate, echo=FALSE}
+varimp_knn_p1_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
+varimp_svm_p1 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
+```
+
+We saw in the Analysis that Heart rate does not have correlation with other predictors. Then look that random forest took a good decision in give importance to this predictor.
+
+
+### QRS duration Predictor
+The second Predictor from random forest (QRS duration) appear in others models too (actually in first place).
+
+### Channel V1 Number of intrinsic deflections & Channel V1 R' wave Amplitude Predictors
+These predictors are present in the others models too.
+
+
+### Channel V1 QRSA Predictor
+
+This predictor appear only in the Top20 of random forest. Is this something only used for this model? Let's see its position in the other models:
+
+```{r Results of varimp of Channel V1 QRSA, echo=FALSE}
+varimp_knn_p1_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
+varimp_svm_p1 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 QRSA")
+```
+It has importance in knn. Let's check its correlation:
+
+```{r Correlation of Channel V1 QRSA, echo=FALSE, warning=FALSE}
+predictor <- "Channel V1 QRSA"
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% predictor | correlated.2 %in% predictor) %>% slice_max(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for Channel V1 QRSA") %>%
+  kable_styling(full_width = F, position = "left")
+cor_arrhythmia_numeric %>%  filter( correlated.1 %in% predictor | correlated.2 %in% predictor) %>% slice_min(order_by = value, n = 5) %>% knitr::kable(caption = "Correlation for Channel V1 QRSA") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+This predictor has some correlation with "Channel V1 QRSTA" which it is in the others models. Under this, could be that the others models indirectly use this type or information.
+Then Channel V1 QRSA predictors is used as a important predictor in more than random forest model.
+
+
+
+
+
+
+Why is important all this review? Because we have too many predictors but not all of them give us the same "quality" of information to our predictions. Predictors with high correlation "enter in a competition" with other.
+
+
+
+
+
+
+## Classification of cardiac arrhythmia
+
+As a summary of **Classification of cardiac arrhythmia** we have (it was shown above too):
+
+```{r Results Second Prediction Result, echo=FALSE, warning=FALSE}
+Pred2_results[-1,] %>% data.frame(row.names = NULL) %>% t() %>% knitr::kable(caption = "Prediction All Arrhytmia Classification Summary")
+```
+
+
+
+Here, we get a accuracy of `r round(Pred2_results[4,2],3) * 100`%, e. gr., we have this percentage of be correct in the kind of arrhythmia, where "normal" is one class and the more frequent one. This value es lower than the first prediction and we expected because we do not have too many patients and the distribution is is not equal among the classes. 
+
+In sensitivity for class 1 ("Normal") is quite good and better than in the first prediction. And the better result is `r round(Pred2_results[5,4],3) * 100`% is in the SVM model. Is this good?
+Here the Arrhythmia class is not the ‘Positive’ class as before, then the concept of sensitivity change in relation to the previous prediction. Here we are considering the sensitivity and specificity in each class, and the result has to be analyzed in this environment.
+
+We see some classes with sensitivity = 0 and specificity = 1. This means that all the prediction for these classes are wrong! This happened with all the models for these classes:  
+* Class: 7  
+* Class: 8  
+* Class: 14  
+* Class: 15  
+* Class: 16  
+
+and in the case of Class 5, the situation it is the same, except for decision tree shows a little better numbers.
+
+```{r Results Class code table, echo=FALSE, message=FALSE, warning=FALSE}
+left_join(arrhythmia, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1)) %>%
+   filter(`Class code` %in% c(5, 7, 8, 14, 15, 16)) %>%
+  knitr::kable(caption = "Presence of codes in our dataset") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+The numbers of occurrences maybe be explains for few patients with these arrhythmia in the dataset, except for class 5 and 16 which has more that class 9 and this last one can be resolved for some methods. These few occurrences should be related that no predictor has a high correlation with this classes, particularly for Class 16, as its same say "Others" maybe is a group of not homogeneous class and for that no model can detect it.
+
+```{r Results No Predictable in our dataset about these arrhythmias, echo=FALSE}
+results <- bind_rows(results,
+                     data.frame(`Class code` = 5,
+                            Prediction = "No Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 7,
+                            Prediction = "No Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 8,
+                            Prediction = "No Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 14,
+                            Prediction = "No Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 15,
+                            Prediction = "No Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 16,
+                            Prediction = "No Predictable", check.names = FALSE))
+```
+
+Class 9, in the other hand, in 3 models has a perfect score: sensitivity = 1 and specificity = 1. Too good to be true? The only point to see it is the low numbers of patients of this disease, only the 2%.
+Similar situation is with Class 3, but it combines the perfect score and the worse score depending the model. Because the random forest give it the perfect score, we can have a good classification for this class.
+
+
+```{r Results Predictable in our dataset about these arrhythmias, echo=FALSE}
+results <- bind_rows(results,
+                     data.frame(`Class code` = 9,
+                            Prediction = "Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 3,
+                            Prediction = "Predictable", check.names = FALSE))
+```
+
+Looking the rest of the classes, we see:
+
+```{r Results Analyzed 5 coded in our dataset about these arrhythmias, echo=FALSE, warning=FALSE}
+Pred2_results %>% select(Accuracy, Code.1, Sensitivity.1, Specificity.1,
+                         Code.2, Sensitivity.2, Specificity.2,
+                         #Code.3, Sensitivity.3, Specificity.3,
+                         Code.4, Sensitivity.4, Specificity.4,
+                         #Code.5, Sensitivity.5, Specificity.5,
+                         Code.6, Sensitivity.6, Specificity.6,
+                         Code.10, Sensitivity.10, Specificity.10)  %>% 
+  t() %>% knitr::kable(caption = "Prediction in remaining Arrhytmia Classification") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+we have a "realistic" results, not to good to be true or too bad.
+
+```{r Results Predictable in our dataset about these arrhythmias Part 2, echo=FALSE}
+results <- bind_rows(results,
+                     data.frame(`Class code` = 1,
+                            Prediction = "Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 2,
+                            Prediction = "Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 4,
+                            Prediction = "Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 6,
+                            Prediction = "Predictable", check.names = FALSE))
+results <- bind_rows(results,
+                     data.frame(`Class code` = 10,
+                            Prediction = "Predictable", check.names = FALSE))
+```
+
+
+Like a summary, we have considering the whole dataset for Ocurrences and percentage:
+
+```{r Results by class codes in our validation dataset, echo=FALSE, message=FALSE, warning=FALSE}
+tmp <- left_join(arrhythmia, Class, by = "Class code") %>% 
+  group_by(`Class code`, `Class name`) %>% summarise( "N Ocurrences" = n(), Percentage = round(100*n()/nrow(arrhythmia),digits = 1))
+results <- results %>% mutate(`Class code` = as.factor(`Class code`))
+left_join(tmp,results, by = "Class code") %>% 
+  knitr::kable(caption = "Result by class codes in our validation dataset") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+## Variable Importance of Predictors
+
+
+We have the same question again, now for the complete classification. Which predictors help to get this percentage? Are these the same the first prediction?
+Analyzing first the random forest which has the better results, we have:
+
+
+
+```{r Results random forest varimp in second prediction, echo=FALSE, size='scriptsize'}
+slice_max(varimp_rf_p2, order_by = Overall, n=20)
+```
+
+Comparing the Variable Importance for the random forest in the first predition with this one, the 6th first are present in the Top20 and the "Channel V5 T wave Amplitude" in the 7th position that it is not. Then a very good similarity we can see in both predictions.
+
+Reviewing all the models we used, except the decision tree that does not rank all the predictors, only that it use to create the tree, we have the top among them:
+
+
+```{r Results means of varimp in second prediction, echo=FALSE, size='scriptsize'}
+varimp_knn_p2_mean <- rowMeans(varimp_knn_p2)
+varimp_p2_mean <- rowMeans(cbind(varimp_knn_p2_mean, varimp_svm_p2[,1], varimp_rf_p2))
+varimp_p2_mean <- data.frame(varimp_p2_mean)
+slice_max(varimp_p2_mean, order_by =  varimp_p2_mean, n=20)
+```
+
+Let's take a look to the principal predictors
+
+### Heart rate Predictor
+Appear like the most relevant for random forest. In this opportunity it is appear in the decision tree **and** in the top 20 in rest of the models.
+If we like to see more detail, the big change was made by KNN model:
+
+```{r Results Heart rate Predictor, echo=FALSE}
+varimp_knn_p2_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
+varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Heart rate")
+```
+
+
+
+### Channel V1 R' wave Amplitude Predictor
+The second Predictor from random forest (Channel V1 R' wave Amplitude) does not appear in the Top20 of others models. Does si ti appear with some importance?
+
+```{r Results Channel V1 R prima wave Amplitude, echo=FALSE}
+varimp_knn_p2_mean %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 R' wave Amplitude")
+varimp_svm_p2 %>% data.frame()  %>% rownames_to_column() %>% filter(rowname == "Channel V1 R' wave Amplitude")
+```
+
+The SVM give it some importance, KNN not.
+
+
+### Channel V1 QRSA Predictor
+This predictor is not present in the op20 of others models
+
+
+In this case, the variables importance that has random forest it is less similar to the one created by the others models compared with the previos prediction. This is because the predction for the other models (knn, svm) cahnge more when we create the fitting for the Noraml/Arrhythmia than we we works with all classes.
+
+
+
+
+\newpage
+
+<!--chapter:end:2.Results.Rmd-->
+
+# Conclusion
+*This section that gives a brief summary of the report, its limitations and future work.*
+
+The first thing to note is that we have a big numbers of predictors (large input dimensionality) while the number of observations is really low. This big numbers of predictors has some degree of correlation among them. This is a challenge to the algorithms we use, where random forest look like has some advantages.
+
+Some approach artificially expand the size of the dataset predictors by multiplying/averaging/(other function) some observations. This can work in some cases, required knowledge to be made properly. We are not to apply this here, besides the last point, we already have to many predictors for our algorithm.
+
+For the low number of patients (row in our dataset) we used bootstrapping in our training.
+
+Despite of this low numbers of rows we still divide the dataset in train and validation, because we do not want to brake this rule of independency of the data in the validation set
+
+
+The initial task of cleaning the data, using this real data, shows its importance, detecting data incomplete, erroneous data, that can lead us to a bad conclusion. More knowledge of physiology can be useful in detect more erroneous data in all the predictors.
+
+In this classifier problem, when we look between “Normal” & “Arrhythmia”, with random forest we get a good result in accuracy and sensitivity:
+
+```{r Conclusion Prediction Normal/Arrhytmia Summary, echo=FALSE, warning=FALSE}
+Pred1_results[4,] %>% data.frame(row.names = NULL) %>% knitr::kable(caption = "Prediction Normal/Arrhytmia Summary") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+then we can feel we have a good result with a dataset with only `r nrow(arrhythmia)` patients. 
+
+When we work with all the different classification in the arrhythmia, its 15 class, we notices that the distribution of this class are not equal, some of them are not even present in the dataset and the classification of "Others" was no predictable, maybe because under this name several different diseases.
+This characteristics of the dataset can not be resolved properly with the model used, and not model can do it.
+
+In the second classifier problem, when we look among all the classification, random forest we get a good result:
+
+
+```{r Conclusion Prediction All Arrhytmia Classification Summary, echo=FALSE, warning=FALSE}
+Pred2_results[4,] %>% data.frame(row.names = NULL) %>% t() %>%
+  knitr::kable(caption = "Prediction All Arrhytmia Classification Summary") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+5 points less in accuracy compared with the first prediction.
+
+As a summary of the 16 classes (class 1 is normal) we have:  
+No data in dataset: 3  
+No prediction can be construct with the models used: 6  
+Classes can be predicted with our models: 7  
+
+In a pie graph:
+
+```{r Conclusion Prediction by Classes,echo=FALSE}
+cols <- c("red", "yellow", "green")
+pie_data_4graph <-results %>% group_by(Prediction) %>% summarise( n=n())
+pie(pie_data_4graph$n, labels = pie_data_4graph$Prediction, col = cols,  main = "Prediction by Classes")
+```
+
+Can this be improved? Yes, if we have more data that cover our lack of patients with some arrhythmia.
+Check if the "Others" can be divided in some way and then look for a rule to detect it.
+
+Other approach that we did not take is trying to create another category in base of group of arrhythmia, for example, all the arrhythmia related with Myocardial, or Synus, because I need medical knowledge that I do not have.
+
+We use some classical algorithm as KNN, decision tree and random forest and SVM not as popular as the first ones but more models are available and can be implemented and some others training method can be used in these models. I selected them considered better for classification task but I know more options are available in this everyday growing up area.
+
+The original problem was that some software can not detect the arrhythmia properly. With this work we can see we can create some level of confidence in the case of “Normal” & “Arrhythmia” and for all the classes but for a more robust solution more data will be necessary to train our model.
+
+
+
+<!--chapter:end:3.Conclusion.Rmd-->
+
