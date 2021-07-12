@@ -1,5 +1,5 @@
 ---
-title: "Cardiac Arrhythmia Project"
+title: "Cardiac Arrhythmia DataScience Project"
 subtitle: "Data Analysis and Prediction Algorithms with R"
 author: "Alejandro A Valenzuela"
 date: "`r Sys.Date()`"

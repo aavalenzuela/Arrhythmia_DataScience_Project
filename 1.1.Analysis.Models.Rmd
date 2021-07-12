@@ -295,7 +295,7 @@ With this model created in base of the train dataset we now take the validation 
 
 ```{r K-Nearest Neighbors Model first Prediction Prediction, echo=FALSE, warning=FALSE, size='scriptsize'}
 y_hat_knn <- predict(fit_knn, validation_set_p1, type = "raw")
-cm <- confusionMatrix(data = y_hat_knn, reference = validation_set_p1$`Class code`) #$overall["Accuracy"]
+cm <- confusionMatrix(data = y_hat_knn, reference = validation_set_p1$`Class code`) 
 cm
 ```
 
@@ -377,7 +377,7 @@ Now see how well it is the prediction in the validation set:
 options(digits =2)
 
 y_hat_knn <- predict(fit_knn, validation_set, type = "raw")
-cm <- confusionMatrix(data = y_hat_knn, reference = validation_set$`Class code`) #$overall["Accuracy"]
+cm <- confusionMatrix(data = y_hat_knn, reference = validation_set$`Class code`)
 cm
 options(digits =7) # default
 ```
@@ -513,7 +513,7 @@ Now let's see how well it is the prediction in the validation set:
 options(digits =2)
 
 y_hat_rpart <- predict(fit_rpart, data.frame(validation_set_p1), type = "raw")
-cm <- confusionMatrix(y_hat_rpart, reference = validation_set_p1$`Class code`)#$overall["Accuracy"]
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set_p1$`Class code`)
 cm
 options(digits =7) # default
 ```
@@ -536,7 +536,7 @@ options(digits =2)
 
 y_hat_rpart <- predict(pruned_fit, data.frame(validation_set_p1), type = "class")
 
-cm <- confusionMatrix(y_hat_rpart, reference = validation_set_p1$`Class code`)#$overall["Accuracy"]
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set_p1$`Class code`)
 cm
 options(digits =7) # default
 ```
@@ -631,7 +631,7 @@ This trained model, now is applied to the validation set. How well does it perfo
 options(digits =2)
 
 y_hat_rpart <- predict(fit_rpart, data.frame(validation_set), type = "raw")
-cm <- confusionMatrix(y_hat_rpart, reference = validation_set$`Class code`)#$overall["Accuracy"]
+cm <- confusionMatrix(y_hat_rpart, reference = validation_set$`Class code`)
 cm
 options(digits =7) # default
 ```

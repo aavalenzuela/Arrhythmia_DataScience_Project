@@ -402,9 +402,10 @@ The first analysis is to review if all the predictor give information. For that 
 
 The predictors are:
 
-```{r Analysis Cleaning,warning=FALSE,  size='small'}
+```{r Analysis Cleaning,warning=FALSE}
 sd.arrhythmia <- apply(arrhythmia,2,sd, na.rm=TRUE)
-sd0.list.arrhythmia <- names(sd.arrhythmia[sd.arrhythmia == 0 & !is.na(sd.arrhythmia)]) # check is.na......
+sd0.list.arrhythmia <- 
+  names(sd.arrhythmia[sd.arrhythmia == 0 & !is.na(sd.arrhythmia)]) # check is.na
 
 # Identify the column number to be deleted
 ix <- which(colnames(arrhythmia) %in% sd0.list.arrhythmia)
@@ -462,8 +463,9 @@ arrhythmia %>% ggplot(aes(`P Vector angles`)) + geom_histogram() +
 This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low and high values that look like an outsiders than the mean. Anyway, both values are pretty close but median will be the preference in this and next cases.
 
 
-```{r Missing P Vector angles replacement}
-arrhythmia$`P Vector angles`[is.na(arrhythmia$`P Vector angles`)] <- median(arrhythmia$`P Vector angles`,na.rm = TRUE)
+```{r Missing P Vector angles replacement, size='small'}
+arrhythmia$`P Vector angles`[is.na(arrhythmia$`P Vector angles`)] <- 
+  median(arrhythmia$`P Vector angles`,na.rm = TRUE)
 ```
 
 
@@ -486,8 +488,9 @@ arrhythmia %>% ggplot(aes(`T Vector angles`)) + geom_histogram() +
 This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low values as before.
 
 
-```{r Missing T Vector angles replacement}
-arrhythmia$`T Vector angles`[is.na(arrhythmia$`T Vector angles`)] <- median(arrhythmia$`T Vector angles`,na.rm = TRUE)
+```{r Missing T Vector angles replacement, size='small'}
+arrhythmia$`T Vector angles`[is.na(arrhythmia$`T Vector angles`)] <- 
+  median(arrhythmia$`T Vector angles`,na.rm = TRUE)
 ```
 
 
@@ -515,8 +518,9 @@ arrhythmia %>% ggplot(aes(`QRST Vector angles`)) + geom_histogram() +
 
 This show in blue the mean and in green the median for this predictors. We are going to use the median which look more independent of the low and hkgh values as before.
 
-```{r Missing QRST Vector angles replacement}
-arrhythmia$`QRST Vector angles`[is.na(arrhythmia$`QRST Vector angles`)] <- median(arrhythmia$`QRST Vector angles`,na.rm = TRUE)
+```{r Missing QRST Vector angles replacement, size='small'}
+arrhythmia$`QRST Vector angles`[is.na(arrhythmia$`QRST Vector angles`)] <- 
+  median(arrhythmia$`QRST Vector angles`,na.rm = TRUE)
 ```
 
 
@@ -603,7 +607,7 @@ Only few are high correlated. This is good for our analysis.
 In the previous predictor that we have missing values, are some others predictor which has complete information are high correlated?
 
 
-#### Correlation of P Vector angles
+#### Correlation of P Vector angles  
 
 Let's start with P Vector angles, where we have 22 missing values.
 
@@ -617,7 +621,7 @@ cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correl
 here we have a value of `r cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "P Vector angles" | correlated.2 %in% "P Vector angles") %>% slice_max(order_by = value) `. If this predictor appear with importance in the final algorithm, let take this in consideration.
 
 
-#### Correlation of T Vector angles
+#### Correlation of T Vector angles  
 
 With T Vector angles, where we have 8 missing values.
 
@@ -632,7 +636,7 @@ cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "T Vector angles" | correl
 The correlation here is lower. Then the assumtion of independant behaivor look valid.
 
 
-#### Correlation of QRST Vector angles
+#### Correlation of QRST Vector angles  
 
 In the case of QRST Vector angles, with only one value missing, we have
 
@@ -645,7 +649,7 @@ cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "QRST Vector angles" | cor
 ```
 
 
-#### Correlation of Heart rate
+#### Correlation of Heart rate  
 
 And the "Heart rate", with only one missing value
 
@@ -660,7 +664,7 @@ cor_arrhythmia_numeric %>%  filter( correlated.1 %in% "Heart rate" | correlated.
 and this predictor has very low correlation with all the rest of the predictor
 
 
-#### Less Correlation
+#### Less Correlation  
 
 Less correlated predictors are also presented and as we saw in the histogram, they are the most common. For example for the correlation between -0.001 and 0.001 we have:
 
